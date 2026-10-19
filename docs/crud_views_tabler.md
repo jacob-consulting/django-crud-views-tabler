@@ -1,7 +1,7 @@
 # crud_views_tabler: a Tabler theme for django-crud-views (draft)
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by the `customers`
-demo app (`/customer/`). Built against django-crud-views 0.29.4, Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+demo app (`/customer/` table list, `/customer/card/` card view). Built against django-crud-views 0.29.4, Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -82,6 +82,43 @@ The table renders as a whole card: `.card > .table-responsive > table.table.tabl
 `.card-footer` with "Showing x–y of n" and a Tabler `.pagination` with chevron icons. `snippets/pagination.html`
 (card views) uses the same look.
 
+## Card views
+
+`CardListView` pages (`view_card.content.html`, `tags/card.html`, `tags/card_action.html`,
+`snippets/card_order.html`):
+
+- cards sit in a `.row.row-deck.row-cards` grid, so cards in a row share their height;
+  `cv_card_container_class` still sets the column width (the demo uses `col-sm-6 col-lg-4`),
+- each card is `.card > .card-body` (title + content) and a `.card-footer` with the actions in a `.btn-list`,
+- `CardAction.variant` maps to Tabler buttons: `primary` → `btn-primary`, `secondary` → the default `btn`,
+  `tertiary` → `btn-ghost-secondary`; `flex` → `flex-grow-1`; labelled buttons get the action's icon too,
+- `no_label` buttons are `btn-icon` with a tooltip **and** a `.visually-hidden` label (the stock template has only
+  a `title`, so icon-only card buttons had no accessible name),
+- the order bar is a Tabler `form-select` plus an icon `btn-group` with Tabler's sort-ascending / sort-descending
+  icons and `aria-pressed` on the active direction; signed ordering (`submit-on-change`) is unchanged,
+- no results render Tabler's `.empty` state; pagination uses the theme's `snippets/pagination.html`.
+
+**Custom card content** without repeating the actions markup: a view's `cv_card_template` can extend the theme's
+card and fill its blocks (`card_title`, `card_content`, `card_footer`):
+
+```html
+{% extends "crud_views/tags/card.html" %}
+{% block card_title %}{{ object.name }} <span class="badge bg-{{ object.status_badge }}-lt">…</span>{% endblock %}
+{% block card_content %}<div class="text-secondary">{{ object.company }}</div>{% endblock %}
+```
+
+(This only works because the template has a different name than the one it extends; overriding
+`crud_views/tags/card.html` itself must not extend it.)
+
+**Getting back to the cards.** With both a list and a card view, create / update / delete return to `"list"` by
+default. Set `cv_cancel_keys` / `cv_success_keys` (e.g. `["list", "card"]`, plus `"detail"` where an object
+remains) so they return to the view the user came from; the links then carry `?cv_from=card`. The theme's form
+templates post to `request.get_full_path`, which keeps that origin across validation errors.
+
+Font Awesome mapping note: crud_views uses `fa-regular fa-rectangle-list` for list views and
+`fa-solid fa-rectangle-list` for card views, so the icon table also matches full class strings first
+(`FONT_AWESOME_EXACT`): card → `layout-grid`, list → `list`.
+
 ## Forms (crispy)
 
 crispy-bootstrap5 needs **no template overrides**: Tabler is Bootstrap 5, so `form-label`, `form-control`,
@@ -140,20 +177,22 @@ crud_views/
   columns/actions.html            row actions
   modal/content.html              modal header icon
   shared/js.html                  jQuery + shim + deferred scripts
+  snippets/card_order.html        card ordering bar
   snippets/pagination.html        card-view pagination
   table/bootstrap5.html           card table, sort headers, footer pagination
   tags/actions_menu_item_label.html, actions_menu_toggle.html
   tags/breadcrumb.html
+  tags/card.html, card_action.html  cards (with blocks) and card buttons
   tags/context_action.html, context_action_filter.html, context_actions.html
   tags/icon.html                  header/filter icon -> Tabler SVG
   tags/list_action.html (+ list_action.inner.html)
   tags/list_filter.html, list_filter.inner.html
+  view_card.content.html          card grid and empty state
   view_create.content.html, view_update.content.html, view_delete.content.html
 ```
 
 ## Not covered yet
 
-- **Card views** (`view_card*.html`, `tags/card.html`, `tags/card_action.html`, `snippets/card_order.html`).
 - **Property-grid detail** (`crud_views_object_detail`): it has its own template packs and icon library settings
   (`bootstrap` / `fontawesome`); a Tabler datagrid layout would be the natural fit. The demo detail page uses a
   hand-written Tabler `.datagrid` instead.

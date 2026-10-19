@@ -5,7 +5,9 @@ from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
 from crud_views.lib.crispy import Column4, Column6, Column12, CrispyModelForm, CrispyViewMixin
 from crud_views.lib.table import LinkDetailColumn, Table
 from crud_views.lib.table.columns import NaturalTimeColumn
+from crud_views.lib.view import CardAction
 from crud_views.lib.views import (
+    CardListViewPermissionRequired,
     CreateViewPermissionRequired,
     DeleteViewPermissionRequired,
     DetailViewPermissionRequired,
@@ -74,6 +76,23 @@ class CustomerListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterM
     filterset_class = CustomerFilter
     formhelper_class = CustomerFilterFormHelper
     cv_list_actions = ["detail", "update", "delete"]
+    cv_context_actions = ["list", "card", "filter", "create"]
+
+
+class CustomerCardListView(BreadcrumbMixin, ListViewTableFilterMixin, CardListViewPermissionRequired):
+    cv_viewset = cv_customer
+    filterset_class = CustomerFilter
+    formhelper_class = CustomerFilterFormHelper
+    cv_context_actions = ["list", "card", "filter", "create"]
+    cv_card_template = "customers/customer_card.html"
+    cv_card_container_class = "col-sm-6 col-lg-4"
+    cv_card_actions = [
+        CardAction(key="detail", label="Open", variant="primary", flex=True),
+        CardAction(key="update", label="Edit"),
+        CardAction(key="delete", no_label=True, variant="tertiary"),
+    ]
+    cv_order_fields = [("name", "Name"), ("revenue", "Revenue"), ("created_at", "Created")]
+    paginate_by = 12
 
 
 class CustomerDetailView(BreadcrumbMixin, DetailViewPermissionRequired):
@@ -84,12 +103,16 @@ class CustomerDetailView(BreadcrumbMixin, DetailViewPermissionRequired):
 class CustomerCreateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewPermissionRequired):
     cv_viewset = cv_customer
     form_class = CustomerForm
+    cv_cancel_keys = ["list", "card"]
+    cv_success_keys = ["list", "card"]
     cv_message_template_code = "Created »{{ object }}«"
 
 
 class CustomerUpdateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
     cv_viewset = cv_customer
     form_class = CustomerForm
+    cv_cancel_keys = ["list", "card", "detail"]
+    cv_success_keys = ["list", "card", "detail"]
     cv_message_template_code = "Updated »{{ object }}«"
 
 
@@ -97,4 +120,6 @@ class CustomerDeleteView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteV
     cv_viewset = cv_customer
     form_class = TablerDeleteForm
     cv_modal = True
+    cv_cancel_keys = ["list", "card", "detail"]
+    cv_success_keys = ["list", "card"]  # never "detail": the object is gone
     cv_message_template_code = "Deleted »{{ object }}«"

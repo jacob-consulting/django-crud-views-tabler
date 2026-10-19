@@ -1,0 +1,20 @@
+{% load crud_views crud_views_tabler i18n %}
+{# Tabler theme: cards in a .row-deck grid (equal heights), a Tabler empty state, Tabler pagination. #}
+{% include "crud_views/snippets/card_order.html" %}
+<div class="row row-deck row-cards">
+  {% for object in object_list %}
+  <div class="{{ view.cv_card_container_class }}">
+    {% cv_card object %}
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="card">
+      <div class="empty">
+        <div class="empty-icon">{% cvt_icon "mood-empty" %}</div>
+        <p class="empty-title">{% translate "No items found." %}</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% cv_pagination %}

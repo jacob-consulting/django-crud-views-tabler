@@ -19,6 +19,10 @@ class IconTests(SimpleTestCase):
     def test_unknown_icon_falls_back_to_the_class(self):
         self.assertEqual(render_icon("bi bi-star"), '<i class="bi bi-star" aria-hidden="true"></i>')
 
+    def test_card_view_icon_differs_from_list_icon(self):
+        self.assertEqual(render_icon("fa-solid fa-rectangle-list"), render_icon("layout-grid"))
+        self.assertEqual(render_icon("fa-regular fa-rectangle-list"), render_icon("list"))
+
     def test_no_icon(self):
         self.assertEqual(render_icon(None), "")
 
@@ -84,3 +88,51 @@ class ThemeRenderingTests(TestCase):
         response = self.client.post(reverse("customer-create"), {"email": "nope", "status": "lead", "revenue": "0"})
         self.assertContains(response, "is-invalid")
         self.assertContains(response, "invalid-feedback")
+
+
+class CardThemeTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = get_user_model().objects.create_superuser("root", "root@example.com", "s3cret-pass")
+        Customer.objects.bulk_create(Customer(name=f"Customer {i:02}", revenue=i * 10) for i in range(15))
+
+    def setUp(self):
+        self.client.force_login(self.admin)
+
+    def get(self, **params):
+        return self.client.get(reverse("customer-card"), params).content.decode()
+
+    def test_cards_render_in_tabler_grid(self):
+        html = self.get()
+        self.assertIn('class="row row-deck row-cards"', html)
+        self.assertEqual(html.count('class="card-footer"'), 12)  # paginate_by
+        self.assertIn('class="pagination', html)
+        self.assertNotIn("fa-solid", html)
+
+    def test_card_action_variants(self):
+        html = self.get()
+        self.assertIn("btn btn-sm btn-primary flex-grow-1", html)  # primary + flex
+        self.assertIn("btn btn-sm btn-ghost-secondary btn-icon", html)  # tertiary + no_label
+        self.assertIn('<span class="visually-hidden">Delete</span>', html)  # icon-only keeps a name
+
+    def test_card_links_carry_their_origin(self):
+        html = self.get()
+        self.assertIn("/update/?cv_from=card", html)
+        self.assertIn("/delete/?cv_from=card", html)
+
+    def test_order_bar(self):
+        html = self.get(order="revenue", dir="desc")
+        self.assertIn('id="cv-card-order-form"', html)
+        self.assertIn('value="desc" class="btn btn-icon active"', html)
+        self.assertLess(html.index("Customer 14"), html.index("Customer 13"))
+
+    def test_empty_state(self):
+        html = self.get(name="nothing-matches", submit="Apply Filter")
+        self.assertIn('class="empty"', html)
+        self.assertIn("No items found.", html)
+
+    def test_delete_from_card_returns_to_cards(self):
+        customer = Customer.objects.get(name="Customer 03")
+        url = reverse("customer-delete", args=[customer.pk]) + "?cv_from=card"
+        response = self.client.post(url, {"confirm": "on", "delete": "Delete"})
+        self.assertRedirects(response, reverse("customer-card"), fetch_redirect_response=False)

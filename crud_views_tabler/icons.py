@@ -55,6 +55,7 @@ ICONS = {
         "M14 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4",
     ],
     "list": ["M9 6l11 0", "M9 12l11 0", "M9 18l11 0", "M5 6l0 .01", "M5 12l0 .01", "M5 18l0 .01"],
+    "mood-empty": ["M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0", "M9 10l.01 0", "M15 10l.01 0", "M9 15l6 0"],
     "moon": ["M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008"],
     "pencil": ["M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4", "M13.5 6.5l4 4"],
     "plus": ["M12 5l0 14", "M5 12l14 0"],
@@ -67,6 +68,8 @@ ICONS = {
         " -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065",
         "M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0",
     ],
+    "sort-ascending": ["M4 6l7 0", "M4 12l7 0", "M4 18l9 0", "M15 9l3 -3l3 3", "M18 6l0 12"],
+    "sort-descending": ["M4 6l9 0", "M4 12l7 0", "M4 18l7 0", "M15 15l3 3l3 -3", "M18 6l0 12"],
     "square-plus": [
         "M9 12h6",
         "M12 9v6",
@@ -94,8 +97,15 @@ ICONS = {
     ],
 }
 
+# Full Font Awesome class strings that need a different icon than their name alone would give.
+FONT_AWESOME_EXACT = {
+    "fa-solid fa-rectangle-list": "layout-grid",  # card view; the list view uses fa-regular fa-rectangle-list
+}
+
 # Font Awesome icon name (without style prefix) -> Tabler icon name, for the defaults django-crud-views ships.
 FONT_AWESOME = {
+    "fa-arrow-up-short-wide": "sort-ascending",
+    "fa-arrow-down-wide-short": "sort-descending",
     "fa-eye": "eye",
     "fa-pen-to-square": "pencil",
     "fa-trash-can": "trash",
@@ -119,6 +129,8 @@ def resolve(value):
         return None
     if value in ICONS:
         return value
+    if value in FONT_AWESOME_EXACT:
+        return FONT_AWESOME_EXACT[value]
     for css_class in value.split():
         if css_class in FONT_AWESOME:
             return FONT_AWESOME[css_class]

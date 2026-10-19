@@ -1,0 +1,27 @@
+{% load crud_views %}
+{% comment %}
+Tabler theme card. A view's cv_card_template can extend this template and fill the blocks:
+  card_title    - the heading (default: str(object))
+  card_content  - anything below the heading, inside .card-body
+  card_footer   - the actions row; override only to change where actions go
+{% endcomment %}
+{% cv_card_action_group object as group %}
+<div class="card">
+  <div class="card-body">
+    <h3 class="card-title">{% block card_title %}{{ object }}{% endblock card_title %}</h3>
+    {% block card_content %}{% endblock card_content %}
+  </div>
+  {% block card_footer %}
+  <div class="card-footer">
+    <div class="btn-list">
+      {% if group is None %}
+      {% for action in view.cv_card_actions %}{% cv_card_action action object %}{% endfor %}
+      {% else %}
+      {% for ctx in group.inline %}{% cv_render_card_action ctx %}{% endfor %}
+      {% for ctx in group.menu %}{% cv_render_list_action_form ctx %}{% endfor %}
+      {% cv_actions_menu group "card" %}
+      {% endif %}
+    </div>
+  </div>
+  {% endblock card_footer %}
+</div>

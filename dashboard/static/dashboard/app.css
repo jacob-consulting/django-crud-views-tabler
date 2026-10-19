@@ -1,0 +1,4 @@
+/* ApexCharts cannot apply opacity to Tabler's oklch() colours, so area fills are tinted here. */
+.chart path.apexcharts-area:not([fill="none"]) {
+  fill-opacity: 0.16;
+}

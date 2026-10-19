@@ -1,0 +1,12 @@
+{% load tabler %}
+{% if field.widget_type == "checkbox" %}
+<label class="form-check">
+  {{ field|form_control:"form-check-input" }}
+  <span class="form-check-label">{{ field.label }}</span>
+</label>
+{% else %}
+<label class="form-label{% if field.field.required %} required{% endif %}" for="{{ field.auto_id }}">{{ field.label }}</label>
+{{ field|form_control }}
+{% endif %}
+{% if field.errors %}<div class="invalid-feedback d-block" id="{{ field.auto_id }}-errors">{{ field.errors|join:" " }}</div>
+{% elif field.help_text %}<div class="form-text" id="{{ field.auto_id }}-help">{{ field.help_text|safe }}</div>{% endif %}

@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{% block title %}{% endblock %} · Acme Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css" integrity="sha384-tT2UAGE9hxG/p5d0iGIvZ/s8El3nWWG3tfG02i8iOY5Pbf8cZZRVmcrrVs+JG5Vw" crossorigin="anonymous" />
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/js/tabler-theme.min.js" integrity="sha384-gPM8vc3koNjMZtzPmhqasm5L6/Zak4DcWmRrPt4GZJBKSEKQfwyFIehZzq2TH1AZ" crossorigin="anonymous"></script>
+    {% block body %}{% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/js/tabler.min.js" integrity="sha384-1yCHfhyU8+V33urXkAlLLpNYd9jdzXkxdafCg0+auIIEtYFnOuM/DwJQgk5sXY98" crossorigin="anonymous" defer></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

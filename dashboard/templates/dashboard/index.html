@@ -1,0 +1,152 @@
+{% extends "layouts/app.html" %}
+{% load humanize static tabler %}
+{% block title %}Dashboard{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler-vendors.min.css" integrity="sha384-A9qqdz+yuPDtQDLvEg/gORLFMPNRUhy8gL/YSBsx7qtSdosheeFYwfbuRPswPnjg" crossorigin="anonymous" />
+<link rel="stylesheet" href="{% static 'dashboard/app.css' %}" />
+{% endblock %}
+{% block pretitle %}Overview{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block actions %}
+{% if perms.auth.add_user %}
+<a href="{% url 'dashboard:users' %}" class="btn btn-primary">{% icon "plus" %} Add user</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="row row-deck row-cards">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="subheader">Users</div>
+        <div class="h1 mb-0">{{ totals.total }}</div>
+        <div class="text-secondary mt-2">{{ totals.staff }} staff, {{ totals.superusers }} superuser{{ totals.superusers|pluralize }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="subheader">Active accounts</div>
+        <div class="h1 mb-0">{{ totals.active }}</div>
+        <div class="text-secondary mt-2">{% widthratio totals.active totals.total|default:1 100 %}% of all accounts</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="subheader">New in last 30 days</div>
+        <div class="d-flex align-items-baseline">
+          <div class="h1 mb-0 me-2">{{ totals.new }}</div>
+          {% if new_delta > 0 %}
+          <span class="text-green d-inline-flex align-items-center lh-1">+{{ new_delta }}{% icon "trending-up" "icon-sm ms-1" %}</span>
+          {% elif new_delta < 0 %}
+          <span class="text-red d-inline-flex align-items-center lh-1">{{ new_delta }}{% icon "trending-down" "icon-sm ms-1" %}</span>
+          {% endif %}
+        </div>
+        <span class="sparkline text-primary mt-2" data-bs-toggle="sparkline" data-bs-fill="auto" data-bs-spot="last" data-bs-values="{{ signups.values|join:',' }}" aria-label="Sign-ups per month, last 12 months"></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="subheader">Signed in, last 30 days</div>
+        <div class="h1 mb-0">{{ totals.logged_in }}</div>
+        <div class="text-secondary mt-2">of {{ totals.active }} active account{{ totals.active|pluralize }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Sign-ups</h3>
+        <div class="card-actions"><span class="text-secondary">Last 12 months</span></div>
+      </div>
+      <div class="card-body">
+        <div id="chart-signups" class="chart chart-lg" role="img" aria-label="New users per month, last 12 months"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Roles</h3>
+      </div>
+      <div class="card-body">
+        <div id="chart-roles" class="chart chart-lg" role="img" aria-label="Users by role"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Recent sign-ins</h3>
+        {% if perms.auth.view_user %}<div class="card-actions"><a href="{% url 'dashboard:users' %}" class="btn btn-sm">All users</a></div>{% endif %}
+      </div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th class="text-end">Last sign-in</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in recent_logins %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <span class="avatar avatar-xs bg-{{ u|avatar_color }}-lt me-2">{{ u|initials }}</span>
+                  {{ u.get_full_name|default:u.get_username }}
+                </div>
+              </td>
+              <td class="text-secondary">{{ u.email|default:"—" }}</td>
+              <td class="text-secondary">{% if u.is_superuser %}Superuser{% elif u.is_staff %}Staff{% else %}Member{% endif %}</td>
+              <td class="text-end text-secondary" title="{{ u.last_login }}">{{ u.last_login|naturaltime }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-secondary py-4">Nobody has signed in yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{{ signups|json_script:"signups-data" }}
+{{ roles|json_script:"roles-data" }}
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/libs/apexcharts/dist/apexcharts.min.js" integrity="sha384-+hxfT+iExRCsHFUrlWam6cWHSCNZg04vcfjwv9UXGl1M8zs+UrU9Me+z+ciPJZFC" crossorigin="anonymous" defer></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (!window.ApexCharts) return;
+    // Series colours come from Tabler's --tblr-chart-* palette via tabler-vendors.css.
+    const signups = JSON.parse(document.getElementById("signups-data").textContent);
+    const roles = JSON.parse(document.getElementById("roles-data").textContent);
+
+    new ApexCharts(document.getElementById("chart-signups"), {
+      chart: { type: "area", height: 240, fontFamily: "inherit", toolbar: { show: false }, parentHeightOffset: 0 },
+      dataLabels: { enabled: false },
+      stroke: { width: 2, curve: "smooth" },
+      fill: { type: "solid" },
+      series: [{ name: "New users", data: signups.values }],
+      xaxis: { categories: signups.labels, tooltip: { enabled: false } },
+      yaxis: { min: 0, forceNiceScale: true, labels: { formatter: (v) => Math.round(v) } },
+    }).render();
+
+    new ApexCharts(document.getElementById("chart-roles"), {
+      chart: { type: "donut", height: 240, fontFamily: "inherit" },
+      series: roles.values,
+      labels: roles.labels,
+      legend: { position: "bottom" },
+      dataLabels: { enabled: false },
+    }).render();
+  });
+</script>
+{% endblock %}

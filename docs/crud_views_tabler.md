@@ -210,3 +210,4 @@ Discussed in detail, with the current code paths, pros and cons, in
 2. Button classes set in Python (`CrispyDeleteForm` has no hook for its Delete button).
 3. jQuery (used by four of the six core scripts, including modals and POST actions) and a global `bootstrap`.
 4. A way to mark a context action as the page's primary action.
+5. Theme overrides have to copy the package's template logic, and nothing detects when they go stale.

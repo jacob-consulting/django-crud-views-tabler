@@ -1,6 +1,6 @@
 # django-crud-views: questions raised by the Tabler theme prototype
 
-Four points came up while building `crud_views_tabler` (see [crud_views_tabler.md](crud_views_tabler.md)). For
+Five points came up while building `crud_views_tabler` (see [crud_views_tabler.md](crud_views_tabler.md)). For
 each: what the package does today, why it matters for a theme, what the prototype does about it, and options with
 their trade-offs.
 
@@ -257,3 +257,95 @@ target view (`CreateView` primary by default).
 
 Option A was derived from reading the code, not run. Whether the stock look (all buttons equal) is a deliberate
 design choice has not been asked.
+
+---
+
+## 5. Theme overrides have to copy the package's template logic
+
+### What the package does today
+
+Theming means overriding templates under `crud_views/` (the hint of check `crud_views.W110` says so). Several of
+those templates mix two things: deciding *what* to render (disabled, inaccessible, POST vs GET vs modal, inline vs
+overflow menu, signed vs direction ordering) and *how* it looks (element, CSS classes, icon, label placement). An
+override cannot change the second without copying the first.
+
+How much logic the theme's 23 override files carry (counted from the variables they branch on: `cv_disabled`,
+`cv_access`, `cv_action_enabled`, `cv_list_action_method`, `cv_modal`, `cv_is_active`, `cv_oid`, the
+`group is None` / `group.inline` / `group.menu` / `group.all` menu branches, `cv_order_signed`, `cv_filter_pinned`):
+
+| Category | Templates |
+|---|---|
+| Substantial copied logic (3–7 of those variables each) | `tags/context_action.html`, `tags/list_action.html` (via `list_action.inner.html`), `tags/card_action.html`, `tags/context_actions.html`, `columns/actions.html`, `tags/card.html` |
+| Some copied logic or a contract to keep | `snippets/card_order.html` (signed mode, preserved params), `tags/list_filter.html` (pinned), `view_create/update/delete.content.html` (must post to `request.get_full_path` so `cv_from` survives; delete keeps the protection-error branch) |
+| Presentation only | the remaining 12 (table, pagination, breadcrumb, modal header, menu toggle and item label, icon, filter header, card grid, script include) |
+
+In the six "substantial" templates most of the theme's change is CSS classes and icons; the branching is copied
+unchanged.
+
+**Nothing detects a stale override.** The package checks that configured templates exist
+(`lib/check.py:225`, `lib/settings.py:98`), not what an override contains. An earlier statement of mine that
+`viewset.W290` guards part of this was wrong: W290 warns when a view's own `cv_*_actions_inline` names a key that is
+not among its actions (`lib/view/action_menu.py:19-38`). The skill lists it next to "an override lacks the
+`{% if group is None %}` branch" only because both show the same symptom, a missing `⋯` menu.
+
+### Why it matters for a theme
+
+When a later release changes the logic in one of these templates (a new button state, a new attribute the
+JavaScript looks for, a new menu branch), a theme that copied the old version keeps rendering the old behaviour.
+Nothing fails at startup; the feature is just missing or subtly wrong on themed sites. That is the same failure mode
+the menu branch already shows. The more templates a theme overrides, the more of these it carries, and every
+release needs a manual diff of all of them.
+
+This is not Tabler-specific: any theme that is more than a colour change runs into it.
+
+### What the prototype does
+
+Copies the logic and changes the markup, keeping every hook it found (`cv-key`, `data-cv-*`,
+`cv-list-container` / `cv-context-container`, the hidden POST forms, the menu branches). It has tests that render
+the demo pages, but nothing compares its templates against the package's.
+
+### Options
+
+**A. Document the contract and leave the structure.** For each overridable template, document which variables,
+branches and attributes an override must keep.
+- Pro: no code change; helps every theme author immediately.
+- Con: drift is still only caught by hand; the documentation itself has to be kept in sync with the templates.
+
+**B. A cheap drift signal.** Stock templates carry a marker (e.g. `{# cv-template: context_action v3 #}`); a system
+check warns when the resolved template for that name is an override with an older or missing marker.
+- Pro: small to build; turns silent drift into a startup warning after an upgrade.
+- Con: depends on maintainers bumping markers for every logic change and theme authors updating them honestly; it
+  says *that* something changed, not *what*. Requires reading override sources at startup (cost not measured).
+
+**C. Class hooks instead of overrides for style-only changes.** Stock templates read CSS classes from context,
+filled from a setting (e.g. a dict of class names per location/variant: context button, list button, card button,
+menu toggle).
+- Pro: themes in the Bootstrap family that differ mainly in classes would override none of the logic templates.
+- Con: covers classes only. The Tabler theme also changes structure (visible label on the primary action,
+  `.btn-list` instead of `fieldset.btn-group`, icon placement), so it would still need some overrides. Another
+  settings surface to design and document.
+
+**D. Split logic from markup.** The logic template resolves one normalised button description (element `a` or
+`button`, `href`, all `data-cv-*` attributes, disabled state and reason, label, icon, variant) and includes a small
+leaf template that only draws it. Themes override the leaves.
+- Pro: logic changes upstream reach themed sites automatically; a theme overrides a handful of small leaves
+  instead of six logic templates; the leaf variables become an explicit, testable contract.
+- Con: the largest refactor of the five items; the leaf contract becomes public API that is hard to change later;
+  list, context, card and menu-item buttons differ enough that it may need several leaves; existing overrides of the
+  current templates keep working only if the old templates stay in place for a deprecation period.
+
+**E. Blocks plus a second template name.** Move the stock templates to a second name (e.g. `crud_views/base/…`)
+with blocks around the presentational parts; `crud_views/…` simply extends them. A theme overrides
+`crud_views/…`, extends `crud_views/base/…` and fills only the blocks. (An override cannot extend a template of
+its own name, which is why the second name is needed.)
+- Pro: plain Django template inheritance; can be introduced one template at a time; existing overrides keep
+  working.
+- Con: two names per template; the value depends on where the block boundaries are. A block that wraps a branch
+  puts the logic back into the theme.
+
+### Not known / not tested
+
+None of B–E has been prototyped. My assessment that this matters more than the icon question is a judgment from
+writing the overrides, not a measurement: the theme overrides most of these templates for class and structure
+changes anyway, so central icon handling alone would remove few overrides, while a logic/markup split would remove
+the riskiest ones.

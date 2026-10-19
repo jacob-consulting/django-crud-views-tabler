@@ -159,8 +159,8 @@ Side effect: list.filter.js toggles `fa-filter` on an `<i>` inside the filter bu
 
 ## JavaScript
 
-crud_views' scripts expect **jQuery** (list.filter.js, formset.js) and a global **`bootstrap`** (modal.js,
-tooltip.js). Tabler's bundle has no jQuery and exposes Bootstrap's components on `window.tabler`. The theme's
+crud_views' scripts expect **jQuery** (viewset.js, modal.js, list.filter.js, formset.js) and a global
+**`bootstrap`** (modal.js, tooltip.js). Tabler's bundle has no jQuery and exposes Bootstrap's components on `window.tabler`. The theme's
 `shared/js.html` (what `{% cv_js %}` renders) therefore emits, all `defer`red so they run after `tabler.min.js`:
 
 1. jQuery 3.7.1 from code.jquery.com with an SRI hash,
@@ -203,10 +203,10 @@ crud_views/
 
 ## Questions for django-crud-views upstream
 
-1. Icons: a setting or registry for action icons (instead of Font Awesome classes on view classes) would let a
-   theme swap icon sets without a render-time mapping.
-2. Button classes: crud_views sets `btn btn-secondary` for Cancel and plain `Submit` for Delete in Python; a hook
-   or setting for these would avoid the `TablerDeleteForm` subclass.
-3. jQuery: list.filter.js only needs it for click handlers and `collapse("toggle")`; dropping jQuery there would
-   remove the theme's biggest shim.
-4. A "primary" flag for context actions (today the theme hard-codes `create`/`create_select`).
+Discussed in detail, with the current code paths, pros and cons, in
+[crud_views_upstream_questions.md](crud_views_upstream_questions.md):
+
+1. Icons: Font Awesome class names on view classes, in two settings and hard-coded in templates.
+2. Button classes set in Python (`CrispyDeleteForm` has no hook for its Delete button).
+3. jQuery (used by four of the six core scripts, including modals and POST actions) and a global `bootstrap`.
+4. A way to mark a context action as the page's primary action.

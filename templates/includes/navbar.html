@@ -16,6 +16,14 @@
             <span class="nav-link-title">Dashboard</span>
           </a>
         </li>
+        {% if perms.customers.view_customer %}
+        <li class="nav-item{% if url_name|slice:':9' == 'customer-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'customer-list' %}"{% if url_name == 'customer-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "building-store" %}</span>
+            <span class="nav-link-title">Customers</span>
+          </a>
+        </li>
+        {% endif %}
         {% if perms.auth.view_user %}
         <li class="nav-item{% if url_name == 'users' or url_name == 'user_create' %} active{% endif %}">
           <a class="nav-link" href="{% url 'dashboard:users' %}"{% if url_name == 'users' %} aria-current="page"{% endif %}>

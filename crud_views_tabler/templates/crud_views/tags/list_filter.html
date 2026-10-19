@@ -1,0 +1,11 @@
+{% if cv_filter_pinned %}
+<div class="card" id="filter-pinned">
+  {% include "crud_views/tags/list_filter.inner.html" %}
+</div>
+{% else %}
+<div class="collapse{% if cv_filter_expanded %} show{% endif %}" id="filter-collapse">
+  <div class="card">
+    {% include "crud_views/tags/list_filter.inner.html" %}
+  </div>
+</div>
+{% endif %}

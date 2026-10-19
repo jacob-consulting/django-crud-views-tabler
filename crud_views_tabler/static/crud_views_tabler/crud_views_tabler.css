@@ -1,0 +1,19 @@
+/* crispy-forms marks required fields with <span class="asteriskField">*</span>; match Tabler's .form-label.required. */
+.asteriskField {
+  margin-inline-start: 0.25rem;
+  color: var(--tblr-danger);
+}
+
+/* Row actions sit at the end of the row and never wrap. */
+.card-table td:has(> [cv-list-container]),
+.card-table th.cv-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: end;
+}
+
+/* The filter card and the content below it. */
+#filter-collapse > .card,
+#filter-pinned {
+  margin-bottom: 1rem;
+}

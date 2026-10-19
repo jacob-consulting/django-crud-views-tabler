@@ -1,0 +1,6 @@
+{% load i18n crud_views_tabler %}
+<button type="button" class="btn {% if cv_location == "list" %}btn-sm btn-ghost-secondary{% endif %} btn-icon cv-menu-toggle"
+        data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% translate 'More actions' %}"
+        {% if cv_location == "list" %}data-bs-popper-config='{"strategy":"fixed"}'{% endif %}>
+  {% cvt_icon cv_menu_icon %}<span class="visually-hidden">{% translate "More actions" %}</span>
+</button>

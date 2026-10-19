@@ -1,0 +1,6 @@
+{% load static %}{# Tabler theme: crud_views needs jQuery and a global `bootstrap`; Tabler's bundle provides neither. Every script is deferred so it runs after tabler.min.js. #}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"{% if nonce %} nonce="{{ nonce }}"{% endif %} defer></script>
+<script src="{% static 'crud_views_tabler/bootstrap-shim.js' %}"{% if nonce %} nonce="{{ nonce }}"{% endif %} defer></script>
+{% for item in js %}
+<script src="{{ item.url }}"{% if nonce %} nonce="{{ nonce }}"{% endif %}{% if item.integrity %} integrity="{{ item.integrity }}"{% endif %}{% if item.crossorigin %} crossorigin="{{ item.crossorigin }}"{% endif %} defer></script>
+{% endfor %}

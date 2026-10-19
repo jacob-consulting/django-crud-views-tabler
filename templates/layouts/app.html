@@ -7,8 +7,10 @@
       <div class="container-xl">
         <div class="row g-2 align-items-center">
           <div class="col">
+            {% block breadcrumb %}{% endblock %}
             <div class="page-pretitle">{% block pretitle %}{% endblock %}</div>
             <h2 class="page-title">{% block page_title %}{% endblock %}</h2>
+            {% block subtitle %}{% endblock %}
           </div>
           <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">{% block actions %}{% endblock %}</div>

@@ -1,0 +1,16 @@
+{% load crud_views %}
+{# Tabler theme: page-level actions render as a .btn-list in the page header. #}
+{% if view.cv_context_actions %}
+{% if group is None %}
+{% for key in view.cv_context_actions %}{% cv_context_action_form key object %}{% endfor %}
+<div class="btn-list" role="group" aria-label="Actions" cv-context-container="true">
+  {% for key in view.cv_context_actions %}{% cv_context_action key object %}{% endfor %}
+</div>
+{% else %}
+{% for ctx in group.all %}{% cv_render_list_action_form ctx %}{% endfor %}
+<div class="btn-list" role="group" aria-label="Actions" cv-context-container="true">
+  {% for ctx in group.inline %}{% cv_render_context_action ctx %}{% endfor %}
+  {% cv_actions_menu group "context" %}
+</div>
+{% endif %}
+{% endif %}

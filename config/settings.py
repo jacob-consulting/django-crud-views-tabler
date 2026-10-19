@@ -39,7 +39,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'crispy_forms',
+    'crispy_bootstrap5',
+    'django_tables2',
+    'django_filters',
+    # The Tabler theme overrides crud_views templates, so it must come before crud_views.
+    'crud_views_tabler',
+    'crud_views.apps.CrudViewsConfig',
     'dashboard',
+    'customers',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +144,10 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+# django-crud-views
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
+CRISPY_TEMPLATE_PACK = 'bootstrap5'
+CRUD_VIEWS_EXTENDS = 'crud_views_page.html'
+DJANGO_TABLES2_TEMPLATE = 'crud_views/table/bootstrap5.html'

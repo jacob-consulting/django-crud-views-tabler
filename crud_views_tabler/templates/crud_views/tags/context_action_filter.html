@@ -1,0 +1,5 @@
+{% load crud_views_tabler %}
+<button type="button" class="btn btn-icon" id="cv-filter-toggle"
+        title="{{ cv_action_label }}" data-bs-toggle="tooltip" data-bs-placement="bottom" cv-key="{{ cv_key }}">
+  {% cvt_icon cv_icon_action %}<span class="visually-hidden">{{ cv_action_label }}</span>
+</button>

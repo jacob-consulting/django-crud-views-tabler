@@ -1,7 +1,7 @@
 # crud_views_tabler: a Tabler theme for django-crud-views (draft)
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by the `customers`
-demo app (`/customer/` table list, `/customer/card/` card view). Built against django-crud-views main @ 440ac55 (0.30.0 plus the unreleased JavaScript adapters, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+demo app (`/customer/` table list, `/customer/card/` card view). Built against django-crud-views main @ 4b62ed6 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, and tooltip markers #204, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -12,8 +12,8 @@ hint describes the intended route, and the prototype follows it:
 - it is listed **before** `crud_views` in `INSTALLED_APPS`, so Django's app template loader finds its files first,
 - anything it does not override falls through to the stock Bootstrap 5 templates.
 
-So the theme is template overrides plus a little Python (the icon library, a system check, one form class) and two static files (a stylesheet and the adapter script). No
-crud_views code is patched or subclassed except where noted under "Forms".
+So the theme is template overrides plus a little Python (the icon library, the button class table, a system check) and two static files (a stylesheet and the adapter script). No
+crud_views code is patched or subclassed.
 
 ```python
 INSTALLED_APPS = [
@@ -52,18 +52,44 @@ surrounding layout (navbar, footer) is the project's.
 This is where crud_views and Tabler line up best: Tabler's page header has a title area and an actions area,
 and crud_views has a header snippet and **context actions**.
 
-- **Context actions** (`tags/context_actions.html`, `tags/context_action.html`) render as a `.btn-list` in the
-  page header. `create` / `create_select` is the page's primary action: `btn-primary` with its label. Every other
-  key is an icon button (`btn btn-icon`) with a tooltip; the label stays in a `.visually-hidden` span, as
-  crud_views requires for accessibility. The current view's key gets `active` + `aria-current`.
-- **Row actions** (`columns/actions.html`, `tags/list_action.html`) are small ghost icon buttons
-  (`btn-sm btn-icon btn-ghost-secondary`, `btn-ghost-danger` for `delete`), right-aligned and never wrapping.
-- **Overflow menu**: the `⋯` toggle (`tags/actions_menu_toggle.html`) is an icon button. The dropdown items are
-  crud_views' own; the stylesheet sizes and mutes their `.cv-icon-fw` icon slot like Tabler's `dropdown-item-icon`,
-  so labels line up whether an action has an icon or not.
-- All hooks the package's JavaScript relies on are kept unchanged: `cv-key`, `cv-list-container`,
-  `cv-context-container`, `data-cv-action`, `data-cv-target`, `data-cv-modal`, `#cv-filter-toggle`, the hidden POST
-  forms from `list_action_form.html`.
+The theme overrides **no** button template. Every action button, the row and toolbar containers, the `⋯` menu
+toggle, the filter toggle and the card-order bar render through crud_views' stock logic templates and leaves
+(`tags/button/action.html`, `menu_item.html`, `container.html`). The Tabler look comes from crud_views' button class
+table: `crud_views_tabler/buttons.py` holds `TABLER_BUTTON_CLASSES`, and `CrudViewsTablerConfig.ready()` registers it
+with `register_button_classes()`, so projects need no button settings. A project overrides single keys with
+`CRUD_VIEWS_BUTTON_CLASSES` (project settings win over the theme).
+
+Which classes a button gets depends on its **variant**, which comes from the view it targets: `create` /
+`create_select` are `primary`, `delete` is `danger`, everything else `secondary`. A view changes it with
+`cv_action_variant`, a single button with `ContextButton.variant` / `CardAction.variant`.
+
+- **Context actions** render as a `fieldset.btn-list` in the page header. Every button is an icon button
+  (`btn btn-icon`); the primary action (create) is `btn btn-primary btn-icon`, a danger action (delete on a detail
+  page) `btn btn-icon btn-outline-danger`. The label stays in a `.visually-hidden` span and is the tooltip. The
+  current view's key gets `active` + `aria-current`.
+- **Row actions** are small ghost icon buttons (`btn btn-sm btn-icon btn-ghost-secondary`, `btn-ghost-danger` for
+  danger), in a `fieldset.btn-list` that is right-aligned and never wraps.
+- **Overflow menu**: the `⋯` toggle uses the same icon-button classes per location inside a Tabler `dropdown`
+  wrapper; crud_views adds `dropdown-toggle`, so it shows a caret. The dropdown items are crud_views' own; the
+  stylesheet sizes and mutes their `.cv-icon-fw` icon slot like Tabler's `dropdown-item-icon`, so labels line up
+  whether an action has an icon or not.
+- **Tooltips**: crud_views marks every icon-only button with `data-cv-tooltip="<location>"` and initialises it
+  through `cv.adapters.tooltip`, which the theme points at Tabler (see JavaScript). Toolbar tooltips open below the
+  button.
+- All hooks the package's JavaScript relies on come from the stock templates unchanged: `cv-key`,
+  `cv-list-container`, `cv-context-container`, `cv-card-container`, `data-cv-action`, `data-cv-target`,
+  `data-cv-modal`, `#cv-filter-toggle`, the hidden POST forms.
+
+**Accepted differences from the earlier theme overrides** (stock markup wins over the old look):
+
+| Where | Before | Now |
+|---|---|---|
+| Toolbar "Create" | `btn-primary` with icon and text label | icon-only `btn-primary`; the label is the tooltip |
+| Labelled card buttons ("Open", "Edit") | icon plus label | label only |
+| `⋯` menu toggles | no caret | caret (`dropdown-toggle`) |
+| Row and toolbar containers | `div.btn-list` | `fieldset.btn-list` (lays out the same) |
+| Card-order bar | `form-label text-secondary` label, full-size select, `aria-pressed` | crud_views' bar: plain label, `form-select-sm`, `active` only |
+| Delete form | confirmation checkbox full width | crud_views' `Row(Column4("confirm"))` |
 
 ## Sorting
 
@@ -85,18 +111,22 @@ The table renders as a whole card: `.card > .table-responsive > table.table.tabl
 
 ## Card views
 
-`CardListView` pages (`view_card.content.html`, `tags/card.html`, `tags/card_action.html`,
-`snippets/card_order.html`):
+`CardListView` pages (`view_card.content.html`, `tags/card.html`; the card buttons and the order bar are crud_views'
+own):
 
 - cards sit in a `.row.row-deck.row-cards` grid, so cards in a row share their height;
   `cv_card_container_class` still sets the column width (the demo uses `col-sm-6 col-lg-4`),
-- each card is `.card > .card-body` (title + content) and a `.card-footer` with the actions in a `.btn-list`,
-- `CardAction.variant` maps to Tabler buttons: `primary` → `btn-primary`, `secondary` → the default `btn`,
-  `tertiary` → `btn-ghost-secondary`; `flex` → `flex-grow-1`; labelled buttons get the action's icon too,
-- `no_label` buttons are `btn-icon` with a tooltip **and** a `.visually-hidden` label (the stock template has only
-  a `title`, so icon-only card buttons had no accessible name),
-- the order bar is a Tabler `form-select` plus an icon `btn-group` with Tabler's sort-ascending / sort-descending
-  icons and `aria-pressed` on the active direction; signed ordering (`submit-on-change`) is unchanged,
+- each card is `.card > .card-body` (title + content) and a `.card-footer`, which includes crud_views' container
+  leaf (`tags/button/container.html`, a `div.btn-list`) for the actions and the overflow menu,
+- variants map to Tabler buttons through the class table: `primary` → `btn btn-sm btn-primary`, `secondary` → the
+  default `btn btn-sm`, `tertiary` → `btn btn-sm btn-icon btn-ghost-secondary`, `danger` →
+  `btn btn-sm btn-ghost-danger`; `flex` → `flex-grow-1`. A button with a visible label shows the label only,
+- `no_label` buttons keep a `.visually-hidden` label and get a tooltip,
+- **limitation**: the class table cannot tell an icon-only card button from a labelled one. `card:tertiary` carries
+  `btn-icon` because the demo's only tertiary card action is the icon-only delete; a project with a labelled
+  tertiary card button overrides that key in `CRUD_VIEWS_BUTTON_CLASSES`,
+- the order bar is crud_views' `snippets/card_order.html` with Tabler's sort-ascending / sort-descending icons and
+  the `card-order:*` classes (`btn btn-icon` in a `btn-group`); signed ordering (`submit-on-change`) is unchanged,
 - no results render Tabler's `.empty` state; pagination uses the theme's `snippets/pagination.html`.
 
 **Custom card content** without repeating the actions markup: a view's `cv_card_template` can extend the theme's
@@ -124,10 +154,11 @@ Remaining gaps and how the prototype handles them:
 
 - **Required marker**: crispy prints `<span class="asteriskField">*</span>`; the theme CSS colours it like Tabler's
   `.form-label.required`.
-- **Button colours**: crispy's `Submit` is always `btn btn-primary`, so `CrispyDeleteForm`'s Delete button is blue.
-  The theme ships `crud_views_tabler.forms.DangerSubmit` and `TablerDeleteForm` (full-width confirm, red Delete);
-  the demo uses `form_class = TablerDeleteForm`. Cancel buttons stay `btn-secondary` (set in crud_views'
-  `get_cancel_button_kwargs`).
+- **Button colours**: crud_views' crispy buttons (`crud_views.lib.crispy.Submit`, `Button`, `Reset`) take their
+  classes from the button class table. The theme sets only `form:delete` to `btn btn-danger`, so the stock
+  `CrispyDeleteForm` (which the demo's delete view uses) has a red Delete button; submit, cancel, filter submit and
+  reset keep crud_views' `btn-primary` / `btn-secondary`. The theme's former `TablerDeleteForm` and `DangerSubmit`
+  were removed.
 - **Cards vs. modals**: `view_create/update/delete.content.html` wrap the form in a card on a full page and leave it
   bare inside a modal, by checking `request.headers.x_cv_modal` (the header crud_views' modal.js sends).
 - A dedicated crispy template pack for Tabler is **not** needed for this level of fidelity; it would only pay off
@@ -136,8 +167,10 @@ Remaining gaps and how the prototype handles them:
 ## Filter
 
 The filter renders as a Tabler card with a titled header inside crud_views' collapse (`tags/list_filter*.html`).
-The crispy filter form itself needs nothing. `CRUD_VIEWS_FILTER_RESET_BUTTON_CSS_CLASS` controls the reset button.
-The toggle button in the page header follows list.filter.js' contract (aria-expanded, aria-controls="filter-collapse", both icons rendered with one hidden), so the icon swaps between filter and filter-x and matches the session state after a reload.
+The crispy filter form itself needs nothing; the reset button's classes are the `form:filter-reset` key of the
+button class table. The toggle button in the page header is crud_views' own `tags/context_action_filter.html`
+(classes from `context:secondary`); it follows list.filter.js' contract, so the icon swaps between filter and
+filter-x and matches the session state after a reload.
 
 ## Icons
 
@@ -168,9 +201,14 @@ semantic name or a `tabler:` value instead.
 
 Core scripts on django-crud-views main run without jQuery and call Bootstrap only through `cv.adapters` (`modal`,
 `tooltip`, `collapse`). Tabler's bundle exposes Bootstrap's components on `window.tabler`, so the theme registers one
-asset, `crud_views_tabler/tabler-adapters.js`, holding one statement:
+asset, `crud_views_tabler/tabler-adapters.js`:
 
     Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler));
+    cv.adapters.tooltip.init = (el, {location} = {}) => { /* Tabler Tooltip, "bottom" for location "context" */ };
+
+The second statement is crud_views' per-location recipe (`docs/reference/javascript.md#tooltips`): toolbar tooltips
+open below the buttons, so they do not cover the page header; it does nothing while `window.tabler` has no
+`Tooltip`.
 
 The namespace is resolved on every call, so `tabler.min.js` stays `defer`red at the end of the body while the
 crud_views scripts load synchronously from `{% cv_js %}`. The theme loads no jQuery; a project with formsets loads it
@@ -179,38 +217,41 @@ in its own base template (`formset.js` is the only core script that needs it).
 The theme follows the modal and filter contracts of main: `modal/shell.html` is overridden with Tabler's `modal-blur`
 and a centered dialog (the ids `cv-modal`, `cv-modal-dialog`, `cv-modal-content` are the contract), crud_views' own
 `modal/content.html` closes through `data-cv-modal-dismiss`, `cv_modal_size` takes `""`, `"sm"`, `"lg"` or `"xl"`, and
-the filter toggle carries `aria-expanded`, `aria-controls="filter-collapse"` and both filter icons. Theme buttons
-carry `data-cv-tooltip`, so core's `tooltip.js` initialises their tooltips through the adapter, including inside modal
-content, which Tabler's own page-load initialisation never sees.
+the filter toggle carries `aria-expanded`, `aria-controls="filter-collapse"` and both filter icons. crud_views' own
+buttons carry `data-cv-tooltip`, so core's `tooltip.js` initialises their tooltips through the adapter, including
+inside modal content, which Tabler's own page-load initialisation never sees.
 
 ## Overridden templates
 
+Ten templates, all about page layout; none of them renders a button:
+
 ```
 crud_views/
-  columns/actions.html            row actions
   modal/shell.html                Tabler modal shell (modal-blur, centered)
-  snippets/card_order.html        card ordering bar
   snippets/pagination.html        card-view pagination
   table/bootstrap5.html           card table, sort headers, footer pagination
-  tags/actions_menu_toggle.html   the ⋯ toggle as an icon button
-  tags/card.html, card_action.html  cards (with blocks) and card buttons
-  tags/context_action.html, context_action_filter.html, context_actions.html
-  tags/list_action.html (+ list_action.inner.html)
-  tags/list_filter.html, list_filter.inner.html
+  tags/card.html                  card layout with blocks; footer includes crud_views' container leaf
+  tags/list_filter.html, list_filter.inner.html   filter as a Tabler card
   view_card.content.html          card grid and empty state
-  view_create.content.html, view_update.content.html, view_delete.content.html
+  view_create.content.html, view_update.content.html, view_delete.content.html   card around the form, bare in a modal
 static/crud_views_tabler/
   crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons
-  tabler-adapters.js              cv.adapters -> window.tabler
+  tabler-adapters.js              cv.adapters -> window.tabler, toolbar tooltips below
 ```
+
+The theme used to override the context, list and card action templates, both containers, the `⋯` toggle, the filter
+toggle and the card-order bar (nine templates). crud_views' class table, leaves and tooltip markers made all of them
+unnecessary.
 
 ## Not covered yet
 
 - **Property-grid detail** (`crud_views_object_detail`): it has its own template packs and icon library settings
   (`bootstrap` / `fontawesome`); a Tabler datagrid layout would be the natural fit. The demo detail page uses a
   hand-written Tabler `.datagrid` instead.
-- **Formsets** (`formsets/*.html`, formset.js), **delete related-objects** snippets, the **manage** view,
-  **language selector**, and the workflow / polymorphic / guardian extensions' templates.
+- **Formsets** (`formsets/*.html`, formset.js; the theme registers `formset:control` = `btn btn-icon` and
+  `formset:control-danger` = `btn btn-icon btn-danger`, untested because the demo has no formsets), **delete
+  related-objects** snippets, the **manage** view, **language selector**, and the workflow / polymorphic / guardian
+  extensions' templates.
 - A Tabler-style cancel button.
 - Responsive check below the `md` breakpoint.
 
@@ -220,7 +261,7 @@ Discussed in detail, with the current code paths, pros and cons, in
 [crud_views_upstream_questions.md](crud_views_upstream_questions.md):
 
 1. Icons: Font Awesome class names on view classes, in two settings and hard-coded in templates. **Resolved in 0.30.0 (icon registry).**
-2. Button classes set in Python (`CrispyDeleteForm` has no hook for its Delete button). **Draft design upstream, not implemented.**
+2. Button classes set in Python (`CrispyDeleteForm` has no hook for its Delete button). **Resolved on main (#201, button class table).**
 3. jQuery (used by four of the six core scripts, including modals and POST actions) and a global `bootstrap`. **Resolved on main (#200, jQuery-free core and cv.adapters).**
-4. A way to mark a context action as the page's primary action. **Draft design upstream, not implemented.**
-5. Theme overrides have to copy the package's template logic, and nothing detects when they go stale. **Draft design upstream, not implemented.**
+4. A way to mark a context action as the page's primary action. **Resolved on main (#201, variants).**
+5. Theme overrides have to copy the package's template logic, and nothing detects when they go stale. **Resolved for buttons on main (#201 leaves, #204 tooltip markers): the theme overrides no button template.**

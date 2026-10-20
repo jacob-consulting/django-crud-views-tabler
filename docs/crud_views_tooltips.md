@@ -1,6 +1,7 @@
 # Why the tooltip marker belongs in django-crud-views
 
-Draft, 2026-10-20. Upstream issue: [jacob-consulting/django-crud-views#202](https://github.com/jacob-consulting/django-crud-views/issues/202).
+2026-10-20. Upstream issue: [jacob-consulting/django-crud-views#202](https://github.com/jacob-consulting/django-crud-views/issues/202),
+closed by #204 (4b62ed6). The analysis below is as written before the fix; the last section records what landed.
 
 Checked against django-crud-views main @ e4bce00 (0.30.0 plus #200 and #201) and `crud_views_tabler` @ ab8c456.
 
@@ -86,9 +87,22 @@ issue).
 - **Placement.** The old theme override set `data-bs-placement="bottom"` on toolbar buttons. Upstream does not need
   to know about placement. A theme that wants it sets it in its adapter's `init(el)`.
 
-## What the theme does meanwhile
+## Resolved by #204
 
-If the theme migration to #201 goes ahead before #202 is merged, the theme drops its button overrides and the buttons
-show native `title` tooltips. When #202 lands, pulling upstream main is enough: the theme installs django-crud-views
-from the sibling checkout as an editable install and already wires `cv.adapters.tooltip`. The theme's tests get their
-tooltip assertions back at that point.
+Option C landed in #204 (4b62ed6), with a bit more than the issue asked:
+
+- **Markers with a location.** The marker carries the trigger's location, not just its presence:
+  `data-cv-tooltip="context"` / `"list"` / `"card"` on icon-only action buttons and the filter toggle,
+  `"card-order"` and `"formset"` on those controls, `"object-detail"` on the property-detail button. Labelled card
+  buttons, menu items and the `⋯` toggle carry no marker.
+- **The location reaches the adapter.** `tooltip.js` calls `cv.adapters.tooltip.init(el, {location})`. Adapters
+  written as `init(el)` keep working.
+- **The object-detail trigger reads `title`.** It moved from `data-bs-title` to `title`, so every trigger reads its
+  text from `title`.
+- **The formset controls' `title` is translated.** It is the translated text of their `aria-label` (`Move up`,
+  `Move down`, `Add row`, `Delete row`).
+- **Opt-out and recipes are documented.** Opt out with `cv.adapters.tooltip = {init() {}}`. `javascript.md` has a
+  per-location recipe and a non-Bootstrap example; `inaccessible_actions.md` documents the disabled-button limitation.
+
+The theme now overrides no button template. `tabler-adapters.js` uses the per-location recipe, so toolbar tooltips
+open below the buttons as they did with the old overrides. Everything else is upstream's.

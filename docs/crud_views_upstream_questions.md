@@ -14,6 +14,9 @@ their trade-offs.
   (`/home/alex/projects/alex/django-crud-views`, branch `main` at 440ac55: 0.30.0 plus the unreleased #200) by diffing
   `v0.29.4..main` for `src/crud_views/templates` and `src/crud_views/static` and reading `docs/reference/icons.md`
   and `docs/reference/javascript.md`. The original analysis and its file/line references remain for 0.29.4.
+- **Update 2026-10-20 (later):** points 2, 4 and 5 got a second Status block for main @ 4b62ed6 (#201 button
+  variants, class table and leaves; #204 tooltip markers), checked by reading `docs/reference/buttons.md`, the
+  CHANGELOG and the stock templates, and by moving the theme onto them.
 - Where something was not tried, it says so. "Not tested" means exactly that.
 - Two statements in the first version of the design doc turned out to be wrong or incomplete on closer reading;
   they are corrected here and in the design doc (jQuery is used by four scripts, not two; context buttons can
@@ -111,6 +114,20 @@ Not changed on main. A draft design in the upstream repository,
 (`CRUD_VIEWS_BUTTON_CLASSES`, `register_button_classes()` for themes): option A plus option B, without the
 contradictory-classes problem because the package would ship its own `Submit` subclass reading the table. Not
 implemented; the theme keeps `TablerDeleteForm`.
+
+### Status (upstream main @ 4b62ed6, 2026-10-20)
+
+Resolved by #201 (e4bce00): option A plus option B, as the draft above described.
+- `CrispyDeleteForm.get_delete_button()` / `get_delete_button_kwargs()`, slot `form:delete`.
+- Every button class in the layered table `crud_views.lib.button_classes`: package defaults, then
+  `register_button_classes()` from a theme's `ready()`, then `CRUD_VIEWS_BUTTON_CLASSES`.
+- `crud_views.lib.crispy.Submit` / `Button` / `Reset` read the table, so no contradictory `btn-primary btn-danger`.
+- `CRUD_VIEWS_FILTER_RESET_BUTTON_CSS_CLASS` is gone (`crud_views.E360`).
+
+**What the theme does now:** it registers `TABLER_BUTTON_CLASSES` (`crud_views_tabler/buttons.py`) from `ready()`,
+with `form:delete` = `btn btn-danger`. `TablerDeleteForm` and `DangerSubmit` are removed, and the demo's delete view
+uses the stock `CrispyDeleteForm`. Resolved.
+
 
 ### What the package does today
 
@@ -266,6 +283,16 @@ the polymorphic create-select view default to `primary`, `DeleteView` to `danger
 `ContextButton.variant` override, and `CardAction.variant = None` meaning "the target view's variant": options B and
 C together. Not implemented; the theme still hard-codes `create` / `create_select` as the primary action.
 
+### Status (upstream main @ 4b62ed6, 2026-10-20)
+
+Resolved by #201 (e4bce00), as the draft above described: `cv_action_variant` on every view, with `ContextButton.variant`
+and `CardAction.variant` as per-button overrides. Each variant has its own class-table keys (`context:primary`, …).
+
+**What the theme does now:** it no longer keys on `create` / `create_select`. `context:primary` is
+`btn btn-primary btn-icon`, and the stock leaf keeps the label visually hidden (shown as the tooltip). The toolbar's
+primary action is therefore an icon-only blue button, not a labelled one, which the maintainer accepted.
+
+
 ### What the package does today
 
 - **Card actions** have styling metadata: `CardAction(variant="primary" | "secondary" | "tertiary", flex=…,
@@ -359,6 +386,34 @@ label is hidden. `tooltip.js` already initialises it through the adapter, and st
 The theme would then drop `tags/context_action_filter.html` entirely (its classes come from the table), and its
 action leaf would exist only for the visible primary label and `icon-sm`. If Tabler renders a `fieldset.btn-list`
 like a `div.btn-list` (the draft's open question), the container leaf goes as well: 12 files.
+
+### Status (upstream main @ 4b62ed6, 2026-10-20)
+
+Resolved by #201 (e4bce00): option D as the draft above described (`cv_button_data()` normalises once, leaves only
+draw, the old names are one-line logic templates). The stock leaf and the filter toggle carry the tooltip marker since #204 (4b62ed6, from this theme's issue
+#202): `data-cv-tooltip="<location>"` next to `title`, and `tooltip.js` passes the location to
+`cv.adapters.tooltip.init(el, {location})`.
+
+**What the theme does now:** it overrides **no** button template. The nine action-related overrides went:
+`tags/context_action.html`, `tags/list_action.html` (+ `.inner.html`), `tags/card_action.html`,
+`tags/context_actions.html`, `columns/actions.html`, `tags/actions_menu_toggle.html`,
+`tags/context_action_filter.html`, `snippets/card_order.html`. That takes the theme from 19 overrides to 10, without
+the "two leaf overrides" the draft estimated, for two reasons. The maintainer chose stock markup over the old look
+(an icon-only primary action and label-only card buttons were accepted), and #204 made the tooltip marker upstream's.
+
+The ten that stay are about page layout, not buttons, and none copies upstream branching:
+- `tags/card.html`: blocks for `cv_card_template`, `card-footer`; it includes upstream's container leaf
+- `view_card.content.html`: `row-deck` grid, empty state
+- `view_create.content.html`, `view_update.content.html`, `view_delete.content.html`: card wrapper outside modals
+- `modal/shell.html`
+- `snippets/pagination.html`
+- `table/bootstrap5.html`
+- `tags/list_filter.html` and `tags/list_filter.inner.html`
+
+**Observed:** upstream's `tags/context_action_filter.html` renders `cv-key=""`, because `cv_key` is not in its
+context. The old theme override had the same gap. It is harmless today (no script reads the filter toggle's
+`cv-key`), but it is inconsistent with the other toolbar buttons.
+
 
 ### What the package does today
 

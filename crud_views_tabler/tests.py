@@ -121,6 +121,8 @@ class ThemeRenderingTests(TestCase):
         self.assertIn('class="modal-header"', html)
         self.assertNotIn('<div class="card">', html)
         self.assertIn("btn btn-danger", html)
+        self.assertIn("data-cv-modal-dismiss", html)
+        self.assertNotIn("data-bs-dismiss", html)
 
     def test_delete(self):
         url = reverse("customer-delete", args=[self.customer.pk])
@@ -132,6 +134,12 @@ class ThemeRenderingTests(TestCase):
         response = self.client.post(reverse("customer-create"), {"email": "nope", "status": "lead", "revenue": "0"})
         self.assertContains(response, "is-invalid")
         self.assertContains(response, "invalid-feedback")
+
+    def test_modal_shell_is_tabler(self):
+        html = self.client.get(reverse("customer-list")).content.decode()
+        self.assertIn('class="modal modal-blur fade" id="cv-modal"', html)
+        self.assertIn('class="modal-dialog modal-dialog-centered" id="cv-modal-dialog"', html)
+        self.assertIn('id="cv-modal-content"', html)
 
 
 class CardThemeTests(TestCase):

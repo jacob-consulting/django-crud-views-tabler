@@ -1,17 +1,20 @@
 from django.core.checks import CheckMessage, Tags, Warning, register
 
-from crud_views.lib.icons import get_icons
-from crud_views_tabler.icons import ICONS
+from crud_views.lib.icons import _get_renderers, _icon_str, get_icons
+from crud_views_tabler.icons import ICONS, render
 
 
 @register(Tags.templates)
 def check_tabler_icons(app_configs=None, **kwargs) -> list[CheckMessage]:
     """Warn when a ``tabler:`` icon value has no SVG path in ``crud_views_tabler.icons.ICONS``."""
     messages: list[CheckMessage] = []
+    if _get_renderers().get("tabler") is not render:
+        return messages  # the project remapped the prefix to another renderer
     for key, value in get_icons().items():
-        if not isinstance(value, str) or not value.startswith("tabler:"):
+        stripped = _icon_str(value)
+        if stripped is None or not stripped.startswith("tabler:"):
             continue
-        name = value.split(":", 1)[1]
+        name = stripped.split(":", 1)[1]
         if name not in ICONS:
             messages.append(
                 Warning(

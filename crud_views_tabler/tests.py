@@ -247,3 +247,16 @@ class IconCheckTests(SimpleTestCase):
     @override_settings(CRUD_VIEWS_ICONS={"detail": "far:eye", "person": "tabler:user"})
     def test_other_library_values_are_not_reported(self):
         self.assertEqual([m.id for m in run_checks() if m.id.startswith("crud_views_tabler.")], [])
+
+    @override_settings(
+        CRUD_VIEWS_ICONS={"detail": "tabler:does-not-exist"},
+        CRUD_VIEWS_ICON_LIBRARIES={"tabler": {"renderer": "font", "class": "ti ti-{name}"}},
+    )
+    def test_remapped_tabler_library_is_not_reported(self):
+        self.assertEqual([m.id for m in run_checks() if m.id.startswith("crud_views_tabler.")], [])
+
+    @override_settings(CRUD_VIEWS_ICONS={"detail": " tabler:nope "})
+    def test_value_with_surrounding_whitespace_is_reported(self):
+        messages = [m for m in run_checks() if m.id == "crud_views_tabler.W001"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("'nope'", messages[0].msg)

@@ -158,6 +158,11 @@ icon through `{% cv_icon %}` with a renderer per library prefix. The theme plugs
 
 The `dashboard` app's `{% icon %}` tag renders the same SVGs through the plain `icons.svg()` function.
 
+The theme's former template library (`{% load crud_views_tabler %}` with `{% cvt_icon %}`) and
+`crud_views_tabler.icons.render_icon` were removed: use `{% cv_icon %}` and `icons.svg()`. Font Awesome classes set
+directly on a project's views (e.g. `cv_icon_action = "fa-regular fa-eye"`) are no longer mapped to Tabler SVG: use a
+semantic name or a `tabler:` value instead.
+
 ## JavaScript
 
 Core scripts on django-crud-views main run without jQuery and call Bootstrap only through `cv.adapters` (`modal`,

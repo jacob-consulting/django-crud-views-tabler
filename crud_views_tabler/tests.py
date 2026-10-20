@@ -1,30 +1,54 @@
+import re
+from unittest import mock
+
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.core.management import call_command
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
-from crud_views_tabler.icons import render_icon
+from crud_views.lib.icons import DEFAULT_ICONS
+from crud_views.lib.icons import render_icon as cv_render_icon
+from crud_views_tabler.icons import ICONS, TABLER_ICONS, render, svg
 from customers.models import Customer
+from customers.views import CustomerDeleteView
 
 
-class IconTests(SimpleTestCase):
-    def test_tabler_name(self):
-        svg = render_icon("eye", "icon-sm")
-        self.assertIn('class="icon icon-sm"', svg)
-        self.assertIn("<path", svg)
+class TablerIconTests(SimpleTestCase):
+    def test_svg_for_a_tabler_name(self):
+        html = svg("eye", "icon-sm")
+        self.assertIn('class="icon icon-sm"', html)
+        self.assertIn("<path", html)
+        self.assertIn('aria-hidden="true"', html)
 
-    def test_font_awesome_class_is_mapped(self):
-        self.assertEqual(render_icon("fa-regular fa-trash-can"), render_icon("trash"))
+    def test_svg_without_extra_classes_has_no_trailing_space(self):
+        self.assertIn('class="icon"', svg("eye"))
 
-    def test_unknown_icon_falls_back_to_the_class(self):
-        self.assertEqual(render_icon("bi bi-star"), '<i class="bi bi-star" aria-hidden="true"></i>')
+    def test_unknown_or_empty_name_renders_nothing(self):
+        self.assertEqual(svg("not-an-icon"), "")
+        self.assertEqual(svg(None), "")
+        self.assertEqual(render("not-an-icon", css="", config={}), "")
 
-    def test_card_view_icon_differs_from_list_icon(self):
-        self.assertEqual(render_icon("fa-solid fa-rectangle-list"), render_icon("layout-grid"))
-        self.assertEqual(render_icon("fa-regular fa-rectangle-list"), render_icon("list"))
+    def test_css_is_escaped(self):
+        self.assertIn('class="icon a&quot; onload=&quot;x"', svg("eye", 'a" onload="x'))
 
-    def test_no_icon(self):
-        self.assertEqual(render_icon(None), "")
+    def test_renderer_matches_svg(self):
+        self.assertEqual(render("trash", css="icon-sm", config={"renderer": "x"}), svg("trash", "icon-sm"))
+
+    def test_every_upstream_icon_name_is_mapped(self):
+        self.assertEqual(set(TABLER_ICONS), set(DEFAULT_ICONS))
+        for name, value in TABLER_ICONS.items():
+            prefix, tabler_name = value.split(":", 1)
+            self.assertEqual(prefix, "tabler", name)
+            self.assertIn(tabler_name, ICONS, f"{name} -> {value} has no path in ICONS")
+
+    def test_registry_renders_tabler_svg(self):
+        self.assertEqual(cv_render_icon("detail"), svg("eye"))
+        self.assertEqual(cv_render_icon("tabler:building-store", css="icon-sm"), svg("building-store", "icon-sm"))
+
+    @override_settings(CRUD_VIEWS_ICONS={"detail": "far:eye"})
+    def test_project_setting_wins_over_the_theme(self):
+        self.assertEqual(cv_render_icon("detail"), '<i class="fa-regular fa-eye" aria-hidden="true"></i>')
 
 
 class ThemeRenderingTests(TestCase):
@@ -49,7 +73,26 @@ class ThemeRenderingTests(TestCase):
         self.assertIn("Showing 1–10 of 15", html)
         self.assertIn('cv-key="delete"', html)
         self.assertIn("btn-ghost-danger", html)
-        self.assertNotIn("fa-regular", html)  # every Font Awesome default was mapped to a Tabler SVG
+        self.assertNotIn("fa-regular", html)
+        self.assertNotIn("fa-solid", html)
+        self.assertNotIn("<i class=", html)  # every icon on the page is a Tabler SVG
+        self.assertIn(svg("building-store"), html)  # the ViewSet header icon, tabler:building-store
+
+    def test_disabled_action_renders_a_tabler_icon(self):
+        viewer = get_user_model().objects.create_user("viewer", password="viewer-pass")
+        viewer.user_permissions.add(Permission.objects.get(codename="view_customer", content_type__app_label="customers"))
+        self.client.force_login(viewer)
+        with mock.patch.object(CustomerDeleteView, "cv_inaccessible_actions", "disable"):
+            html = self.client.get(reverse("customer-list")).content.decode()
+        button = re.search(r'<button[^>]*data-cv-disabled="permission"[^>]*>.*?</button>', html, re.S)
+        self.assertIsNotNone(button)
+        self.assertIn("<svg", button.group(0))
+        self.assertNotIn("<i class=", button.group(0))
+
+    def test_dashboard_icons_still_render(self):
+        html = self.client.get("/").content.decode()
+        self.assertIn("<svg", html)
+        self.assertNotIn("<i class=", html)
 
     def test_sorted_column_is_marked(self):
         html = self.client.get(reverse("customer-list"), {"sort": "-revenue"}).content.decode()
@@ -108,6 +151,7 @@ class CardThemeTests(TestCase):
         self.assertEqual(html.count('class="card-footer"'), 12)  # paginate_by
         self.assertIn('class="pagination', html)
         self.assertNotIn("fa-solid", html)
+        self.assertNotIn("<i class=", html)
 
     def test_card_action_variants(self):
         html = self.get()
@@ -124,6 +168,7 @@ class CardThemeTests(TestCase):
         html = self.get(order="revenue", dir="desc")
         self.assertIn('id="cv-card-order-form"', html)
         self.assertIn('value="desc" class="btn btn-icon active"', html)
+        self.assertRegex(html, r'<button[^>]*value="asc"[^>]*>\s*<svg')
         self.assertLess(html.index("Customer 14"), html.index("Customer 13"))
 
     def test_empty_state(self):

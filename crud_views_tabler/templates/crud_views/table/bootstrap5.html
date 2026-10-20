@@ -1,4 +1,4 @@
-{% load django_tables2 crud_views crud_views_tabler i18n %}
+{% load django_tables2 crud_views i18n %}
 {# Tabler theme: the table renders as a card - .card-table, Tabler sort headers, pagination in the card footer. #}
 {% block table-wrapper %}
 <div class="card table-container">
@@ -66,7 +66,7 @@
       {% block pagination.previous %}
       <li class="page-item{% if not table.page.has_previous %} disabled{% endif %}">
         <a class="page-link" {% if table.page.has_previous %}href="{% cv_querystring table.prefixed_page_field=table.page.previous_page_number %}"{% else %}aria-disabled="true"{% endif %}>
-          {% cvt_icon "chevron-left" "icon-sm" %}<span class="visually-hidden">{% translate "previous" %}</span>
+          {% cv_icon "tabler:chevron-left" css="icon-sm" %}<span class="visually-hidden">{% translate "previous" %}</span>
         </a>
       </li>
       {% endblock pagination.previous %}
@@ -80,7 +80,7 @@
       {% block pagination.next %}
       <li class="page-item{% if not table.page.has_next %} disabled{% endif %}">
         <a class="page-link" {% if table.page.has_next %}href="{% cv_querystring table.prefixed_page_field=table.page.next_page_number %}"{% else %}aria-disabled="true"{% endif %}>
-          <span class="visually-hidden">{% translate "next" %}</span>{% cvt_icon "chevron-right" "icon-sm" %}
+          <span class="visually-hidden">{% translate "next" %}</span>{% cv_icon "tabler:chevron-right" css="icon-sm" %}
         </a>
       </li>
       {% endblock pagination.next %}

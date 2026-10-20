@@ -5,7 +5,8 @@ class CrudViewsTablerConfig(AppConfig):
     """Tabler theme for django-crud-views.
 
     Overrides the package's templates under the ``crud_views/`` namespace, so it must be listed
-    before ``crud_views`` in INSTALLED_APPS.
+    before ``crud_views`` in INSTALLED_APPS. Registers the ``tabler`` icon library and a Tabler icon for every
+    semantic name, so projects need no icon settings.
     """
 
     name = "crud_views_tabler"
@@ -13,5 +14,10 @@ class CrudViewsTablerConfig(AppConfig):
 
     def ready(self):
         from crud_views.lib.assets import register_assets
+        from crud_views.lib.icons import register_icon_library, register_icons
 
+        from crud_views_tabler.icons import TABLER_ICONS
+
+        register_icon_library("tabler", renderer="crud_views_tabler.icons.render")
+        register_icons(TABLER_ICONS)
         register_assets("crud_views_tabler", css=["crud_views_tabler/crud_views_tabler.css"])

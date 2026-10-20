@@ -1,6 +1,6 @@
 from django import template
 
-from crud_views_tabler.icons import render_icon
+from crud_views_tabler.icons import svg
 
 register = template.Library()
 
@@ -10,7 +10,7 @@ AVATAR_COLORS = ["blue", "green", "purple", "azure", "orange", "pink", "teal", "
 @register.simple_tag
 def icon(name, css_class=""):
     """Render a Tabler outline icon as inline SVG: {% icon "users" "icon-sm" %}."""
-    return render_icon(name, css_class)
+    return svg(name, css_class)
 
 
 @register.filter

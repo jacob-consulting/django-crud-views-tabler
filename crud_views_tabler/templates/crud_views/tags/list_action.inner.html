@@ -1,18 +1,18 @@
-{% load crud_views_tabler %}
+{% load crud_views %}
 {% if cv_disabled %}
 <button type="button" class="{{ cvt_class }}" disabled data-cv-disabled="{{ cv_disabled_reason }}" title="{{ cv_action_label }}" cv-key="{{ cv_key }}">
-  {% cvt_icon cv_icon_action %}<span class="visually-hidden">{{ cv_action_label }}</span>
+  {% cv_icon cv_icon_action %}<span class="visually-hidden">{{ cv_action_label }}</span>
 </button>
 {% elif cv_action_enabled is not False and cv_access is True %}
 {% if cv_list_action_method == "post" and not cv_modal %}
 <button type="button" class="{{ cvt_class }}" data-cv-action="submit-form" data-cv-target="cv_form_{{ cv_oid }}"
         title="{{ cv_action_label }}" data-bs-toggle="tooltip" cv-key="{{ cv_key }}">
-  {% cvt_icon cv_icon_action %}<span class="visually-hidden">{{ cv_action_label }}</span>
+  {% cv_icon cv_icon_action %}<span class="visually-hidden">{{ cv_action_label }}</span>
 </button>
 {% else %}
 <a {% if cv_modal %}href="{{ cv_url }}" data-cv-modal="true" data-cv-modal-size="{{ cv_modal_size }}"{% elif cv_list_action_method == "get" %}href="{{ cv_url }}"{% endif %}
    class="{{ cvt_class }}" title="{{ cv_action_label }}" data-bs-toggle="tooltip" cv-key="{{ cv_key }}">
-  {% cvt_icon cv_icon_action %}<span class="visually-hidden">{{ cv_action_label }}</span>
+  {% cv_icon cv_icon_action %}<span class="visually-hidden">{{ cv_action_label }}</span>
 </a>
 {% endif %}
 {% endif %}

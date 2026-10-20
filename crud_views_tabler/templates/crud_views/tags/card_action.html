@@ -1,10 +1,10 @@
-{% load crud_views_tabler %}
+{% load crud_views %}
 {# Tabler theme: variant primary -> btn-primary, secondary -> default btn, tertiary -> ghost. Icon-only buttons keep a hidden label. #}
 {% if cv_variant == "primary" %}{% firstof "btn-primary" as cvt_variant %}{% elif cv_variant == "tertiary" %}{% firstof "btn-ghost-secondary" as cvt_variant %}{% else %}{% firstof "" as cvt_variant %}{% endif %}
 {% if cv_disabled %}
 <button type="button" class="btn btn-sm {{ cvt_variant }}{% if cv_no_label %} btn-icon{% endif %}{% if cv_flex %} flex-grow-1{% endif %}" disabled
         data-cv-disabled="{{ cv_disabled_reason }}"{% if cv_no_label %} title="{{ cv_label }}"{% endif %}>
-  {% if cv_no_label %}{% cvt_icon cv_icon_action %}<span class="visually-hidden">{{ cv_label }}</span>{% else %}{% cvt_icon cv_icon_action "icon-sm" %}{{ cv_label }}{% endif %}
+  {% if cv_no_label %}{% cv_icon cv_icon_action %}<span class="visually-hidden">{{ cv_label }}</span>{% else %}{% cv_icon cv_icon_action css="icon-sm" %}{{ cv_label }}{% endif %}
 </button>
 {% elif cv_access and cv_action_enabled is not False %}
 {% if cv_list_action_method == "post" %}
@@ -13,6 +13,6 @@
 <a {% if cv_modal %}href="{{ cv_url }}" data-cv-modal="true" data-cv-modal-size="{{ cv_modal_size }}"{% elif cv_list_action_method == "post" %}href="#" data-cv-action="submit-form" data-cv-target="cv_form_{{ cv_oid }}"{% else %}href="{{ cv_url }}"{% endif %}
    class="btn btn-sm {{ cvt_variant }}{% if cv_no_label %} btn-icon{% endif %}{% if cv_flex %} flex-grow-1{% endif %}"
    {% if cv_no_label %}title="{{ cv_label }}" data-bs-toggle="tooltip"{% endif %}>
-  {% if cv_no_label %}{% cvt_icon cv_icon_action %}<span class="visually-hidden">{{ cv_label }}</span>{% else %}{% cvt_icon cv_icon_action "icon-sm" %}{{ cv_label }}{% endif %}
+  {% if cv_no_label %}{% cv_icon cv_icon_action %}<span class="visually-hidden">{{ cv_label }}</span>{% else %}{% cv_icon cv_icon_action css="icon-sm" %}{{ cv_label }}{% endif %}
 </a>
 {% endif %}

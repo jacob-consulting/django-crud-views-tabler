@@ -1,9 +1,9 @@
-{% load crud_views_tabler i18n %}
+{% load crud_views i18n %}
 {% if is_paginated %}
 <nav aria-label="{% translate 'pagination' %}" class="mt-3 d-flex">
   <ul class="pagination m-0 mx-auto">
     <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
-      <a class="page-link" {% if page_obj.has_previous %}href="?{% if base_qs %}{{ base_qs }}&amp;{% endif %}page={{ page_obj.previous_page_number }}"{% else %}aria-disabled="true"{% endif %}>{% cvt_icon "chevron-left" "icon-sm" %}<span class="visually-hidden">{% translate "previous" %}</span></a>
+      <a class="page-link" {% if page_obj.has_previous %}href="?{% if base_qs %}{{ base_qs }}&amp;{% endif %}page={{ page_obj.previous_page_number }}"{% else %}aria-disabled="true"{% endif %}>{% cv_icon "tabler:chevron-left" css="icon-sm" %}<span class="visually-hidden">{% translate "previous" %}</span></a>
     </li>
     {% for num in paginator.page_range %}
     <li class="page-item{% if num == page_obj.number %} active{% endif %}"{% if num == page_obj.number %} aria-current="page"{% endif %}>
@@ -11,7 +11,7 @@
     </li>
     {% endfor %}
     <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
-      <a class="page-link" {% if page_obj.has_next %}href="?{% if base_qs %}{{ base_qs }}&amp;{% endif %}page={{ page_obj.next_page_number }}"{% else %}aria-disabled="true"{% endif %}><span class="visually-hidden">{% translate "next" %}</span>{% cvt_icon "chevron-right" "icon-sm" %}</a>
+      <a class="page-link" {% if page_obj.has_next %}href="?{% if base_qs %}{{ base_qs }}&amp;{% endif %}page={{ page_obj.next_page_number }}"{% else %}aria-disabled="true"{% endif %}><span class="visually-hidden">{% translate "next" %}</span>{% cv_icon "tabler:chevron-right" css="icon-sm" %}</a>
     </li>
   </ul>
 </nav>

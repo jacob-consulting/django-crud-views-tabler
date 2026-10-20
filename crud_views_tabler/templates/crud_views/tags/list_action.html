@@ -1,3 +1,2 @@
-{% load crud_views_tabler %}
 {% if cv_key == "delete" %}{% with "btn btn-sm btn-icon btn-ghost-danger" as cvt_class %}{% include "crud_views/tags/list_action.inner.html" %}{% endwith %}
 {% else %}{% with "btn btn-sm btn-icon btn-ghost-secondary" as cvt_class %}{% include "crud_views/tags/list_action.inner.html" %}{% endwith %}{% endif %}

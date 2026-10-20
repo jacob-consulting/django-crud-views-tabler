@@ -23,7 +23,7 @@ from crud_views_tabler.forms import TablerDeleteForm
 
 from .models import Customer
 
-cv_customer = ViewSet(model=Customer, name="customer", icon_header="building-store")
+cv_customer = ViewSet(model=Customer, name="customer", icon_header="tabler:building-store")
 
 class BreadcrumbMixin(CrudViewBreadcrumbMixin):
     pass

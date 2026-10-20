@@ -1,14 +1,14 @@
 """Tabler outline icons (https://tabler.io/icons) rendered as inline SVG.
 
-django-crud-views names its icons with Font Awesome classes (``cv_icon_action = "fa-regular fa-eye"``).
-``render_icon`` accepts either a Tabler icon name from ``ICONS`` or such a Font Awesome class string, which
-it maps through ``FONT_AWESOME``. Anything it does not know is rendered as the original ``<i class>`` so a
-project that also loads Font Awesome keeps working.
+The icons plug into django-crud-views' icon registry as the ``tabler`` library (``tabler:eye``, see ``render``).
+``TABLER_ICONS`` maps the package's semantic icon names to Tabler icons; a project overrides single keys with
+``CRUD_VIEWS_ICONS``. ``svg`` renders a Tabler icon directly, e.g. for the dashboard's ``{% icon %}`` tag.
 """
 
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import SafeString
 
-ICONS = {
+ICONS: dict[str, list[str]] = {
     "alert-circle": ["M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0", "M12 8v4", "M12 16h.01"],
     "arrow-down": ["M12 5l0 14", "M18 13l-6 6", "M6 13l6 6"],
     "arrow-left": ["M5 12l14 0", "M5 12l6 6", "M5 12l6 -6"],
@@ -20,9 +20,16 @@ ICONS = {
         "M19 21l0 -10.15",
         "M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4",
     ],
+    "caret-down": ["M6 10l6 6l6 -6h-12"],
+    "caret-up": ["M18 14l-6 -6l-6 6h12"],
     "check": ["M5 12l5 5l10 -10"],
     "chevron-left": ["M15 6l-6 6l6 6"],
     "chevron-right": ["M9 6l6 6l-6 6"],
+    "chevrons-down": ["M7 7l5 5l5 -5", "M7 13l5 5l5 -5"],
+    "chevrons-right": ["M7 7l5 5l-5 5", "M13 7l5 5l-5 5"],
+    "chevrons-up": ["M7 11l5 -5l5 5", "M7 17l5 -5l5 5"],
+    "circle-check": ["M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0", "M9 12l2 2l4 -4"],
+    "circle-x": ["M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0", "M10 10l4 4m0 -4l-4 4"],
     "corner-left-up": ["M18 18h-6a3 3 0 0 1 -3 -3v-10l-4 4m8 0l-4 -4"],
     "dashboard": [
         "M5 4h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1",
@@ -39,8 +46,27 @@ ICONS = {
         "M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0",
         "M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6",
     ],
+    "file-text": [
+        "M14 3v4a1 1 0 0 0 1 1h4",
+        "M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2",
+        "M9 9l1 0",
+        "M9 13l6 0",
+        "M9 17l6 0",
+    ],
     "filter": [
         "M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227"
+    ],
+    "filter-x": [
+        "M13.758 19.414l-4.758 1.586v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v1.5",
+        "M22 22l-5 -5",
+        "M17 22l5 -5",
+    ],
+    "hierarchy": [
+        "M10 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
+        "M3 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
+        "M17 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
+        "M6.5 17.5l5.5 -4.5l5.5 4.5",
+        "M12 7l0 6",
     ],
     "home": [
         "M5 12l-2 0l9 -9l9 9l-2 0",
@@ -48,6 +74,14 @@ ICONS = {
         "M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6",
     ],
     "info-circle": ["M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0", "M12 9h.01", "M11 12h1v4h1"],
+    "language": [
+        "M9 6.371c0 4.418 -2.239 6.629 -5 6.629",
+        "M4 6.371h7",
+        "M5 9c0 2.144 2.252 3.908 6 4",
+        "M12 20l4 -9l4 9",
+        "M19.1 18h-6.2",
+        "M6.694 3l.793 .582",
+    ],
     "layout-grid": [
         "M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4",
         "M14 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4",
@@ -75,6 +109,10 @@ ICONS = {
         "M12 9v6",
         "M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14",
     ],
+    "square-x": [
+        "M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14",
+        "M9 9l6 6m0 -6l-6 6",
+    ],
     "sun": [
         "M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0",
         "M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7",
@@ -97,58 +135,52 @@ ICONS = {
     ],
 }
 
-# Full Font Awesome class strings that need a different icon than their name alone would give.
-FONT_AWESOME_EXACT = {
-    "fa-solid fa-rectangle-list": "layout-grid",  # card view; the list view uses fa-regular fa-rectangle-list
+# django-crud-views semantic icon name -> Tabler icon (registered from apps.py; CRUD_VIEWS_ICONS overrides per key).
+TABLER_ICONS: dict[str, str] = {
+    "list": "tabler:list",
+    "card": "tabler:layout-grid",
+    "detail": "tabler:eye",
+    "create": "tabler:square-plus",
+    "update": "tabler:pencil",
+    "delete": "tabler:trash",
+    "order-up": "tabler:arrow-up",
+    "order-down": "tabler:arrow-down",
+    "manage": "tabler:settings",
+    "workflow": "tabler:hierarchy",
+    "actions-menu": "tabler:dots",
+    "filter": "tabler:filter",
+    "filter-close": "tabler:filter-x",
+    "language": "tabler:language",
+    "sort-asc": "tabler:sort-ascending",
+    "sort-desc": "tabler:sort-descending",
+    "table-sort-asc": "tabler:chevrons-up",
+    "table-sort-desc": "tabler:chevrons-down",
+    "formset-up": "tabler:caret-up",
+    "formset-down": "tabler:caret-down",
+    "formset-add": "tabler:plus",
+    "formset-delete": "tabler:square-x",
+    "field-marker": "tabler:chevrons-right",
+    "boolean-true": "tabler:circle-check",
+    "boolean-false": "tabler:circle-x",
+    "property-detail": "tabler:info-circle",
+    "text-icon": "tabler:file-text",
 }
 
-# Font Awesome icon name (without style prefix) -> Tabler icon name, for the defaults django-crud-views ships.
-FONT_AWESOME = {
-    "fa-arrow-up-short-wide": "sort-ascending",
-    "fa-arrow-down-wide-short": "sort-descending",
-    "fa-eye": "eye",
-    "fa-pen-to-square": "pencil",
-    "fa-trash-can": "trash",
-    "fa-square-plus": "square-plus",
-    "fa-rectangle-list": "list",
-    "fa-circle-up": "arrow-up",
-    "fa-circle-down": "arrow-down",
-    "fa-gear": "settings",
-    "fa-filter": "filter",
-    "fa-ellipsis": "dots",
-    "fa-house": "home",
-    "fa-arrow-left": "arrow-left",
-    "fa-user": "user",
-    "fa-users": "users",
-}
 
-
-def resolve(value):
-    """Tabler icon name for ``value`` (a Tabler name or a Font Awesome class string), or None."""
-    if not value:
-        return None
-    if value in ICONS:
-        return value
-    if value in FONT_AWESOME_EXACT:
-        return FONT_AWESOME_EXACT[value]
-    for css_class in value.split():
-        if css_class in FONT_AWESOME:
-            return FONT_AWESOME[css_class]
-    return None
-
-
-def render_icon(value, css_class=""):
-    """Inline SVG for a known icon; the original ``<i class>`` otherwise; empty for no icon."""
-    if not value:
-        return ""
-    name = resolve(value)
-    if name is None:
-        return format_html('<i class="{}" aria-hidden="true"></i>', f"{value} {css_class}".strip())
+def svg(name: str | None, css: str = "") -> SafeString:
+    """Inline SVG for a Tabler icon name; empty for no name or one not in ``ICONS``."""
+    if not name or name not in ICONS:
+        return SafeString("")
     paths = format_html_join("", '<path d="{}" />', ((d,) for d in ICONS[name]))
     return format_html(
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" '
         'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
         'aria-hidden="true" focusable="false" class="{}">{}</svg>',
-        f"icon {css_class}".strip(),
+        f"icon {css}".strip(),
         paths,
     )
+
+
+def render(name: str, *, css: str, config: dict) -> SafeString:
+    """Renderer of the ``tabler`` icon library in django-crud-views' icon registry."""
+    return svg(name, css)

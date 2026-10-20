@@ -1,4 +1,4 @@
-{% load crud_views crud_views_tabler i18n %}
+{% load crud_views i18n %}
 {# Tabler theme: cards in a .row-deck grid (equal heights), a Tabler empty state, Tabler pagination. #}
 {% include "crud_views/snippets/card_order.html" %}
 <div class="row row-deck row-cards">
@@ -10,7 +10,7 @@
   <div class="col-12">
     <div class="card">
       <div class="empty">
-        <div class="empty-icon">{% cvt_icon "mood-empty" %}</div>
+        <div class="empty-icon">{% cv_icon "tabler:mood-empty" %}</div>
         <p class="empty-title">{% translate "No items found." %}</p>
       </div>
     </div>

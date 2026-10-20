@@ -165,6 +165,16 @@ class ThemeRenderingTests(TestCase):
         self.assertLess(core, theme)
         self.assertIn("crud_views/js/modal.js", html)
 
+    def test_tooltip_adapter_places_toolbar_tooltips_below(self):
+        from django.contrib.staticfiles import finders
+        with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
+            source = f.read()
+        self.assertIn("cv.bootstrapAdapters(() => globalThis.tabler)", source)
+        self.assertIn("cv.adapters.tooltip.init", source)
+        self.assertIn('location === "context"', source)
+        self.assertIn('"bottom"', source)
+        self.assertIn("globalThis.tabler?.Tooltip", source)
+
     def test_form_page_wraps_form_in_card(self):
         html = self.client.get(reverse("customer-create")).content.decode()
         self.assertIn('<div class="card"><div class="card-body">', html)

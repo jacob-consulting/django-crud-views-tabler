@@ -9,8 +9,11 @@ from django.template.loader import get_template
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
+from crud_views.lib.button_classes import DEFAULT_BUTTON_CLASSES, get_button_classes
+from crud_views.lib.crispy import CrispyDeleteForm
 from crud_views.lib.icons import DEFAULT_ICONS
 from crud_views.lib.icons import render_icon as cv_render_icon
+from crud_views_tabler.buttons import TABLER_BUTTON_CLASSES
 from crud_views_tabler.icons import ICONS, TABLER_ICONS, render, svg
 from customers.models import Customer
 from customers.views import CustomerDeleteView, CustomerListView
@@ -51,6 +54,50 @@ class TablerIconTests(SimpleTestCase):
     @override_settings(CRUD_VIEWS_ICONS={"detail": "far:eye"})
     def test_project_setting_wins_over_the_theme(self):
         self.assertEqual(cv_render_icon("detail"), '<i class="fa-regular fa-eye" aria-hidden="true"></i>')
+
+
+class ButtonClassTests(SimpleTestCase):
+    def test_theme_classes_are_registered(self):
+        resolved = get_button_classes()
+        for key, classes in TABLER_BUTTON_CLASSES.items():
+            self.assertEqual(resolved[key], classes, key)
+
+    def test_every_theme_key_is_an_upstream_key(self):
+        self.assertLessEqual(set(TABLER_BUTTON_CLASSES), set(DEFAULT_BUTTON_CLASSES))
+
+    def test_table_values(self):
+        expected = {
+            "context:primary": "btn btn-primary btn-icon",
+            "context:secondary": "btn btn-icon",
+            "context:tertiary": "btn btn-icon",
+            "context:danger": "btn btn-icon btn-outline-danger",
+            "list:primary": "btn btn-sm btn-icon btn-ghost-primary",
+            "list:secondary": "btn btn-sm btn-icon btn-ghost-secondary",
+            "list:tertiary": "btn btn-sm btn-icon btn-ghost-secondary",
+            "list:danger": "btn btn-sm btn-icon btn-ghost-danger",
+            "card:primary": "btn btn-sm btn-primary",
+            "card:secondary": "btn btn-sm",
+            "card:tertiary": "btn btn-sm btn-icon btn-ghost-secondary",
+            "card:danger": "btn btn-sm btn-ghost-danger",
+            "context:container": "btn-list",
+            "list:container": "btn-list flex-nowrap justify-content-end gap-1",
+            "card:container": "btn-list",
+            "context:menu-toggle": "btn btn-icon",
+            "list:menu-toggle": "btn btn-sm btn-icon btn-ghost-secondary",
+            "card:menu-toggle": "btn btn-sm btn-icon",
+            "context:menu-wrapper": "dropdown",
+            "list:menu-wrapper": "dropdown",
+            "form:delete": "btn btn-danger",
+            "card-order:toggle": "btn btn-icon",
+            "card-order:container": "btn-group",
+            "formset:control": "btn btn-icon",
+            "formset:control-danger": "btn btn-icon btn-danger",
+        }
+        self.assertEqual(TABLER_BUTTON_CLASSES, expected)
+
+    @override_settings(CRUD_VIEWS_BUTTON_CLASSES={"list:danger": "x-danger"})
+    def test_project_setting_wins_over_the_theme_classes(self):
+        self.assertEqual(get_button_classes()["list:danger"], "x-danger")
 
 
 class ThemeRenderingTests(TestCase):
@@ -124,6 +171,12 @@ class ThemeRenderingTests(TestCase):
         self.assertIn("btn btn-danger", html)
         self.assertIn("data-cv-modal-dismiss", html)
         self.assertNotIn("data-bs-dismiss", html)
+
+    def test_delete_form_is_the_stock_crispy_delete_form(self):
+        self.assertIs(CustomerDeleteView.form_class, CrispyDeleteForm)
+        html = self.client.get(reverse("customer-delete", args=[self.customer.pk])).content.decode()
+        self.assertRegex(html, r'<input type="submit"[^>]*class="btn btn-danger"')
+        self.assertNotIn("btn-primary btn-danger", html)
 
     def test_delete(self):
         url = reverse("customer-delete", args=[self.customer.pk])

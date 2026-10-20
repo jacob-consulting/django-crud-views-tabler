@@ -2,7 +2,7 @@ import django_tables2 as tables
 import django_filters
 from crispy_forms.layout import Layout, Row
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
-from crud_views.lib.crispy import Column4, Column6, Column12, CrispyModelForm, CrispyViewMixin
+from crud_views.lib.crispy import Column4, Column6, Column12, CrispyDeleteForm, CrispyModelForm, CrispyViewMixin
 from crud_views.lib.table import LinkDetailColumn, Table
 from crud_views.lib.table.columns import NaturalTimeColumn
 from crud_views.lib.view import CardAction
@@ -19,7 +19,6 @@ from crud_views.lib.views import (
 )
 from crud_views.lib.views.list import ListViewFilterFormHelper
 from crud_views.lib.viewset import ViewSet
-from crud_views_tabler.forms import TablerDeleteForm
 
 from .models import Customer
 
@@ -118,7 +117,7 @@ class CustomerUpdateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateV
 
 class CustomerDeleteView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
     cv_viewset = cv_customer
-    form_class = TablerDeleteForm
+    form_class = CrispyDeleteForm
     cv_modal = True
     cv_cancel_keys = ["list", "card", "detail"]
     cv_success_keys = ["list", "card"]  # never "detail": the object is gone

@@ -1,0 +1,30 @@
+"""Tabler classes for django-crud-views' button class table, registered from CrudViewsTablerConfig.ready()."""
+
+TABLER_BUTTON_CLASSES: dict[str, str] = {
+    "context:primary": "btn btn-primary btn-icon",
+    "context:secondary": "btn btn-icon",
+    "context:tertiary": "btn btn-icon",
+    "context:danger": "btn btn-icon btn-outline-danger",
+    "list:primary": "btn btn-sm btn-icon btn-ghost-primary",
+    "list:secondary": "btn btn-sm btn-icon btn-ghost-secondary",
+    "list:tertiary": "btn btn-sm btn-icon btn-ghost-secondary",
+    "list:danger": "btn btn-sm btn-icon btn-ghost-danger",
+    "card:primary": "btn btn-sm btn-primary",
+    "card:secondary": "btn btn-sm",
+    # The demo's only tertiary card action is icon-only; btn-icon keeps it square.
+    "card:tertiary": "btn btn-sm btn-icon btn-ghost-secondary",
+    "card:danger": "btn btn-sm btn-ghost-danger",
+    "context:container": "btn-list",
+    "list:container": "btn-list flex-nowrap justify-content-end gap-1",
+    "card:container": "btn-list",
+    "context:menu-toggle": "btn btn-icon",
+    "list:menu-toggle": "btn btn-sm btn-icon btn-ghost-secondary",
+    "card:menu-toggle": "btn btn-sm btn-icon",
+    "context:menu-wrapper": "dropdown",
+    "list:menu-wrapper": "dropdown",
+    "form:delete": "btn btn-danger",
+    "card-order:toggle": "btn btn-icon",
+    "card-order:container": "btn-group",
+    "formset:control": "btn btn-icon",
+    "formset:control-danger": "btn btn-icon btn-danger",
+}

@@ -17,3 +17,18 @@
 #filter-pinned {
   margin-bottom: 1rem;
 }
+
+/* crud_views' modal header: the header icon sits beside the title text. */
+#cv-modal .modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* crud_views' actions menu items: the icon slot (icon or empty placeholder) sized and muted like Tabler's
+   .dropdown-item-icon, so labels line up; .dropdown-item supplies the gap. */
+.dropdown-item > .cv-icon-fw {
+  width: var(--tblr-dropdown-item-icon-size);
+  height: var(--tblr-dropdown-item-icon-size);
+  color: var(--tblr-dropdown-item-icon-color);
+}

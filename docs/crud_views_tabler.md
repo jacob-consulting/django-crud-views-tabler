@@ -58,8 +58,9 @@ and crud_views has a header snippet and **context actions**.
   crud_views requires for accessibility. The current view's key gets `active` + `aria-current`.
 - **Row actions** (`columns/actions.html`, `tags/list_action.html`) are small ghost icon buttons
   (`btn-sm btn-icon btn-ghost-secondary`, `btn-ghost-danger` for `delete`), right-aligned and never wrapping.
-- **Overflow menu** (`tags/actions_menu_*.html`): the `⋯` toggle and its dropdown items use Tabler icons
-  (`dropdown-item-icon`). The `{% if group is None %}` branch crud_views needs for menus is kept.
+- **Overflow menu**: the `⋯` toggle (`tags/actions_menu_toggle.html`) is an icon button. The dropdown items are
+  crud_views' own; the stylesheet sizes and mutes their `.cv-icon-fw` icon slot like Tabler's `dropdown-item-icon`,
+  so labels line up whether an action has an icon or not.
 - All hooks the package's JavaScript relies on are kept unchanged: `cv-key`, `cv-list-container`,
   `cv-context-container`, `data-cv-action`, `data-cv-target`, `data-cv-modal`, `#cv-filter-toggle`, the hidden POST
   forms from `list_action_form.html`.
@@ -176,10 +177,10 @@ crud_views scripts load synchronously from `{% cv_js %}`. The theme loads no jQu
 in its own base template (`formset.js` is the only core script that needs it).
 
 The theme follows the modal and filter contracts of main: `modal/shell.html` is overridden with Tabler's `modal-blur`
-and a centered dialog (the ids `cv-modal`, `cv-modal-dialog`, `cv-modal-content` are the contract),
+and a centered dialog (the ids `cv-modal`, `cv-modal-dialog`, `cv-modal-content` are the contract), crud_views' own
 `modal/content.html` closes through `data-cv-modal-dismiss`, `cv_modal_size` takes `""`, `"sm"`, `"lg"` or `"xl"`, and
-the filter toggle carries `aria-expanded`, `aria-controls="filter-collapse"` and both filter icons. Theme buttons carry
-`data-cv-tooltip`, so core's `tooltip.js` initialises their tooltips through the adapter, including inside modal
+the filter toggle carries `aria-expanded`, `aria-controls="filter-collapse"` and both filter icons. Theme buttons
+carry `data-cv-tooltip`, so core's `tooltip.js` initialises their tooltips through the adapter, including inside modal
 content, which Tabler's own page-load initialisation never sees.
 
 ## Overridden templates
@@ -187,13 +188,11 @@ content, which Tabler's own page-load initialisation never sees.
 ```
 crud_views/
   columns/actions.html            row actions
-  modal/content.html              modal header icon, data-cv-modal-dismiss
   modal/shell.html                Tabler modal shell (modal-blur, centered)
   snippets/card_order.html        card ordering bar
   snippets/pagination.html        card-view pagination
   table/bootstrap5.html           card table, sort headers, footer pagination
-  tags/actions_menu_item_label.html, actions_menu_toggle.html
-  tags/breadcrumb.html
+  tags/actions_menu_toggle.html   the ⋯ toggle as an icon button
   tags/card.html, card_action.html  cards (with blocks) and card buttons
   tags/context_action.html, context_action_filter.html, context_actions.html
   tags/list_action.html (+ list_action.inner.html)
@@ -201,7 +200,7 @@ crud_views/
   view_card.content.html          card grid and empty state
   view_create.content.html, view_update.content.html, view_delete.content.html
 static/crud_views_tabler/
-  crud_views_tabler.css           required marker, row actions, filter card spacing
+  crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons
   tabler-adapters.js              cv.adapters -> window.tabler
 ```
 

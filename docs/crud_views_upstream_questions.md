@@ -336,6 +336,30 @@ the template and `{% cv_header_icon %}` renders through `render_icon()` now. `mo
 `cv.adapters.modal.hide`. One loud failure, two silent ones, found only by diffing upstream's templates against the
 overrides: the failure mode this point describes.
 
+**Override audit after the switch to `{% cv_icon %}` (2026-10-20):** every override was diffed against main. None
+was a verbatim copy, but three differed only in ways the theme no longer needs and are gone: `modal/content.html`
+(one flex class on the title, now a CSS rule), `tags/actions_menu_item_label.html` (Tabler's `dropdown-item-icon`
+instead of `cv-icon-fw`, without upstream's placeholder for icon-less actions; the stylesheet now sizes and mutes
+`.cv-icon-fw` in dropdown items) and `tags/breadcrumb.html` (no `<nav>` wrapper; upstream's is valid Tabler markup and
+a better landmark). `tags/list_filter.html` stays, for two `<br>` the theme replaces with CSS spacing. That leaves 19
+overrides.
+
+**What the draft design would remove from those 19:** the action leaf (`tags/button/action.html`) replaces
+`tags/context_action.html`, `tags/list_action.html`, `tags/list_action.inner.html` and `tags/card_action.html`; the
+container leaf (`tags/button/container.html`) replaces `tags/context_actions.html` and `columns/actions.html`; class
+table entries replace `tags/actions_menu_toggle.html` and `TablerDeleteForm` (`form:delete`). Seven overrides go and
+two logic-free leaves come in: 14 files, none of them copying upstream's branching. Still overridden, because they change
+markup rather than button classes: `tags/card.html` (blocks, footer), `view_card.content.html` (`row-deck`, empty
+state), `view_create` / `view_update` / `view_delete.content.html` (card wrapper outside modals),
+`modal/shell.html`, `snippets/card_order.html` (only its toggle classes would come from the table),
+`snippets/pagination.html`, `table/bootstrap5.html`, `tags/list_filter.html` and `tags/list_filter.inner.html`.
+
+**Suggestion for the draft:** let the stock action leaf and the filter toggle emit `data-cv-tooltip` whenever the
+label is hidden. `tooltip.js` already initialises it through the adapter, and stock markup would gain tooltips too.
+The theme would then drop `tags/context_action_filter.html` entirely (its classes come from the table), and its
+action leaf would exist only for the visible primary label and `icon-sm`. If Tabler renders a `fieldset.btn-list`
+like a `div.btn-list` (the draft's open question), the container leaf goes as well: 12 files.
+
 ### What the package does today
 
 Theming means overriding templates under `crud_views/` (the hint of check `crud_views.W110` says so). Several of

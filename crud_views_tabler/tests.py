@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.checks import run_checks
 from django.core.management import call_command
+from django.template.loader import get_template
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
@@ -177,6 +178,22 @@ class ThemeRenderingTests(TestCase):
         for tag in buttons:
             self.assertNotIn('data-bs-toggle="tooltip"', tag)
         self.assertTrue(any("data-cv-tooltip" in tag for tag in buttons))
+
+    def test_near_copies_of_upstream_templates_are_not_overridden(self):
+        # Their only differences were spacing or markup Tabler does not need; the theme styles crud_views' version.
+        for name in ("crud_views/modal/content.html", "crud_views/tags/actions_menu_item_label.html",
+                     "crud_views/tags/breadcrumb.html"):
+            self.assertNotIn("crud_views_tabler", get_template(name).origin.name, name)
+
+    def test_menu_items_use_the_fixed_width_icon_slot(self):
+        with mock.patch.object(CustomerListView, "cv_list_actions_inline", ["detail"]):
+            html = self.client.get(reverse("customer-list")).content.decode()
+        item = re.search(r'<a\b[^>]*class="dropdown-item[^"]*"[^>]*cv-key="update"[^>]*>.*?</a>', html, re.S).group(0)
+        self.assertIn('class="icon cv-icon-fw"', item)
+
+    def test_breadcrumb_is_a_nav_landmark(self):
+        html = self.client.get(reverse("customer-list")).content.decode()
+        self.assertIn('<nav aria-label="breadcrumb">', html)
 
 
 class CardThemeTests(TestCase):

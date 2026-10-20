@@ -1,7 +1,7 @@
 # crud_views_tabler: a Tabler theme for django-crud-views (draft)
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by the `customers`
-demo app (`/customer/` table list, `/customer/card/` card view). Built against django-crud-views 0.29.4, Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+demo app (`/customer/` table list, `/customer/card/` card view). Built against django-crud-views main @ 440ac55 (0.30.0 plus the unreleased JavaScript adapters, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -12,7 +12,7 @@ hint describes the intended route, and the prototype follows it:
 - it is listed **before** `crud_views` in `INSTALLED_APPS`, so Django's app template loader finds its files first,
 - anything it does not override falls through to the stock Bootstrap 5 templates.
 
-So the theme is template overrides plus a little Python (icons, one form class) and two static files. No
+So the theme is template overrides plus a little Python (the icon library, a system check, one form class) and two static files (a stylesheet and the adapter script). No
 crud_views code is patched or subclassed except where noted under "Forms".
 
 ```python
@@ -115,10 +115,6 @@ default. Set `cv_cancel_keys` / `cv_success_keys` (e.g. `["list", "card"]`, plus
 remains) so they return to the view the user came from; the links then carry `?cv_from=card`. The theme's form
 templates post to `request.get_full_path`, which keeps that origin across validation errors.
 
-Font Awesome mapping note: crud_views uses `fa-regular fa-rectangle-list` for list views and
-`fa-solid fa-rectangle-list` for card views, so the icon table also matches full class strings first
-(`FONT_AWESOME_EXACT`): card → `layout-grid`, list → `list`.
-
 ## Forms (crispy)
 
 crispy-bootstrap5 needs **no template overrides**: Tabler is Bootstrap 5, so `form-label`, `form-control`,
@@ -140,43 +136,54 @@ Remaining gaps and how the prototype handles them:
 
 The filter renders as a Tabler card with a titled header inside crud_views' collapse (`tags/list_filter*.html`).
 The crispy filter form itself needs nothing. `CRUD_VIEWS_FILTER_RESET_BUTTON_CSS_CLASS` controls the reset button.
+The toggle button in the page header follows list.filter.js' contract (aria-expanded, aria-controls="filter-collapse", both icons rendered with one hidden), so the icon swaps between filter and filter-x and matches the session state after a reload.
 
 ## Icons
 
-crud_views names icons with Font Awesome classes, hard-coded on the view classes (`cv_icon_action =
-"fa-regular fa-eye"`) and in two settings. Rather than requiring every project to subclass its views, the theme
-maps them at render time:
+django-crud-views 0.30.0 refers to icons by semantic name (`detail`, `delete`, `filter`, …), resolves names through a
+layered table (package defaults, theme registrations, `CRUD_VIEWS_ICONS`) to `prefix:name` values, and renders every
+icon through `{% cv_icon %}` with a renderer per library prefix. The theme plugs into that:
 
-- `crud_views_tabler/icons.py` holds Tabler outline icons as SVG paths plus a Font Awesome → Tabler table for every
-  default crud_views ships,
-- `{% cvt_icon value %}` renders inline SVG for a Tabler name (`"building-store"`) or a known Font Awesome class,
-  and falls back to the original `<i class="…">` for anything else, so a project that also loads Font Awesome
-  keeps working,
-- a ViewSet can use Tabler names directly: `ViewSet(..., icon_header="building-store")`.
+- `crud_views_tabler/icons.py` holds Tabler outline icons as SVG paths (`ICONS`), the registry renderer `render`
+  (inline SVG with `class="icon …"` and `aria-hidden`), and `TABLER_ICONS`: a Tabler icon for every semantic name
+  the package defines (27 names, from `detail` to the formset and object-detail icons),
+- `CrudViewsTablerConfig.ready()` registers the library (`register_icon_library("tabler", renderer=…)`) and the table
+  (`register_icons(TABLER_ICONS)`), so a project needs no icon settings; formset, boolean, object-detail and
+  language-selector icons are Tabler too, without a template override,
+- the theme's templates use `{% cv_icon "sort-asc" %}` for semantic names and `{% cv_icon "tabler:chevron-left" %}`
+  for Tabler-only icons; a ViewSet or view uses `icon_header="tabler:building-store"`,
+- a project overrides any name with `CRUD_VIEWS_ICONS = {"detail": "tabler:zoom"}` (or a value from another
+  library); a `tabler:` value without a path in `ICONS` renders nothing and is reported by the system check
+  `crud_views_tabler.W001`.
 
-Side effect: list.filter.js toggles `fa-filter` on an `<i>` inside the filter button; with SVG that does nothing
-(harmless, the button simply doesn't swap icons).
+The `dashboard` app's `{% icon %}` tag renders the same SVGs through the plain `icons.svg()` function.
 
 ## JavaScript
 
-crud_views' scripts expect **jQuery** (viewset.js, modal.js, list.filter.js, formset.js) and a global
-**`bootstrap`** (modal.js, tooltip.js). Tabler's bundle has no jQuery and exposes Bootstrap's components on `window.tabler`. The theme's
-`shared/js.html` (what `{% cv_js %}` renders) therefore emits, all `defer`red so they run after `tabler.min.js`:
+Core scripts on django-crud-views main run without jQuery and call Bootstrap only through `cv.adapters` (`modal`,
+`tooltip`, `collapse`). Tabler's bundle exposes Bootstrap's components on `window.tabler`, so the theme registers one
+asset, `crud_views_tabler/tabler-adapters.js`, holding one statement:
 
-1. jQuery 3.7.1 from code.jquery.com with an SRI hash,
-2. `crud_views_tabler/bootstrap-shim.js`: `window.bootstrap = window.tabler`, and registers Bootstrap's jQuery
-   plugins (`$.fn.collapse`, …), which Bootstrap only does itself when jQuery is loaded before it,
-3. crud_views' own scripts.
+    Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler));
 
-Without step 2 the filter toggle fails with `collapse.collapse is not a function`.
+The namespace is resolved on every call, so `tabler.min.js` stays `defer`red at the end of the body while the
+crud_views scripts load synchronously from `{% cv_js %}`. The theme loads no jQuery; a project with formsets loads it
+in its own base template (`formset.js` is the only core script that needs it).
+
+The theme follows the modal and filter contracts of main: `modal/shell.html` is overridden with Tabler's `modal-blur`
+and a centered dialog (the ids `cv-modal`, `cv-modal-dialog`, `cv-modal-content` are the contract),
+`modal/content.html` closes through `data-cv-modal-dismiss`, `cv_modal_size` takes `""`, `"sm"`, `"lg"` or `"xl"`, and
+the filter toggle carries `aria-expanded`, `aria-controls="filter-collapse"` and both filter icons. Theme buttons carry
+`data-cv-tooltip`, so core's `tooltip.js` initialises their tooltips through the adapter, including inside modal
+content, which Tabler's own page-load initialisation never sees.
 
 ## Overridden templates
 
 ```
 crud_views/
   columns/actions.html            row actions
-  modal/content.html              modal header icon
-  shared/js.html                  jQuery + shim + deferred scripts
+  modal/content.html              modal header icon, data-cv-modal-dismiss
+  modal/shell.html                Tabler modal shell (modal-blur, centered)
   snippets/card_order.html        card ordering bar
   snippets/pagination.html        card-view pagination
   table/bootstrap5.html           card table, sort headers, footer pagination
@@ -184,11 +191,13 @@ crud_views/
   tags/breadcrumb.html
   tags/card.html, card_action.html  cards (with blocks) and card buttons
   tags/context_action.html, context_action_filter.html, context_actions.html
-  tags/icon.html                  header/filter icon -> Tabler SVG
   tags/list_action.html (+ list_action.inner.html)
   tags/list_filter.html, list_filter.inner.html
   view_card.content.html          card grid and empty state
   view_create.content.html, view_update.content.html, view_delete.content.html
+static/crud_views_tabler/
+  crud_views_tabler.css           required marker, row actions, filter card spacing
+  tabler-adapters.js              cv.adapters -> window.tabler
 ```
 
 ## Not covered yet
@@ -198,7 +207,7 @@ crud_views/
   hand-written Tabler `.datagrid` instead.
 - **Formsets** (`formsets/*.html`, formset.js), **delete related-objects** snippets, the **manage** view,
   **language selector**, and the workflow / polymorphic / guardian extensions' templates.
-- Filter button state (active/open) and a Tabler-style cancel button.
+- A Tabler-style cancel button.
 - Responsive check below the `md` breakpoint.
 
 ## Questions for django-crud-views upstream
@@ -206,8 +215,8 @@ crud_views/
 Discussed in detail, with the current code paths, pros and cons, in
 [crud_views_upstream_questions.md](crud_views_upstream_questions.md):
 
-1. Icons: Font Awesome class names on view classes, in two settings and hard-coded in templates.
-2. Button classes set in Python (`CrispyDeleteForm` has no hook for its Delete button).
-3. jQuery (used by four of the six core scripts, including modals and POST actions) and a global `bootstrap`.
-4. A way to mark a context action as the page's primary action.
-5. Theme overrides have to copy the package's template logic, and nothing detects when they go stale.
+1. Icons: Font Awesome class names on view classes, in two settings and hard-coded in templates. **Resolved in 0.30.0 (icon registry).**
+2. Button classes set in Python (`CrispyDeleteForm` has no hook for its Delete button). **Draft design upstream, not implemented.**
+3. jQuery (used by four of the six core scripts, including modals and POST actions) and a global `bootstrap`. **Resolved on main (#200, jQuery-free core and cv.adapters).**
+4. A way to mark a context action as the page's primary action. **Draft design upstream, not implemented.**
+5. Theme overrides have to copy the package's template logic, and nothing detects when they go stale. **Draft design upstream, not implemented.**

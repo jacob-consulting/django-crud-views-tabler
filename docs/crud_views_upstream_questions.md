@@ -8,8 +8,12 @@ their trade-offs.
 
 - Every statement about the package is checked against the **installed django-crud-views 0.29.4** source
   (`.venv/lib/python3.14/site-packages/crud_views*`). File and line references are for that version.
-- **Not checked:** the upstream repository's current main branch, its issue tracker, discussions, or anything after
+- **Not checked at the time of writing:** the upstream repository's current main branch, its issue tracker, discussions, or anything after
   0.29.4. Some of these points may already be discussed, decided or changed there.
+- **Update 2026-10-20:** the "Status" block under each point was checked against the upstream checkout
+  (`/home/alex/projects/alex/django-crud-views`, branch `main` at 440ac55: 0.30.0 plus the unreleased #200) by diffing
+  `v0.29.4..main` for `src/crud_views/templates` and `src/crud_views/static` and reading `docs/reference/icons.md`
+  and `docs/reference/javascript.md`. The original analysis and its file/line references remain for 0.29.4.
 - Where something was not tried, it says so. "Not tested" means exactly that.
 - Two statements in the first version of the design doc turned out to be wrong or incomplete on closer reading;
   they are corrected here and in the design doc (jQuery is used by four scripts, not two; context buttons can
@@ -18,6 +22,24 @@ their trade-offs.
 ---
 
 ## 1. Icons: Font Awesome class names hard-coded in several places
+
+### Status (upstream main @ 440ac55, 2026-10-20)
+
+**What upstream did (0.30.0):** a semantic icon registry (`crud_views.lib.icons`, `docs/reference/icons.md`). The
+package refers to icons by name (`detail`, `delete`, `filter`, …: 27 names); the table is layered (package defaults,
+theme registrations from `AppConfig.ready()`, `CRUD_VIEWS_ICONS`); values are `prefix:name` with a renderer per
+library (`far`, `fas`, `bi` built in; the `font` renderer or any callable); one tag, `{% cv_icon %}`, renders
+everything; `cv_icon_action`, `cv_icon_header` and `cv_menu_icon` carry icon values, not classes; object detail uses
+the same table. `tags/icon.html`, `{% cv_filter_icon %}`, `CRUD_VIEWS_FILTER_ICON`, `CRUD_VIEWS_ACTIONS_MENU_ICON` and
+the object-detail icon settings are gone, guarded by the checks `crud_views.E350`–`E356`, `W352`, `W353` and
+`viewset.W246`.
+
+**How it maps to the options:** option C, with a library/renderer layer on top. The compatibility rule is the one C
+predicted: a colon-less value that is not a known name is a raw CSS class.
+
+**What the theme does now:** registers a `tabler` library (inline-SVG renderer) and a Tabler icon for every semantic
+name from `ready()`. The Font Awesome table, `{% cvt_icon %}` and `tags/icon.html` are gone; formset, boolean,
+object-detail and language-selector icons are Tabler without any template override. Resolved.
 
 ### What the package does today
 
@@ -81,6 +103,15 @@ been prototyped.
 
 ## 2. Button classes set in Python
 
+### Status (upstream main @ 440ac55, 2026-10-20)
+
+Not changed on main. A draft design in the upstream repository,
+`superpowers/specs/2026-10-19-button-variants-and-leaves-design.md`, gives `CrispyDeleteForm` the missing
+`get_delete_button()` / `get_delete_button_kwargs()` hooks and moves every button class into a layered table
+(`CRUD_VIEWS_BUTTON_CLASSES`, `register_button_classes()` for themes): option A plus option B, without the
+contradictory-classes problem because the package would ship its own `Submit` subclass reading the table. Not
+implemented; the theme keeps `TablerDeleteForm`.
+
 ### What the package does today
 
 - Form buttons are crispy-forms layout objects. crispy's `Submit` has `field_classes = "btn btn-primary"`, and a
@@ -139,6 +170,26 @@ Whether the unused tags are used by projects in the wild, or kept for compatibil
 ---
 
 ## 3. jQuery and a global `bootstrap`
+
+### Status (upstream main @ 440ac55, 2026-10-20)
+
+**What upstream did (#200, unreleased):** `viewset.js`, `modal.js`, `list.filter.js` and `tooltip.js` use the DOM API
+and `fetch`; `formset.js` stays on jQuery, logs one `console.error` without it and retries once on `window` `load`.
+Every call into Bootstrap goes through `cv.adapters` (`modal.show` / `hide` / `setSize`, `tooltip.init`,
+`collapse.toggle`), defined in a new first core script, `adapters.js`, pre-filled for `globalThis.bootstrap`;
+`cv.bootstrapAdapters(ns)` builds all three for any Bootstrap-compatible namespace, `ns` being an object or a function
+resolved on every call. New contracts: `crud_views/modal/shell.html` (ids `cv-modal`, `cv-modal-dialog`,
+`cv-modal-content`), `data-cv-modal-dismiss`, `cv_modal_size` tokens `""` / `sm` / `lg` / `xl` (`viewset.E250`), and
+the filter toggle's `aria-expanded`, `aria-controls="filter-collapse"` and `data-cv-filter-icon` spans
+(`docs/reference/javascript.md`).
+
+**How it maps to the options:** B (the three small scripts, plus tooltip.js), with C deferred (formset.js). The
+"configured global" idea became an adapter object with a lazily resolved namespace, which also removes the load-order
+trap: Bootstrap may load anywhere, deferred included.
+
+**What the theme does now:** no jQuery, no shim. One registered asset, `tabler-adapters.js`, holds one statement:
+`Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler))`. `shared/js.html` is no longer
+overridden. Resolved for every page without formsets; a project with formsets loads jQuery itself.
 
 ### What the package does today
 
@@ -208,6 +259,13 @@ six direct call sites counted (eight matches, two of them in comments). Options 
 
 ## 4. Marking a context action as the page's primary action
 
+### Status (upstream main @ 440ac55, 2026-10-20)
+
+Not changed on main. The draft design named under point 2 adds `cv_action_variant` to every view (`CreateView` and
+the polymorphic create-select view default to `primary`, `DeleteView` to `danger`, the rest to `secondary`), a
+`ContextButton.variant` override, and `CardAction.variant = None` meaning "the target view's variant": options B and
+C together. Not implemented; the theme still hard-codes `create` / `create_select` as the primary action.
+
 ### What the package does today
 
 - **Card actions** have styling metadata: `CardAction(variant="primary" | "secondary" | "tertiary", flex=…,
@@ -261,6 +319,22 @@ design choice has not been asked.
 ---
 
 ## 5. Theme overrides have to copy the package's template logic
+
+### Status (upstream main @ 440ac55, 2026-10-20)
+
+Not changed on main. The draft design named under point 2 is option D: `cv_button_data()` normalises a button once in
+Python, three leaves (`tags/button/action.html`, `menu_item.html`, `container.html`) only draw, and the current
+template names become thin logic templates so whole-template overrides keep working. Its "Tabler check" section
+counts what this theme would drop: the six logic-copying overrides become two leaf overrides plus a `ready()`
+registration. Not implemented.
+
+**Observed while following main (2026-10-20):** three of the theme's overrides had gone stale between 0.29.4 and
+main. `tags/list_filter.inner.html` still called `{% cv_filter_icon %}`, removed in 0.30.0: a `TemplateSyntaxError`
+on every list page with a filter (9 of the theme's 19 tests). `tags/icon.html` went silently dead: upstream deleted
+the template and `{% cv_header_icon %}` renders through `render_icon()` now. `modal/content.html` kept
+`data-bs-dismiss="modal"`, which still worked only because Tabler's data API handles it, not through the new
+`cv.adapters.modal.hide`. One loud failure, two silent ones, found only by diffing upstream's templates against the
+overrides: the failure mode this point describes.
 
 ### What the package does today
 

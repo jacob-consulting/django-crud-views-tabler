@@ -14,6 +14,10 @@ uv run python manage.py seed_demo_customers   # optional: 60 sample customers fo
 uv run python manage.py runserver
 ```
 
+django-crud-views is installed from the sibling checkout `../django-crud-views` (branch `main`) as an editable path
+dependency (`[tool.uv.sources]` in `pyproject.toml`), because the theme follows features that are not released yet.
+Replace the source entry with a version pin once they are.
+
 Open http://127.0.0.1:8000/ and sign in. Every page except the login page requires a signed-in user
 (`LoginRequiredMiddleware`).
 
@@ -36,7 +40,7 @@ Seeded demo users have no usable password and cannot sign in.
 - `templates/layouts/app.html`: top-navbar page layout; `templates/includes/` holds the navbar, messages and form-field partials
 - `templates/registration/login.html`: sign-in page used by Django's `LoginView`
 - `dashboard/`: views, the user form, the `{% icon %}` template tag (`templatetags/tabler.py`), the seed command and tests
-- `crud_views_tabler/`: prototype Tabler theme for django-crud-views (template overrides, icons, JS shim);
+- `crud_views_tabler/`: prototype Tabler theme for django-crud-views (template overrides, Tabler icon library, JS adapter);
   design notes in [`docs/crud_views_tabler.md`](docs/crud_views_tabler.md)
 - `customers/`: demo ViewSet that exercises the theme
 - `templates/crud_views_page.html`: the page every crud_views view extends (`CRUD_VIEWS_EXTENDS`)

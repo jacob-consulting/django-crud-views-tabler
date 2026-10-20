@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.checks import run_checks
 from django.core.management import call_command
+from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
@@ -112,6 +113,11 @@ class ThemeRenderingTests(TestCase):
     def setUp(self):
         self.client.force_login(self.admin)
 
+    @staticmethod
+    def tag(html, key):
+        """The first opening <a> or <button> tag with cv-key=key."""
+        return re.search(rf'<(?:a|button)\b[^>]*\bcv-key="{key}"[^>]*>', html).group(0)
+
     def test_system_checks_pass(self):
         call_command("check", "--fail-level", "WARNING")
 
@@ -135,6 +141,7 @@ class ThemeRenderingTests(TestCase):
             html = self.client.get(reverse("customer-list")).content.decode()
         button = re.search(r'<button[^>]*data-cv-disabled="permission"[^>]*>.*?</button>', html, re.S)
         self.assertIsNotNone(button)
+        self.assertIn('class="btn btn-sm btn-icon btn-ghost-danger"', button.group(0))
         self.assertIn("<svg", button.group(0))
         self.assertNotIn("<i class=", button.group(0))
 
@@ -200,7 +207,8 @@ class ThemeRenderingTests(TestCase):
         button = re.search(r'<button[^>]*id="cv-filter-toggle"[^>]*>.*?</button>', html, re.S).group(0)
         self.assertIn('aria-controls="filter-collapse"', button)
         self.assertIn('aria-expanded="false"', button)
-        self.assertIn("data-cv-tooltip", button)
+        self.assertIn('class="btn btn-icon"', button)
+        self.assertIn('data-cv-tooltip="context"', button)
         self.assertIn('<span data-cv-filter-icon="open">', button)
         self.assertIn('<span data-cv-filter-icon="close" class="d-none">', button)
         self.assertEqual(button.count("<svg"), 2)
@@ -231,11 +239,46 @@ class ThemeRenderingTests(TestCase):
         for tag in buttons:
             self.assertNotIn('data-bs-toggle="tooltip"', tag)
         self.assertTrue(any("data-cv-tooltip" in tag for tag in buttons))
+        for key in ("list", "card", "create"):  # the filter toggle is checked by id in test_filter_toggle_contract
+            self.assertIn('data-cv-tooltip="context"', self.tag(html, key), key)
 
-    def test_near_copies_of_upstream_templates_are_not_overridden(self):
-        # Their only differences were spacing or markup Tabler does not need; the theme styles crud_views' version.
+    def test_toolbar_uses_theme_classes(self):
+        html = self.client.get(reverse("customer-list")).content.decode()
+        create = self.tag(html, "create")
+        self.assertIn('class="btn btn-primary btn-icon"', create)
+        self.assertIn('data-cv-tooltip="context"', create)
+        self.assertIn('class="btn btn-icon active"', self.tag(html, "list"))
+        self.assertIn('aria-current="page"', self.tag(html, "list"))
+        self.assertRegex(html, r'<fieldset class="btn-list" aria-label="Actions" cv-context-container="true">')
+
+    def test_row_actions_use_theme_classes(self):
+        html = self.client.get(reverse("customer-list")).content.decode()
+        delete = self.tag(html, "delete")
+        self.assertIn('class="btn btn-sm btn-icon btn-ghost-danger"', delete)
+        self.assertIn('data-cv-tooltip="list"', delete)
+        self.assertIn('class="btn btn-sm btn-icon btn-ghost-secondary"', self.tag(html, "update"))
+        self.assertIn('<fieldset class="btn-list flex-nowrap justify-content-end gap-1"', html)
+
+    def test_overflow_menu_uses_theme_classes(self):
+        with mock.patch.object(CustomerListView, "cv_list_actions_inline", ["detail"]):
+            html = self.client.get(reverse("customer-list")).content.decode()
+        self.assertIn('<div class="dropdown">', html)
+        self.assertRegex(html, r'class="btn btn-sm btn-icon btn-ghost-secondary dropdown-toggle cv-menu-toggle"')
+
+    def test_upstream_templates_are_not_overridden(self):
+        # Near copies (spacing or markup Tabler does not need) and every template whose only job was button classes,
+        # the primary action or the tooltip marker: the class table and crud_views' leaves cover those.
         for name in ("crud_views/modal/content.html", "crud_views/tags/actions_menu_item_label.html",
-                     "crud_views/tags/breadcrumb.html"):
+                     "crud_views/tags/breadcrumb.html", "crud_views/tags/context_action.html",
+                     "crud_views/tags/list_action.html", "crud_views/tags/card_action.html",
+                     "crud_views/tags/context_actions.html", "crud_views/columns/actions.html",
+                     "crud_views/tags/actions_menu_toggle.html", "crud_views/tags/context_action_filter.html",
+                     "crud_views/snippets/card_order.html"):
+            self.assertNotIn("crud_views_tabler", get_template(name).origin.name, name)
+        with self.assertRaises(TemplateDoesNotExist):
+            get_template("crud_views/tags/list_action.inner.html")
+        for name in ("crud_views/tags/button/action.html", "crud_views/tags/button/container.html",
+                     "crud_views/tags/button/menu_item.html", "crud_views/tags/button/menu_item_label.html"):
             self.assertNotIn("crud_views_tabler", get_template(name).origin.name, name)
 
     def test_menu_items_use_the_fixed_width_icon_slot(self):
@@ -265,6 +308,7 @@ class CardThemeTests(TestCase):
         html = self.get()
         self.assertIn('class="row row-deck row-cards"', html)
         self.assertEqual(html.count('class="card-footer"'), 12)  # paginate_by
+        self.assertEqual(html.count('class="btn-list" cv-card-container="true"'), 12)
         self.assertIn('class="pagination', html)
         self.assertNotIn("fa-solid", html)
         self.assertNotIn("<i class=", html)
@@ -272,7 +316,8 @@ class CardThemeTests(TestCase):
     def test_card_action_variants(self):
         html = self.get()
         self.assertIn("btn btn-sm btn-primary flex-grow-1", html)  # primary + flex
-        self.assertIn("btn btn-sm btn-ghost-secondary btn-icon", html)  # tertiary + no_label
+        self.assertIn("btn btn-sm btn-icon btn-ghost-secondary", html)  # tertiary (icon-only in the demo)
+        self.assertIn("<span>Open</span>", html)  # a visible label renders as text only
         self.assertIn('<span class="visually-hidden">Delete</span>', html)  # icon-only keeps a name
 
     def test_card_links_carry_their_origin(self):
@@ -283,7 +328,8 @@ class CardThemeTests(TestCase):
     def test_order_bar(self):
         html = self.get(order="revenue", dir="desc")
         self.assertIn('id="cv-card-order-form"', html)
-        self.assertIn('value="desc" class="btn btn-icon active"', html)
+        self.assertRegex(html, r'value="desc"\s+class="btn btn-icon active"')
+        self.assertIn('<fieldset class="btn-group"', html)
         self.assertRegex(html, r'<button[^>]*value="asc"[^>]*>\s*<svg')
         self.assertLess(html.index("Customer 14"), html.index("Customer 13"))
 
@@ -302,7 +348,7 @@ class CardThemeTests(TestCase):
         html = self.get()
         delete = re.search(r'<a\b[^>]*/delete/\?cv_from=card[^>]*>', html).group(0)  # the no_label card action
         self.assertIn("btn-icon", delete)
-        self.assertIn("data-cv-tooltip", delete)
+        self.assertIn('data-cv-tooltip="card"', delete)
         self.assertNotIn('data-bs-toggle="tooltip"', delete)
 
 

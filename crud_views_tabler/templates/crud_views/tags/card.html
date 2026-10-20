@@ -3,7 +3,7 @@
 Tabler theme card. A view's cv_card_template can extend this template and fill the blocks:
   card_title    - the heading (default: str(object))
   card_content  - anything below the heading, inside .card-body
-  card_footer   - the actions row; override only to change where actions go
+  card_footer   - the actions row (crud_views' container leaf); override only to change where actions go
 {% endcomment %}
 {% cv_card_action_group object as group %}
 <div class="card">
@@ -13,15 +13,8 @@ Tabler theme card. A view's cv_card_template can extend this template and fill t
   </div>
   {% block card_footer %}
   <div class="card-footer">
-    <div class="btn-list">
-      {% if group is None %}
-      {% for action in view.cv_card_actions %}{% cv_card_action action object %}{% endfor %}
-      {% else %}
-      {% for ctx in group.inline %}{% cv_render_card_action ctx %}{% endfor %}
-      {% for ctx in group.menu %}{% cv_render_list_action_form ctx %}{% endfor %}
-      {% cv_actions_menu group "card" %}
-      {% endif %}
-    </div>
+    {% for ctx in group.menu %}{% cv_render_list_action_form ctx %}{% endfor %}
+    {% include "crud_views/tags/button/container.html" with cv_buttons=group.inline cv_group=group cv_location="card" cv_container_tag="div" %}
   </div>
   {% endblock card_footer %}
 </div>

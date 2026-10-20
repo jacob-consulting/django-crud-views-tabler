@@ -9,14 +9,14 @@
 {% elif cv_key and cv_action_enabled is not False and cv_access is True and cv_list_action_method == "post" and not cv_modal %}
 <button type="button" class="btn{% if cvt_text %} btn-primary{% else %} btn-icon{% endif %}"
         data-cv-action="submit-form" data-cv-target="cv_form_{{ cv_oid }}"
-        title="{{ cv_action_label }}" data-bs-toggle="tooltip" data-bs-placement="bottom" cv-key="{{ cv_key }}">
+        title="{{ cv_action_label }}" data-cv-tooltip data-bs-placement="bottom" cv-key="{{ cv_key }}">
   {% cv_icon cv_icon_action %}{% if cvt_text %}{{ cvt_text }}{% else %}<span class="visually-hidden">{{ cv_action_label }}</span>{% endif %}
 </button>
 {% elif cv_key and cv_action_enabled is not False and cv_access is True %}
 <a href="{{ cv_url }}" class="btn{% if cvt_text %} btn-primary{% else %} btn-icon{% endif %}{% if cv_is_active %} active{% endif %}"
    {% if cv_is_active %}aria-current="page"{% endif %}
    {% if cv_modal %}data-cv-modal="true" data-cv-modal-size="{{ cv_modal_size }}"{% endif %}
-   title="{{ cv_action_label }}"{% if not cvt_text %} data-bs-toggle="tooltip" data-bs-placement="bottom"{% endif %} cv-key="{{ cv_key }}">
+   title="{{ cv_action_label }}"{% if not cvt_text %} data-cv-tooltip data-bs-placement="bottom"{% endif %} cv-key="{{ cv_key }}">
   {% cv_icon cv_icon_action %}{% if cvt_text %}{{ cvt_text }}{% else %}<span class="visually-hidden">{{ cv_action_label }}</span>{% endif %}
 </a>
 {% endif %}

@@ -12,7 +12,7 @@ from crud_views.lib.icons import DEFAULT_ICONS
 from crud_views.lib.icons import render_icon as cv_render_icon
 from crud_views_tabler.icons import ICONS, TABLER_ICONS, render, svg
 from customers.models import Customer
-from customers.views import CustomerDeleteView
+from customers.views import CustomerDeleteView, CustomerListView
 
 
 class TablerIconTests(SimpleTestCase):
@@ -141,6 +141,43 @@ class ThemeRenderingTests(TestCase):
         self.assertIn('class="modal-dialog modal-dialog-centered" id="cv-modal-dialog"', html)
         self.assertIn('id="cv-modal-content"', html)
 
+    def test_filter_toggle_contract(self):
+        html = self.client.get(reverse("customer-list")).content.decode()
+        button = re.search(r'<button[^>]*id="cv-filter-toggle"[^>]*>.*?</button>', html, re.S).group(0)
+        self.assertIn('aria-controls="filter-collapse"', button)
+        self.assertIn('aria-expanded="false"', button)
+        self.assertIn("data-cv-tooltip", button)
+        self.assertIn('<span data-cv-filter-icon="open">', button)
+        self.assertIn('<span data-cv-filter-icon="close" class="d-none">', button)
+        self.assertEqual(button.count("<svg"), 2)
+
+    def test_filter_toggle_reflects_the_session_state(self):
+        response = self.client.post(
+            reverse("customer-list"), data='{"filter_expanded": true}', content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+        html = self.client.get(reverse("customer-list")).content.decode()
+        button = re.search(r'<button[^>]*id="cv-filter-toggle"[^>]*>.*?</button>', html, re.S).group(0)
+        self.assertIn('aria-expanded="true"', button)
+        self.assertIn('<span data-cv-filter-icon="open" class="d-none">', button)
+        self.assertIn('<span data-cv-filter-icon="close">', button)
+        self.assertIn('class="collapse show" id="filter-collapse"', html)
+
+    def test_pinned_filter_has_no_toggle(self):
+        with mock.patch.object(CustomerListView, "cv_filter_pinned", True):
+            html = self.client.get(reverse("customer-list")).content.decode()
+        self.assertIn('id="filter-pinned"', html)
+        self.assertNotIn('id="cv-filter-toggle"', html)
+        self.assertIn("<svg", html[html.index('id="filter-pinned"'):][:800])  # the card header's filter icon
+
+    def test_action_tooltips_are_initialised_by_crud_views(self):
+        html = self.client.get(reverse("customer-list")).content.decode()
+        buttons = re.findall(r"<(?:a|button)\b[^>]*\bcv-key=[^>]*>", html)
+        self.assertGreater(len(buttons), 3)
+        for tag in buttons:
+            self.assertNotIn('data-bs-toggle="tooltip"', tag)
+        self.assertTrue(any("data-cv-tooltip" in tag for tag in buttons))
+
 
 class CardThemeTests(TestCase):
     @classmethod
@@ -190,6 +227,13 @@ class CardThemeTests(TestCase):
         url = reverse("customer-delete", args=[customer.pk]) + "?cv_from=card"
         response = self.client.post(url, {"confirm": "on", "delete": "Delete"})
         self.assertRedirects(response, reverse("customer-card"), fetch_redirect_response=False)
+
+    def test_icon_only_card_action_has_a_crud_views_tooltip(self):
+        html = self.get()
+        delete = re.search(r'<a\b[^>]*/delete/\?cv_from=card[^>]*>', html).group(0)  # the no_label card action
+        self.assertIn("btn-icon", delete)
+        self.assertIn("data-cv-tooltip", delete)
+        self.assertNotIn('data-bs-toggle="tooltip"', delete)
 
 
 class IconCheckTests(SimpleTestCase):

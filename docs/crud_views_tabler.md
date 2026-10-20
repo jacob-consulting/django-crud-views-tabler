@@ -1,7 +1,7 @@
 # crud_views_tabler: a Tabler theme for django-crud-views (draft)
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by the `customers`
-demo app (`/customer/` table list, `/customer/card/` card view). Built against django-crud-views main @ 4b62ed6 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, and tooltip markers #204, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+demo app (`/customer/` table list, `/customer/card/` card view). Built against django-crud-views main @ 5e36477 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -75,7 +75,8 @@ Which classes a button gets depends on its **variant**, which comes from the vie
   whether an action has an icon or not.
 - **Tooltips**: crud_views marks every icon-only button with `data-cv-tooltip="<location>"` and initialises it
   through `cv.adapters.tooltip`, which the theme points at Tabler (see JavaScript). Toolbar tooltips open below the
-  button.
+  button. A click hides the clicked button's tooltip, and tooltips inside the modal are disposed before its content is
+  replaced (#205).
 - All hooks the package's JavaScript relies on come from the stock templates unchanged: `cv-key`,
   `cv-list-container`, `cv-context-container`, `cv-card-container`, `data-cv-action`, `data-cv-target`,
   `data-cv-modal`, `#cv-filter-toggle`, the hidden POST forms.
@@ -208,7 +209,10 @@ asset, `crud_views_tabler/tabler-adapters.js`:
 
 The second statement is crud_views' per-location recipe (`docs/reference/javascript.md#tooltips`): toolbar tooltips
 open below the buttons, so they do not cover the page header; it does nothing while `window.tabler` has no
-`Tooltip`.
+`Tooltip`. Only `init` is replaced, so the adapter keeps crud_views' optional `hide(el)` and `dispose(el)` (#205),
+which resolve `tabler.Tooltip` through the same namespace: `tooltip.js` hides a trigger's tooltip on click and disposes
+the tooltips under `#cv-modal` on `cv:modal:unload`, so Tabler's per-tooltip `hide.bs.modal` handlers do not pile up
+over repeated modal opens. Do not reassign `cv.adapters.tooltip` as a whole in the theme; that would drop both.
 
 The namespace is resolved on every call, so `tabler.min.js` stays `defer`red at the end of the body while the
 crud_views scripts load synchronously from `{% cv_js %}`. The theme loads no jQuery; a project with formsets loads it

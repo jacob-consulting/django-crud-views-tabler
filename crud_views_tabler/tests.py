@@ -175,6 +175,19 @@ class ThemeRenderingTests(TestCase):
         self.assertIn('"bottom"', source)
         self.assertIn("globalThis.tabler?.Tooltip", source)
 
+    def test_tooltip_adapter_keeps_upstream_lifecycle(self):
+        # Only init is replaced, so crud_views' hide(el) / dispose(el) (#205) keep resolving tabler.Tooltip.
+        from django.contrib.staticfiles import finders
+        with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
+            source = f.read()
+        self.assertNotRegex(source, r"cv\.adapters\.tooltip\s*=")
+        self.assertNotIn("cv.adapters.tooltip.hide", source)
+        self.assertNotIn("cv.adapters.tooltip.dispose", source)
+        with open(finders.find("crud_views/js/adapters.js"), encoding="utf-8") as f:
+            core = f.read()
+        self.assertIn("hide(el)", core)
+        self.assertIn("dispose(el)", core)
+
     def test_form_page_wraps_form_in_card(self):
         html = self.client.get(reverse("customer-create")).content.decode()
         self.assertIn('<div class="card"><div class="card-body">', html)

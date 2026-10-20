@@ -73,8 +73,8 @@ wheels = [
 
 [[package]]
 name = "django-crud-views"
-version = "0.29.4"
-source = { registry = "https://pypi.org/simple" }
+version = "0.30.0"
+source = { editable = "../django-crud-views" }
 dependencies = [
     { name = "crispy-bootstrap5" },
     { name = "django" },
@@ -86,10 +86,45 @@ dependencies = [
     { name = "python-box" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/22/6e/40b664952d1422aa5dd7848d493d55960061be634c230a561427a62b5894/django_crud_views-0.29.4.tar.gz", hash = "sha256:90b6f8afefd01039d62e79f7bcb39370e74cbe8e0de8bdef77285698aaae4399", size = 2558910, upload-time = "2026-10-18T13:39:03.153Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/33/e4/8a5274527fb47b05c379e32b6218ee1a3ca1564a904f5f00fe0d6f509a3a/django_crud_views-0.29.4-py3-none-any.whl", hash = "sha256:140e006ee0db886692f3829ff21c3b4f0c008ba4db14194cbf85e36c3d789efd", size = 215296, upload-time = "2026-10-18T13:39:01.502Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "bump-my-version", marker = "extra == 'dev'" },
+    { name = "crispy-bootstrap5", specifier = ">=2023.10" },
+    { name = "cssselect", marker = "extra == 'test'" },
+    { name = "django", specifier = ">=4.2.0" },
+    { name = "django-bootstrap5", specifier = ">=21.3" },
+    { name = "django-crispy-forms", specifier = ">=2.0" },
+    { name = "django-crud-views", extras = ["workflow", "polymorphic", "ordered", "guardian"], marker = "extra == 'all'" },
+    { name = "django-filter", specifier = ">=21.1" },
+    { name = "django-fsm-2", marker = "extra == 'workflow'", specifier = ">=4.0.0" },
+    { name = "django-fsm-2-admin", marker = "extra == 'workflow'", specifier = ">=2.0.1" },
+    { name = "django-guardian", marker = "extra == 'guardian'", specifier = ">=2.4" },
+    { name = "django-guardian", marker = "extra == 'test'", specifier = ">=2.4" },
+    { name = "django-ordered-model", marker = "extra == 'ordered'", specifier = ">=3.4.3" },
+    { name = "django-pipeline", marker = "extra == 'test'" },
+    { name = "django-polymorphic", marker = "extra == 'polymorphic'", specifier = ">=3.1.0" },
+    { name = "django-tables2", specifier = ">=2.5.3" },
+    { name = "lxml", marker = "extra == 'test'" },
+    { name = "mkdocs", marker = "extra == 'dev'", specifier = ">=1.6.1" },
+    { name = "mkdocs-awesome-pages-plugin", marker = "extra == 'dev'", specifier = ">=2.10.1" },
+    { name = "mkdocs-get-deps", marker = "extra == 'dev'", specifier = ">=0.2.0" },
+    { name = "nox", marker = "extra == 'test'" },
+    { name = "polib", marker = "extra == 'test'" },
+    { name = "pre-commit", marker = "extra == 'dev'" },
+    { name = "pydantic", specifier = ">=2.2.1" },
+    { name = "pygments", marker = "extra == 'examples'" },
+    { name = "pytest", marker = "extra == 'test'" },
+    { name = "pytest-cov", marker = "extra == 'test'" },
+    { name = "pytest-django", marker = "extra == 'test'" },
+    { name = "pytest-mock", marker = "extra == 'test'" },
+    { name = "pytest-random-order", marker = "extra == 'test'" },
+    { name = "pytest-xdist", marker = "extra == 'test'" },
+    { name = "python-box", specifier = ">=6.0.2" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.16,<0.17" },
+    { name = "typing-extensions", specifier = ">=4.7.1" },
 ]
+provides-extras = ["workflow", "polymorphic", "ordered", "guardian", "all", "dev", "test", "examples"]
 
 [[package]]
 name = "django-filter"
@@ -234,7 +269,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "django", specifier = ">=6.1,<6.2" },
-    { name = "django-crud-views", specifier = ">=0.29.4" },
+    { name = "django-crud-views", editable = "../django-crud-views" },
 ]
 
 [[package]]

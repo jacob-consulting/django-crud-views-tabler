@@ -21,4 +21,8 @@ class CrudViewsTablerConfig(AppConfig):
 
         register_icon_library("tabler", renderer="crud_views_tabler.icons.render")
         register_icons(TABLER_ICONS)
-        register_assets("crud_views_tabler", css=["crud_views_tabler/crud_views_tabler.css"])
+        register_assets(
+            "crud_views_tabler",
+            js=["crud_views_tabler/tabler-adapters.js"],
+            css=["crud_views_tabler/crud_views_tabler.css"],
+        )

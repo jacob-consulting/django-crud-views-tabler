@@ -101,14 +101,14 @@ class ThemeRenderingTests(TestCase):
         self.assertIn('class="table-sort desc"', html)
         self.assertLess(html.index("Customer 14"), html.index("Customer 13"))
 
-    def test_scripts_load_jquery_and_shim_deferred(self):
+    def test_scripts_use_the_tabler_adapter_without_jquery(self):
         html = self.client.get(reverse("customer-list")).content.decode()
-        jquery = html.index("jquery-3.7.1.min.js")
-        shim = html.index("crud_views_tabler/bootstrap-shim.js")
-        core = html.index("crud_views/js/modal.js")
-        self.assertLess(jquery, shim)
-        self.assertLess(shim, core)
-        self.assertNotIn('type="application/javascript"', html)
+        self.assertNotIn("jquery", html.lower())
+        self.assertNotIn("bootstrap-shim", html)
+        core = html.index("crud_views/js/adapters.js")
+        theme = html.index("crud_views_tabler/tabler-adapters.js")
+        self.assertLess(core, theme)
+        self.assertIn("crud_views/js/modal.js", html)
 
     def test_form_page_wraps_form_in_card(self):
         html = self.client.get(reverse("customer-create")).content.decode()

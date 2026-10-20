@@ -3,6 +3,7 @@ from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.core.checks import run_checks
 from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
@@ -181,3 +182,16 @@ class CardThemeTests(TestCase):
         url = reverse("customer-delete", args=[customer.pk]) + "?cv_from=card"
         response = self.client.post(url, {"confirm": "on", "delete": "Delete"})
         self.assertRedirects(response, reverse("customer-card"), fetch_redirect_response=False)
+
+
+class IconCheckTests(SimpleTestCase):
+    @override_settings(CRUD_VIEWS_ICONS={"detail": "tabler:does-not-exist"})
+    def test_unknown_tabler_icon_is_reported(self):
+        messages = [m for m in run_checks() if m.id == "crud_views_tabler.W001"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("'detail'", messages[0].msg)
+        self.assertIn("'tabler:does-not-exist'", messages[0].msg)
+
+    @override_settings(CRUD_VIEWS_ICONS={"detail": "far:eye", "person": "tabler:user"})
+    def test_other_library_values_are_not_reported(self):
+        self.assertEqual([m.id for m in run_checks() if m.id.startswith("crud_views_tabler.")], [])

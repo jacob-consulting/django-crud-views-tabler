@@ -16,6 +16,7 @@ class CrudViewsTablerConfig(AppConfig):
         from crud_views.lib.assets import register_assets
         from crud_views.lib.icons import register_icon_library, register_icons
 
+        import crud_views_tabler.checks  # noqa: F401
         from crud_views_tabler.icons import TABLER_ICONS
 
         register_icon_library("tabler", renderer="crud_views_tabler.icons.render")

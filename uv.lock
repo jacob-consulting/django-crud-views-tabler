@@ -38,12 +38,14 @@ name = "crispy-tabler"
 version = "0.1.0"
 source = { editable = "../crispy-tabler" }
 dependencies = [
+    { name = "crispy-bootstrap5" },
     { name = "django" },
     { name = "django-crispy-forms" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "crispy-bootstrap5", specifier = ">=2026.9" },
     { name = "crispy-bootstrap5", marker = "extra == 'test'", specifier = "==2026.9" },
     { name = "django", specifier = ">=5.2" },
     { name = "django-crispy-forms", specifier = ">=2.4" },

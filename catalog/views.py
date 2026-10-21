@@ -8,9 +8,9 @@ side by side. Keep that coverage when editing — the table in
 
 import django_filters
 import django_tables2 as tables
-from crispy_bootstrap5.bootstrap5 import FloatingField, Switch
-from crispy_forms.bootstrap import AppendedText, InlineCheckboxes, InlineRadios, PrependedText, UneditableField
+from crispy_forms.bootstrap import AppendedText, InlineCheckboxes, InlineRadios, PrependedText
 from crispy_forms.layout import Fieldset, Layout, Row
+from crispy_tabler.layout import FloatingField, Switch, UneditableField
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
 from crud_views.lib.crispy import Column3, Column4, Column6, Column12, CrispyDeleteForm, CrispyModelForm, CrispyViewMixin
 from crud_views.lib.table import LinkDetailColumn, Table

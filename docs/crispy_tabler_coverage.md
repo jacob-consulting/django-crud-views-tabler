@@ -2,10 +2,11 @@
 
 The `catalog` app exists to make one page — `/product/create/` — render **every branch of the crispy
 template pack at once**, so the Tabler theme can be judged field by field instead of guessing. It is the
-groundwork for a `crispy_tabler` template pack (no such package exists: `crispy-tabler` is 404 on PyPI and
-there is no GitHub repository under that name).
+groundwork for the `crispy_tabler` template pack, which now exists as the sibling package `../crispy-tabler`
+and which the demo renders through (`CRISPY_TEMPLATE_PACK = "crispy_tabler"`).
 
-Checked on 2026-10-21 against crispy-bootstrap5 2026.9 (`CRISPY_TEMPLATE_PACK = "bootstrap5"`, unchanged),
+The findings below were recorded on 2026-10-21 against crispy-bootstrap5 2026.9 (`CRISPY_TEMPLATE_PACK = "bootstrap5"`) and
+are now fixed by `crispy_tabler`; the third column of the table shows the state before the switch. Checked against
 Tabler 1.6.1 and django-crud-views main.
 
 ```
@@ -13,17 +14,17 @@ uv run python manage.py seed_demo_catalog     # 40 products, 5 categories, 6 tag
 uv run python manage.py test catalog          # pins the coverage below
 ```
 
-`catalog/tests.py` asserts one marker per render path. If a field is removed from `ProductForm.get_layout_fields`
-the matching test fails, so the coverage cannot rot silently.
+`catalog/tests.py` asserts one marker per render path, now against the fixed markup. If a field is removed from
+`ProductForm.get_layout_fields` the matching test fails, so the coverage cannot rot silently.
 
 ## What each field is for
 
-| Form field | Layout object / widget | crispy template | Under Tabler |
+| Form field | Layout object / widget | crispy template | Under Tabler (before the switch) |
 |---|---|---|---|
 | `name` | plain | `field.html`, text | ok |
 | `slug` | `help_text` | `layout/help_text.html` → `form-text` | ok — Tabler styles `.form-text` as well as its own `.form-hint` |
 | `description` | plain | `field.html`, textarea | ok |
-| `sku` | `UneditableField` | `layout/uneditable_input.html` | **broken** (below) |
+| `sku` | `UneditableField` | `layout/uneditable_input.html` | **broken**, now fixed (below) |
 | `category` | FK | `field.html`, `is_select` → `form-select` | ok |
 | `tags` | M2M `SelectMultiple` | `field.html`, `is_select` | ok |
 | `channels` | M2M `CheckboxSelectMultiple` | `layout/radio_checkbox_select.html` | ok |
@@ -32,41 +33,54 @@ the matching test fails, so the coverage cannot rot silently.
 | `price` | `PrependedText("€")` | `layout/prepended_appended_text.html` → `input-group` | ok |
 | `warranty_months` | `AppendedText("months")` | same | ok |
 | `stock` | plain | `field.html`, number | ok |
-| `rating` | `type="range"` | `field.html`, fall-through | **wrong class** (below) |
+| `rating` | `type="range"` | `field.html`, fall-through | **wrong class**, now fixed (below) |
 | `released_on` / `published_at` / `restock_at` | native `date` / `datetime-local` / `time` | `field.html` | ok |
 | `is_active` | Boolean | `field.html`, `is_checkbox` → `form-check` | ok |
 | `is_featured` | `Switch` | `layout/switch.html` → `form-switch` | ok |
-| `accent_color` | `type="color"` | `field.html`, fall-through | **wrong class** (below) |
+| `accent_color` | `type="color"` | `field.html`, fall-through | **wrong class**, now fixed (below) |
 | `contact_email` | `FloatingField` | `layout/floating_field.html` → `form-floating` | ok |
 | `website` | URL | `field.html` | ok |
 | `datasheet` | `FileField` | `layout/field_file.html` | ok |
-| `internal_notes` | inside `Fieldset` | `layout/fieldset.html` | **plain `<fieldset>`** (below) |
-| Save / Cancel | `FormActions` | `layout/formactions.html` → `mb-3` | **no `form-footer`** (below) |
+| `internal_notes` | inside `Fieldset` | `layout/fieldset.html` | **plain `<fieldset>`**, now fixed (below) |
+| Save / Cancel | `FormActions` | `layout/formactions.html` → `mb-3` | **no `form-footer`**, now fixed (below) |
 
 The **filter form** (`ProductFilter`) covers what a ModelForm cannot reach: `BooleanFilter` renders a
 `NullBooleanSelect` ("Unknown / Yes / No"), two `NumberFilter`s make the price pair, and
 `InlineCheckboxes("tags")` renders `layout/checkboxselectmultiple_inline.html`.
 
-## What is actually wrong under Tabler
+## What was wrong under Tabler, and what `crispy_tabler` emits now
 
-Six findings, all seen in the browser on `/product/create/`:
+Six findings, all seen in the browser on `/product/create/`. **All six are fixed** by the pack and pinned in
+`catalog/tests.py`, with one exception inside finding 6 (below).
 
-1. **`UneditableField` has no Tabler equivalent.** `uneditable_input.html` emits
-   `class="uneditable-input textinput"` — a Bootstrap 2 class that no longer exists anywhere — and **no**
-   `form-control`. The SKU field renders as a grey square-cornered box next to proper inputs. Tabler's class
-   for this is `form-control-plaintext`.
-2. **`type="range"` gets `form-control`.** `field.html` only distinguishes file / select / checkbox and sends
-   everything else to `form-control`, so the slider sits inside a bordered input box with no visible track.
-   Tabler wants `form-range`.
-3. **`type="color"` gets `form-control`.** Same fall-through: the colour picker stretches to the full column
-   width as a solid bar. Tabler wants `form-control-color`.
-4. **`Fieldset` renders a bare `<fieldset><legend>`.** Tabler has `.form-fieldset` (a padded, tinted block);
-   crispy's template takes `css_class`, so this one a project *can* work around, but the default is wrong.
-5. **`FormActions` has no footer spacing.** It renders `class="mb-3"`; Tabler separates a form's actions with
-   `.form-footer` (`margin-top: 2rem`). Save and Cancel currently sit tight under the last field.
-6. **Django's `use_fieldset` labels shrink.** For `RadioSelect` / `CheckboxSelectMultiple`, `field.html`
-   renders the label as `<legend class="fs-6 form-label requiredField">`. Next to the normal `form-label`
-   fields, "Size", "Channels", "Shipping" and the filter's "Tags" read noticeably smaller and lighter.
+1. **`UneditableField` had no Tabler equivalent.** Bootstrap's template emitted `class="uneditable-input textinput"`
+   (a Bootstrap 2 class) and no `form-control`. **Fixed:** now `form-control-plaintext`, and `uneditable-input` is
+   absent. crispy's own `UneditableField` hardcodes the dead class in Python, so the demo imports `UneditableField`
+   from `crispy_tabler.layout`, not `crispy_forms.bootstrap`.
+2. **`type="range"` got `form-control`.** **Fixed:** now `form-range` **alone**. Tabler's `.form-range` resets
+   `appearance` and `background-color`, which `form-control` would fight.
+3. **`type="color"` got `form-control`.** **Fixed:** now `form-control form-control-color`, **both**. Unlike range,
+   Tabler's `.form-control-color` sets only width/height/padding and relies on `.form-control` for border and
+   radius. Do not "simplify" this into one class to match the range fix.
+4. **`Fieldset` rendered a bare `<fieldset><legend>`.** **Fixed:** now `form-fieldset`; a caller's `css_class` is
+   kept alongside it.
+5. **`FormActions` had no footer spacing.** **Fixed:** now `form-footer`.
+6. **Django's `use_fieldset` labels shrank** (`fs-6 form-label`). **Fixed for `RadioSelect` and
+   `CheckboxSelectMultiple`** ("Size", "Channels"): plain `form-label`. **Not fixed for the inline variants:** the
+   pack's `layout/radioselect_inline.html` and `layout/checkboxselectmultiple_inline.html` still carry `fs-6` on their
+   legend, so "Shipping" and the filter's "Tags" are still smaller. This is a bug in `crispy-tabler`;
+   `test_inline_group_labels_are_not_shrunk` is marked `expectedFailure` and will report an unexpected success once
+   it is fixed.
+
+## Known gap: detail pages still need `crispy_bootstrap5`
+
+`crispy_bootstrap5` stays in `INSTALLED_APPS`. django-crud-views' `crud_views/detail/field.html` hardcodes four
+`bootstrap5/...` includes, so the **detail** page renders Bootstrap-pack partials regardless of
+`CRISPY_TEMPLATE_PACK`. Create, update and delete pages do not. Fixing it in the Tabler theme app is an explicit
+non-goal; it belongs upstream in django-crud-views (issue not yet filed; its number goes here).
+`test_create_and_update_pages_use_no_bootstrap5_template` guards the other side: it renders the create and update
+pages with the `bootstrap5/` templates unavailable, and is **skipped** while `crud_views/detail/field.html` still
+hardcodes them (the skip condition reads the template source, so it un-skips itself once upstream is fixed).
 
 Two things are **not** deltas, although the earlier guess was that they would be:
 
@@ -79,8 +93,8 @@ Two things are **not** deltas, although the earlier guess was that they would be
 ## Tabler widgets crispy cannot reach at all
 
 `form-selectgroup` (button-style single/multi select), `form-imagecheck` (image tiles) and `form-colorinput`
-(colour swatch radios) have no crispy layout object. They are candidates for new layout objects in a
-`crispy_tabler` package rather than demo fields, so this app does not use them.
+(colour swatch radios) have no stock crispy layout object. They are candidates for new layout objects in
+`crispy_tabler` rather than demo fields, so this app does not use them.
 
 ## A gotcha worth remembering
 

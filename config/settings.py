@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'crispy_forms',
-    'crispy_bootstrap5',
+    'crispy_bootstrap5',  # kept: crud_views' detail/field.html still includes bootstrap5/ partials
+    'crispy_tabler',
     'django_tables2',
     'django_filters',
     # The Tabler theme overrides crud_views templates, so it must come before crud_views.
@@ -153,7 +154,7 @@ MAILERS = {
 
 # django-crud-views
 
-CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
-CRISPY_TEMPLATE_PACK = 'bootstrap5'
+CRISPY_ALLOWED_TEMPLATE_PACKS = ('crispy_tabler', 'bootstrap5')
+CRISPY_TEMPLATE_PACK = 'crispy_tabler'
 CRUD_VIEWS_EXTENDS = 'crud_views_page.html'
 DJANGO_TABLES2_TEMPLATE = 'crud_views/table/bootstrap5.html'

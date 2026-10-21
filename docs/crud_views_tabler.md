@@ -1,7 +1,8 @@
 # crud_views_tabler: a Tabler theme for django-crud-views (draft)
 
-Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by the `customers`
-demo app (`/customer/` table list, `/customer/card/` card view). Built against django-crud-views main @ 5e36477 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by two
+demo apps: `customers` (`/customer/` table list, `/customer/card/` card view) and `catalog` (`/product/`), whose
+create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views main @ 5e36477 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 

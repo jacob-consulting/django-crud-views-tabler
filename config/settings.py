@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'crud_views.apps.CrudViewsConfig',
     'dashboard',
     'customers',
+    'catalog',
 ]
 
 MIDDLEWARE = [
@@ -128,6 +129,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Uploaded files (catalog datasheets). Served by config/urls.py while DEBUG is on.
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Authentication
 

@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'crispy_forms',
-    'crispy_bootstrap5',
+    'crispy_tabler',
     'django_tables2',
     'django_filters',
     # The Tabler theme overrides crud_views templates, so it must come before crud_views.
@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'crud_views.apps.CrudViewsConfig',
     'dashboard',
     'customers',
+    'catalog',
 ]
 
 MIDDLEWARE = [
@@ -129,6 +130,11 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Uploaded files (catalog datasheets). Served by config/urls.py while DEBUG is on.
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Authentication
 
 LOGIN_URL = 'login'
@@ -147,7 +153,7 @@ MAILERS = {
 
 # django-crud-views
 
-CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
-CRISPY_TEMPLATE_PACK = 'bootstrap5'
+CRISPY_ALLOWED_TEMPLATE_PACKS = ('crispy_tabler',)
+CRISPY_TEMPLATE_PACK = 'crispy_tabler'
 CRUD_VIEWS_EXTENDS = 'crud_views_page.html'
 DJANGO_TABLES2_TEMPLATE = 'crud_views/table/bootstrap5.html'

@@ -24,6 +24,14 @@
           </a>
         </li>
         {% endif %}
+        {% if perms.catalog.view_product %}
+        <li class="nav-item{% if url_name|slice:':8' == 'product-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'product-list' %}"{% if url_name == 'product-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "package" %}</span>
+            <span class="nav-link-title">Products</span>
+          </a>
+        </li>
+        {% endif %}
         {% if perms.auth.view_user %}
         <li class="nav-item{% if url_name == 'users' or url_name == 'user_create' %} active{% endif %}">
           <a class="nav-link" href="{% url 'dashboard:users' %}"{% if url_name == 'users' %} aria-current="page"{% endif %}>

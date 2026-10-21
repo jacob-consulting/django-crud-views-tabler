@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'crispy_forms',
-    'crispy_bootstrap5',  # precaution: crud_views' (unreferenced) detail/field.html hardcodes bootstrap5/ includes
     'crispy_tabler',
     'django_tables2',
     'django_filters',
@@ -154,7 +153,7 @@ MAILERS = {
 
 # django-crud-views
 
-CRISPY_ALLOWED_TEMPLATE_PACKS = ('crispy_tabler', 'bootstrap5')
+CRISPY_ALLOWED_TEMPLATE_PACKS = ('crispy_tabler',)
 CRISPY_TEMPLATE_PACK = 'crispy_tabler'
 CRUD_VIEWS_EXTENDS = 'crud_views_page.html'
 DJANGO_TABLES2_TEMPLATE = 'crud_views/table/bootstrap5.html'

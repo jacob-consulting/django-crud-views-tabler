@@ -51,7 +51,7 @@ The **filter form** (`ProductFilter`) covers what a ModelForm cannot reach: `Boo
 ## What was wrong under Tabler, and what `crispy_tabler` emits now
 
 Six findings, all seen in the browser on `/product/create/`. **All six are fixed** by the pack and pinned in
-`catalog/tests.py`, with one exception inside finding 6 (below).
+`catalog/tests.py`.
 
 1. **`UneditableField` had no Tabler equivalent.** Bootstrap's template emitted `class="uneditable-input textinput"`
    (a Bootstrap 2 class) and no `form-control`. **Fixed:** now `form-control-plaintext`, and `uneditable-input` is
@@ -77,9 +77,11 @@ Six findings, all seen in the browser on `/product/create/`. **All six are fixed
 `bootstrap5/...` includes, so the **detail** page renders Bootstrap-pack partials regardless of
 `CRISPY_TEMPLATE_PACK`. Create, update and delete pages do not. Fixing it in the Tabler theme app is an explicit
 non-goal; it belongs upstream in django-crud-views (issue not yet filed; its number goes here).
-`test_create_and_update_pages_use_no_bootstrap5_template` guards the other side: it renders the create and update
-pages with the `bootstrap5/` templates unavailable, and is **skipped** while `crud_views/detail/field.html` still
+`test_form_and_detail_pages_use_no_bootstrap5_template` guards the other side: it renders the create, update and
+**detail** pages with the `bootstrap5/` templates unavailable (a loader refuses any `bootstrap5/` name), and is **skipped** while `crud_views/detail/field.html` still
 hardcodes them (the skip condition reads the template source, so it un-skips itself once upstream is fixed).
+Because the detail page is in its URL list, un-skipping proves that very fix: it passes only if detail pages
+render without any Bootstrap-pack template.
 
 Two things are **not** deltas, although the earlier guess was that they would be:
 

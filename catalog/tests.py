@@ -33,6 +33,11 @@ class WithoutBootstrap5Loader(AppDirectoriesLoader):
 
 
 class ProductFormCoverageTests(TestCase):
+    def find(self, pattern: str, html: str) -> str:
+        match = re.search(pattern, html)
+        self.assertIsNotNone(match, f"{pattern!r} not found in the rendered page")
+        return match.group(0)
+
     @classmethod
     def setUpTestData(cls):
         cls.admin = get_user_model().objects.create_superuser("root", "root@example.com", "s3cret-pass")
@@ -65,7 +70,7 @@ class ProductFormCoverageTests(TestCase):
         self.assertIn('name="is_featured"', html)  # NullBooleanSelect
         self.assertIn('name="price_min"', html)
         # InlineCheckboxes legend ("Tags") is plain form-label, not shrunk with fs-6
-        legend = re.search(r"<legend[^>]*>\s*Tags", html).group(0)
+        legend = self.find(r"<legend[^>]*>\s*Tags", html)
         self.assertNotIn("fs-6", legend)
         self.assertIn("form-label", legend)
 
@@ -105,26 +110,30 @@ class ProductFormCoverageTests(TestCase):
         # fieldset.html — Django's use_fieldset emits <fieldset> for radio/checkbox fields too,
         # so pin the legend of the Fieldset layout object itself
         self.assertIn("<legend>Internal</legend>", html)
-        self.assertIn("form-fieldset", html)  # Tabler's tinted block, not a bare <fieldset>
+        # Tabler's tinted block, not a bare <fieldset>
+        fieldset = self.find(r"<fieldset[^>]*>\s*<legend>Internal</legend>", html)
+        self.assertIn("form-fieldset", fieldset)
 
     def test_range_and_color_get_tablers_own_classes(self):
         html = self.create_page()
-        range_input = re.search(r'<input type="range"[^>]*>', html).group(0)
-        color_input = re.search(r'<input type="color"[^>]*>', html).group(0)
+        range_input = self.find(r'<input type="range"[^>]*>', html)
+        color_input = self.find(r'<input type="color"[^>]*>', html)
         # .form-range resets appearance/background-color, which .form-control would fight
         self.assertIn("form-range", range_input)
         self.assertNotIn("form-control", range_input)
         # .form-control-color only sets size/padding and relies on .form-control for border and radius
         self.assertIn("form-control-color", color_input)
-        self.assertRegex(color_input, r'class="[^"]*\bform-control\b[^"]*"')
+        classes = re.search(r'class="([^"]*)"', color_input).group(1).split()
+        self.assertIn("form-control", classes)  # a standalone token, not just the prefix of form-control-color
 
     def test_form_actions_and_group_labels(self):
         html = self.create_page()
-        self.assertIn("form-footer", html)  # formactions.html
+        footer = self.find(r"<div[^>]*>\s*<div class=\"\">\s*<input type=\"submit\"", html)  # formactions.html
+        self.assertIn("form-footer", footer)
         # group legends are plain form-label: Size/Channels (field.html), Shipping (radioselect_inline.html)
         for name in ("Size", "Channels", "Shipping"):
             with self.subTest(label=name):
-                legend = re.search(r"<legend[^>]*>\s*" + name, html).group(0)
+                legend = self.find(r"<legend[^>]*>\s*" + name, html)
                 self.assertNotIn("fs-6", legend)
                 self.assertIn("form-label", legend)
         self.assertNotIn("fs-6", html)
@@ -134,8 +143,9 @@ class ProductFormCoverageTests(TestCase):
         "django-crud-views' crud_views/detail/field.html still hardcodes four bootstrap5/ includes, so detail "
         "pages need crispy_bootstrap5 installed; an upstream issue for it is still to be filed (number to follow)",
     )
-    def test_create_and_update_pages_use_no_bootstrap5_template(self):
-        # detail pages are excluded: crud_views/detail/field.html hardcodes four bootstrap5 includes
+    def test_form_and_detail_pages_use_no_bootstrap5_template(self):
+        # the detail page is the one that matters: crud_views/detail/field.html hardcodes four bootstrap5 includes,
+        # which is why this test is skipped today. When the skip lifts, detail is covered too.
         # Removing crispy_bootstrap5 from INSTALLED_APPS would re-run every AppConfig.ready() (crud_views asset
         # bundles register twice), so take its templates away at the loader instead: same effect on rendering.
         templates = copy.deepcopy(settings.TEMPLATES)
@@ -145,7 +155,11 @@ class ProductFormCoverageTests(TestCase):
             "catalog.tests.WithoutBootstrap5Loader",
         ]
         with override_settings(TEMPLATES=templates):
-            for url in [reverse("product-create"), reverse("product-update", kwargs={"pk": self.product.pk})]:
+            for url in [
+                reverse("product-create"),
+                reverse("product-update", kwargs={"pk": self.product.pk}),
+                reverse("product-detail", kwargs={"pk": self.product.pk}),
+            ]:
                 with self.subTest(url=url):
                     response = self.client.get(url)
                     self.assertEqual(response.status_code, 200)

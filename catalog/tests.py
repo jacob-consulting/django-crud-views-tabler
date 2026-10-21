@@ -64,6 +64,10 @@ class ProductFormCoverageTests(TestCase):
         self.assertIn('name="tags"', html)  # checkboxselectmultiple_inline.html
         self.assertIn('name="is_featured"', html)  # NullBooleanSelect
         self.assertIn('name="price_min"', html)
+        # InlineCheckboxes legend ("Tags") is plain form-label, not shrunk with fs-6
+        legend = re.search(r"<legend[^>]*>\s*Tags", html).group(0)
+        self.assertNotIn("fs-6", legend)
+        self.assertIn("form-label", legend)
 
     def test_text_select_and_textarea_paths(self):
         html = self.create_page()
@@ -117,18 +121,13 @@ class ProductFormCoverageTests(TestCase):
     def test_form_actions_and_group_labels(self):
         html = self.create_page()
         self.assertIn("form-footer", html)  # formactions.html
-        # use_fieldset legends (radio_checkbox_select.html) are no longer shrunk
-        for name in ("Size", "Channels"):
+        # group legends are plain form-label: Size/Channels (field.html), Shipping (radioselect_inline.html)
+        for name in ("Size", "Channels", "Shipping"):
             with self.subTest(label=name):
                 legend = re.search(r"<legend[^>]*>\s*" + name, html).group(0)
                 self.assertNotIn("fs-6", legend)
-
-    @unittest.expectedFailure
-    def test_inline_group_labels_are_not_shrunk(self):
-        # Known gap in crispy-tabler: layout/radioselect_inline.html (and checkboxselectmultiple_inline.html)
-        # still carry fs-6 on their legend, so "Shipping" and the filter's "Tags" stay small. Remove the
-        # decorator once the pack is fixed; an unexpected success will say so.
-        self.assertNotIn("fs-6", self.create_page())
+                self.assertIn("form-label", legend)
+        self.assertNotIn("fs-6", html)
 
     @unittest.skipIf(
         _detail_field_template_hardcodes_bootstrap5(),

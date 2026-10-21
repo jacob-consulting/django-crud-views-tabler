@@ -65,12 +65,11 @@ Six findings, all seen in the browser on `/product/create/`. **All six are fixed
 4. **`Fieldset` rendered a bare `<fieldset><legend>`.** **Fixed:** now `form-fieldset`; a caller's `css_class` is
    kept alongside it.
 5. **`FormActions` had no footer spacing.** **Fixed:** now `form-footer`.
-6. **Django's `use_fieldset` labels shrank** (`fs-6 form-label`). **Fixed for `RadioSelect` and
-   `CheckboxSelectMultiple`** ("Size", "Channels"): plain `form-label`. **Not fixed for the inline variants:** the
-   pack's `layout/radioselect_inline.html` and `layout/checkboxselectmultiple_inline.html` still carry `fs-6` on their
-   legend, so "Shipping" and the filter's "Tags" are still smaller. This is a bug in `crispy-tabler`;
-   `test_inline_group_labels_are_not_shrunk` is marked `expectedFailure` and will report an unexpected success once
-   it is fixed.
+6. **Django's `use_fieldset` labels shrank** (`fs-6 form-label`). **Fixed:** plain `form-label` everywhere. The fix
+   spans **three** templates in `crispy_tabler`: `field.html` ("Size", "Channels") plus
+   `layout/radioselect_inline.html` ("Shipping") and `layout/checkboxselectmultiple_inline.html` (the filter's
+   "Tags"). The two inline ones were missed at first and caught by this demo; `fs-6` now appears nowhere on
+   `/product/create/`.
 
 ## Known gap: detail pages still need `crispy_bootstrap5`
 

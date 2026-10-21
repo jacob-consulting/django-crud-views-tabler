@@ -1,7 +1,7 @@
 # crispy_tabler: a Tabler template pack for django-crispy-forms
 
 Date: 2026-10-21
-Status: design, discussed with the maintainer; builder check pending
+Status: design, discussed with the maintainer; builder check complete, open questions answered
 
 ## Intent
 
@@ -91,12 +91,22 @@ findings fixed.
 3. **The six fixes**, in the vendored templates and the new widgets (see *Design*).
 4. **Own widgets** with their own `template_name`, in the shape the reference package uses, for the cases where
    Django's default widget cannot carry Tabler's markup.
+4b. **Own `FloatingField` and `Switch`** in `crispy_tabler.layout`, because crispy-bootstrap5's hardcode their
+   template path and would otherwise render Bootstrap markup under this pack (see *The two layout objects that
+   escape the pack*), plus an upstream issue asking crispy-bootstrap5 to make those two templates pack-relative.
 5. **A parity test** that walks the installed `crispy_bootstrap5` template directory and asserts the pack has a
    file of the same name for every one of them, plus a recorded note of the crispy-bootstrap5 version each
    template was vendored from. This is the drift detector that upstream issue #211 asks for, built in from day one.
 6. **Wired into this demo**: editable path dependency, `crispy_tabler` in `INSTALLED_APPS`,
-   `CRISPY_TEMPLATE_PACK = 'crispy_tabler'`, the `catalog` and `customers` forms rendering through it unchanged,
-   and `docs/crispy_tabler_coverage.md` updated to record what the new pack fixes.
+   `CRISPY_TEMPLATE_PACK = 'crispy_tabler'`, and `docs/crispy_tabler_coverage.md` updated to record what the new
+   pack fixes and what it does not. The `customers` form renders through the new pack with no source change; the
+   `catalog` form changes two import lines, swapping crispy-bootstrap5's `FloatingField` and `Switch` for the
+   pack's own. Nothing else in either app moves.
+7. **`crispy_bootstrap5` leaves the demo's `INSTALLED_APPS`.** With 4b in place nothing needs its templates, and
+   removing the app turns self-containment into something the test suite can actually prove: a stray `bootstrap5/`
+   include then raises `TemplateDoesNotExist` instead of silently resolving. The distribution stays installed —
+   the parity test reads its template directory. This is the single sharpest check in the plan, so it is a goal,
+   not a nicety.
 
 ## Non-goals
 
@@ -105,9 +115,18 @@ findings fixed.
   version.
 - Any JavaScript. The pack is templates, widgets and fields.
 - Moving, changing or depending on `crud_views_tabler`.
-- Dropping crispy-bootstrap5 as a dependency. It stays, for its **Python** layout objects (`FloatingField`,
-  `Switch`, `BS5Accordion`) and as the source of truth the parity test compares against — never as a template
-  fallback.
+- Dropping crispy-bootstrap5 as a **distribution** dependency. It stays for `BS5Accordion` (whose template *is*
+  pack-relative) and as the source of truth the parity test compares against — never as a template fallback, and
+  no longer in the demo's `INSTALLED_APPS`.
+- Fixing django-crud-views' own `crud_views/detail/field.html`. It is a vendored copy of Bootstrap's `field.html`
+  carrying four hardcoded `bootstrap5/…` includes (lines 22, 35, 39, 58), and the theme does not override it, so
+  **detail pages keep Bootstrap partials after the switch while create and update pages get Tabler ones**. That is
+  a known gap, recorded in `docs/crispy_tabler_coverage.md` and filed as an upstream issue asking for those
+  includes to become pack-relative — the same route as #208–#211. Fixing it here would mean either depending on
+  crud_views from this package or adding an eleventh override to the theme, and both are anti-goals. Note that
+  this gap keeps `crispy_bootstrap5` in the *demo's* `INSTALLED_APPS` until it is resolved upstream, so goal 7
+  lands only once a detail page no longer needs Bootstrap templates — if the upstream fix has not landed by then,
+  goal 7 ships as a test that is skipped with that reason recorded, not as a quietly dropped goal.
 - Replacing the theme's existing CSS bridges (for example `.asteriskField`). Where the pack now emits a correct
   class, the corresponding bridge can go, but auditing the theme's stylesheet is not part of this.
 - i18n of the package's own strings.
@@ -127,7 +146,10 @@ Things that would mean the design was not followed, even if the result looked ri
 
 ## Constraints
 
-- Python ≥ 3.12; Django 4.2, 5.2 and 6.x, matching django-crud-views' own support matrix.
+- Python ≥ 3.12; **Django ≥ 5.2** (5.2 and 6.x). This deliberately diverges from django-crud-views' 4.2 floor:
+  crispy-bootstrap5 2026.9 and django-crispy-forms 2.7 both declare `Requires-Dist: django>=5.2`, so a 4.2 claim
+  could not be installed, let alone tested. Vendoring from an older crispy-bootstrap5 to keep 4.2 was considered
+  and rejected — it would change the template baseline the six findings were measured against.
 - django-crispy-forms ≥ 2.4, crispy-bootstrap5 pinned to a lower bound that the vendored templates were taken
   from, and recorded as such.
 - Tabler 1.6.1's class vocabulary. The checkout at `/home/alex/projects/alex/tabler/tabler-1.6.1` is the
@@ -149,7 +171,7 @@ crispy-tabler/
     __init__.py  apps.py
     widgets.py            # Django widgets with their own template_name
     fields.py             # form fields that bind those widgets
-    layout.py             # crispy layout objects (wave 2 grows here)
+    layout.py             # FloatingField, Switch (wave 1); wave 2 grows here
     templatetags/crispy_tabler_field.py
     templates/crispy_tabler/
       field.html  uni_form.html  errors.html  …          # the 42 vendored names
@@ -208,6 +230,34 @@ the findings justify, each with its own `template_name = "crispy_tabler/widget/<
 `fields.py` binds those widgets to form fields. The module exists in wave 1 mainly so that wave 2's Tabler-only
 components have an established home; it should not grow speculative API.
 
+### The two layout objects that escape the pack
+
+`CRISPY_TEMPLATE_PACK` does not reach every layout object. `crispy_forms.layout.LayoutObject.get_template_name`
+substitutes the pack **only when the template string contains `%s`**:
+
+```python
+def get_template_name(self, template_pack):
+    if "%s" in self.template:
+        template = self.template % template_pack
+    else:
+        template = self.template
+```
+
+Two objects in crispy-bootstrap5 hardcode theirs — `FloatingField.template = "bootstrap5/layout/floating_field.html"`
+and `Switch.template = "bootstrap5/layout/switch.html"` — so under `CRISPY_TEMPLATE_PACK = 'crispy_tabler'` they
+still render Bootstrap templates, which in turn include `bootstrap5/layout/help_text_and_errors.html`. Every other
+object in `crispy_forms.layout` and `crispy_forms.bootstrap`, `BS5Accordion` included, is `%s`-relative and
+follows the pack correctly. The acceptance page uses both of the exceptions.
+
+So `crispy_tabler.layout` ships `FloatingField` and `Switch` whose `template` is `"%s/layout/floating_field.html"`
+and `"%s/layout/switch.html"`, rendering the pack's own vendored copies. A project swaps the import; the demo's
+`catalog/views.py` does exactly that. An issue goes to crispy-bootstrap5 asking for the two templates to be made
+pack-relative upstream, which would make these subclasses unnecessary for everyone.
+
+This is also what makes goal 7 possible: with no object reaching for a `bootstrap5/` template, the demo can drop
+`crispy_bootstrap5` from `INSTALLED_APPS`, and any leak becomes a `TemplateDoesNotExist` at test time rather than
+markup nobody notices.
+
 ### Settings, in the demo and in the README
 
 ```python
@@ -244,14 +294,19 @@ pack and updating those markers *is* the acceptance test for "nothing else moved
 3. `docs/crispy_tabler_coverage.md` updated: each of the six findings marked fixed, with the class now emitted.
 4. No `bootstrap5/` string under `src/crispy_tabler/templates/`.
 5. The parity test fails if a template name is added to crispy-bootstrap5 and not to the pack.
+6. The demo's rendered pages contain no markup produced by a `bootstrap5/` template. Once the upstream detail-page
+   fix has landed, this is enforced by removing `crispy_bootstrap5` from `INSTALLED_APPS`; until then it holds for
+   create, update, list-filter and delete pages, and the detail-page gap is recorded.
+7. Two issues filed: crispy-bootstrap5 (make `FloatingField` / `Switch` templates pack-relative) and
+   django-crud-views (make `crud_views/detail/field.html`'s four includes pack-relative).
 
 ## Left to the builder
 
 - The exact provenance mechanism (a header comment per file, a single `VENDORED.md`, or both) — as long as the
   crispy-bootstrap5 version is recorded and the parity test reads it.
 - Test framework details in the new repository (pytest layout, a nox file or not, CI or not for the first version).
-- Whether `layout.py` ships anything at all in wave 1 or is created empty with a docstring.
-- Naming of the widget classes and their template files.
+- Naming of the widget classes and their template files, and whether `crispy_tabler.layout` re-exports the
+  crispy-bootstrap5 objects it does *not* need to replace, so a project can import them all from one module.
 - Whether the theme's `.asteriskField` CSS bridge is left alone (default) or the pack emits Tabler's
   `form-label required` instead — the second is tempting, but it changes markup the theme currently depends on, so
   it needs its own decision rather than being folded in here.

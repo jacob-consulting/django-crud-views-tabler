@@ -2,7 +2,7 @@
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by two
 demo apps: `customers` (`/customer/` table list, `/customer/card/` card view) and `catalog` (`/product/`), whose
-create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views main @ 5e36477 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views main @ 10d81ad (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213 and the removal of the dead crispy detail templates #217, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -20,7 +20,6 @@ crud_views code is patched or subclassed.
 INSTALLED_APPS = [
     ...,
     "crispy_forms",
-    "crispy_bootstrap5",  # precaution only; see Forms (crispy)
     "crispy_tabler",
     "django_tables2",
     "django_filters",
@@ -28,7 +27,7 @@ INSTALLED_APPS = [
     "crud_views.apps.CrudViewsConfig",
 ]
 CRISPY_TEMPLATE_PACK = "crispy_tabler"
-CRISPY_ALLOWED_TEMPLATE_PACKS = ("crispy_tabler", "bootstrap5")
+CRISPY_ALLOWED_TEMPLATE_PACKS = ("crispy_tabler",)
 CRUD_VIEWS_EXTENDS = "crud_views_page.html"                   # project template, see below
 DJANGO_TABLES2_TEMPLATE = "crud_views/table/bootstrap5.html"  # the theme's table template
 ```
@@ -156,9 +155,11 @@ The demo renders forms through the sibling template pack `crispy_tabler` (`CRISP
 see [crispy_tabler_coverage.md](crispy_tabler_coverage.md) for what it fixes). The theme app itself needs **no
 crispy template overrides**: Tabler is Bootstrap 5, so `form-label`, `form-control`, `form-select`, `form-check`,
 `is-invalid` and `invalid-feedback` render natively with either pack, including in dark mode. `crispy_bootstrap5`
-stays in `INSTALLED_APPS` as a precaution: crud_views' `crud_views/detail/field.html` hardcodes four `bootstrap5/...`
-includes, though nothing currently renders that file (see the latent-gap section in
-[crispy_tabler_coverage.md](crispy_tabler_coverage.md)). Remaining gaps and how the prototype handles them:
+is **not** in `INSTALLED_APPS` and nothing needs it: upstream removed `crud_views/detail/` — the last templates in
+the package carrying hardcoded `bootstrap5/...` includes — in 10d81ad (#217), so the former precaution is gone (see
+[crispy_tabler_coverage.md](crispy_tabler_coverage.md)). The `crispy-bootstrap5` *distribution* stays installed, as a
+dependency of `crispy-tabler`, whose `layout` module subclasses its `FloatingField` and `Switch`. Remaining gaps and
+how the prototype handles them:
 
 - **Required marker**: crispy prints `<span class="asteriskField">*</span>`; the theme CSS colours it like Tabler's
   `.form-label.required`.

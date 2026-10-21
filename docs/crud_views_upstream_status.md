@@ -54,7 +54,7 @@ Point by point, with the evidence behind "none":
 
 ## Still to do
 
-### Upstream asks (#208-#211 filed on 2026-10-21; #217 added later the same day)
+### Upstream asks (#208-#211 filed on 2026-10-21; #217 added later the same day and already resolved)
 
 1. **`cv-key=""` on the stock filter toggle.** `FilterContextButton.get_context()`
    (`src/crud_views/lib/view/buttons.py:295-328`) never puts `cv_key` in the context, while
@@ -63,6 +63,7 @@ Point by point, with the evidence behind "none":
    The theme no longer overrides that template, so it has to be fixed upstream. **Filed as
    [#208](https://github.com/jacob-consulting/django-crud-views/issues/208)** (2026-10-21), with the golden-file
    evidence, why the context is missing the key, `self.key` vs the list view's key, and acceptance criteria.
+   **Fixed upstream in 5cc9240** (the toggle renders `cv-key="filter"`); #209-#211 not re-checked.
 2. **The class table cannot tell an icon-only card button from a labelled one.** `card:tertiary` carries
    `btn-icon` because the demo's only tertiary card action is the icon-only delete; a project with a labelled
    tertiary card button has to override the key
@@ -86,21 +87,21 @@ Point by point, with the evidence behind "none":
    check for an override of a template the package no longer ships, and a `cv_template_overrides --diff` command for
    upgrade review. Recommends those two plus documenting the contract of the remaining templates.
 
-5. **An unreferenced template that hardcodes Bootstrap includes.** `src/crud_views/templates/crud_views/detail/field.html`
-   is a vendored copy of Bootstrap's `field.html` with four `bootstrap5/layout/...` includes (lines 22, 35, 39, 58),
-   and nothing in the package appears to render it: no static or built template path mentions `detail/field` or
-   `crud_views/detail` (the three `detail/widgets/` files look unreferenced too), and `crud_views_object_detail`
-   builds only `crud_views_object_detail/...` paths. So it is either dead code or live through wiring we could not
-   find. **Filed as [#217](https://github.com/jacob-consulting/django-crud-views/issues/217)** as a question rather
-   than a claim, with the exact greps so it can be repeated. Resolving it as dead code deletes the file (and
-   probably `detail/widgets/`); resolving it as live makes the includes follow `CRISPY_TEMPLATE_PACK`. The demo is
-   unaffected either way; the guard test `test_form_and_detail_pages_use_no_bootstrap5_template` is skipped on this
-   condition and un-skips itself once the includes are gone.
+5. ~~**An unreferenced template that hardcodes Bootstrap includes.**~~ **Done (#217).** `crud_views/detail/field.html`
+   was a vendored copy of Bootstrap's `field.html` with four `bootstrap5/layout/...` includes, and nothing in the
+   package rendered it. Filed as [#217](https://github.com/jacob-consulting/django-crud-views/issues/217) as a
+   question (dead code or live?) with the exact greps; resolved as dead code in upstream commit 10d81ad, which
+   removed the whole `crud_views/detail/` directory (`field.html` plus `widgets/{attrs,bool,display}.html`) and the
+   `cv_is_true` / `cv_is_false` / `cv_is_list` filters that only those templates used. No template under
+   `src/crud_views/templates/` contains `bootstrap5/` any more. The demo was unaffected either way; its guard test
+   `test_form_and_detail_pages_use_no_bootstrap5_template` runs unskipped and green, and `crispy_bootstrap5` is out
+   of the demo's `INSTALLED_APPS`.
 
 ### Theme follow-ups
 
-- **Re-diff the 10 overrides whenever an upstream release touches `src/crud_views/templates`.** Nothing newer than
-  4b62ed6 does, so they are current. The drift surface is small but not empty: `tags/list_filter.html` and
+- **Re-diff the 10 overrides whenever an upstream release touches `src/crud_views/templates`.** Two commits up to
+  10d81ad do: 3fc4be6 (#213/#218) touched `tags/button/action.html` and 10d81ad (#217) deleted `crud_views/detail/`.
+  Neither path is among the 10 overrides, so they are still current. The drift surface is small but not empty: `tags/list_filter.html` and
   `tags/list_filter.inner.html` carry the pinned-filter contract, and `view_create.content.html`,
   `view_update.content.html`, `view_delete.content.html` must keep posting to `request.get_full_path` (so `cv_from`
   survives) plus delete's protection-error branch. The other five (`tags/card.html`, `view_card.content.html`,

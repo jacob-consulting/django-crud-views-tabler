@@ -71,29 +71,28 @@ Six findings, all seen in the browser on `/product/create/`. **All six are fixed
    "Tags"). The two inline ones were missed at first and caught by this demo; `fs-6` now appears nowhere on
    `/product/create/`.
 
-## Known gap: a latent `bootstrap5/` dependency in django-crud-views (harmless here)
+## Resolved: the latent `bootstrap5/` dependency in django-crud-views
 
-django-crud-views' `crud_views/detail/field.html` hardcodes four `bootstrap5/...` includes, so it would render
-Bootstrap-pack partials whatever `CRISPY_TEMPLATE_PACK` says. That is a real defect in that file, but it is
-**latent**: the file appears to be referenced nowhere in django-crud-views (neither by a static template path nor by a
-dynamically built one; the object-detail app builds only `crud_views_object_detail/...` paths), so no current code
-path renders it. Detail pages are not degraded by the switch to `crispy_tabler`.
+django-crud-views used to ship `crud_views/detail/field.html`, a vendored copy of Bootstrap's `field.html` with four
+hardcoded `bootstrap5/...` includes, so it would have rendered Bootstrap-pack partials whatever
+`CRISPY_TEMPLATE_PACK` says. It was a real defect in that file but a **latent** one: nothing in the package rendered
+it. Filed as [django-crud-views#217](https://github.com/jacob-consulting/django-crud-views/issues/217) as a question
+(dead code or live?), and resolved as dead code: upstream commit 10d81ad removed the whole `crud_views/detail/`
+directory — `field.html` and `widgets/{attrs,bool,display}.html` — together with the `cv_is_true`, `cv_is_false` and
+`cv_is_list` template filters that only those templates used. No template in the package contains the string
+`bootstrap5/` any more (`src/crud_views/templates/`), so a non-Bootstrap crispy pack has nothing left to trip over.
 
-This demo could not reach it anyway, for two independent reasons, either of which is enough on its own:
+Consequently `crispy_bootstrap5` is out of `INSTALLED_APPS` and nothing depends on it being there. The
+`crispy-bootstrap5` *distribution* is still installed — `crispy_tabler.layout` subclasses its `FloatingField` and
+`Switch`, and django-crud-views still declares it in `dependencies` — but that is a Python import, not a template
+lookup, and unrelated to this gap.
 
-1. `crud_views_object_detail` is not in `INSTALLED_APPS`.
-2. `ProductDetailView` and `CustomerDetailView` set their own `template_name` and render hand-written templates, so
-   they never go through crispy. Changing one of these facts does not by itself expose the other.
-
-Consequently `crispy_bootstrap5` stays in `INSTALLED_APPS` as a precaution, not a necessity. Fixing the file is worth
-doing upstream ([django-crud-views#217](https://github.com/jacob-consulting/django-crud-views/issues/217), which asks whether the file is dead code or live), and fixing it in the Tabler theme app is an explicit
-non-goal.
-
-`test_form_and_detail_pages_use_no_bootstrap5_template` renders the create, update and detail pages with a loader that
-refuses any `bootstrap5/` template name. It is **skipped** while `crud_views/detail/field.html` still hardcodes the
-includes (the condition reads the template source, so it un-skips itself when upstream is fixed). It passes for detail
-pages today, so **un-skipping it will prove little by itself**: it would pass whether or not the file was fixed. It
-only becomes meaningful evidence if the demo is changed to actually render that template.
+`test_form_and_detail_pages_use_no_bootstrap5_template` renders the create, update, detail, list-filter and delete
+pages with no `crispy_bootstrap5` in `INSTALLED_APPS`, so a stray `bootstrap5/` reference raises
+`TemplateDoesNotExist`, and asserts no such name appears in the rendered template list. It runs unskipped and green
+(71 tests, 0 skipped, against upstream 10d81ad). It is a guard against regression, not proof that the old file was
+harmless — the demo never rendered it, for two independent reasons: `crud_views_object_detail` is not installed, and
+`ProductDetailView` / `CustomerDetailView` set their own `template_name` and never go through crispy.
 
 Two things are **not** deltas, although the earlier guess was that they would be:
 

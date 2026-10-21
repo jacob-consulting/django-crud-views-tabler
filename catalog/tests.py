@@ -124,8 +124,8 @@ class ProductFormCoverageTests(TestCase):
     def test_form_and_detail_pages_use_no_bootstrap5_template(self):
         # crispy_bootstrap5 is not in INSTALLED_APPS (spec goal 7), so a stray bootstrap5/ reference raises
         # TemplateDoesNotExist; this also asserts no such template shows up in the rendered template list.
-        # Context: django-crud-views#217 (crud_views/detail/field.html hardcodes bootstrap5/ includes, but
-        # nothing renders it). If that file is ever rendered, this test is where it will show.
+        # Context: django-crud-views#217 removed crud_views/detail/, the last templates in the package with
+        # hardcoded bootstrap5/ includes, so this is now a regression guard for the pack and the theme.
         rendered = set()
         for url, query in [
             (reverse("product-create"), {}),

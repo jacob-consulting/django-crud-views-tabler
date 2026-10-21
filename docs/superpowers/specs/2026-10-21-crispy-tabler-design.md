@@ -185,10 +185,15 @@ checkbox, and sends everything else to `form-control` via `{% crispy_field field
 widget that sets `form-range` on itself would therefore end up with *both* classes. crispy's own filters live in
 `crispy_forms.templatetags.crispy_forms_field` and cover only `is_checkbox`, `is_password`, `is_radioselect`,
 `is_select`, `is_checkboxselectmultiple`, `is_file`, `is_clearable_file` and `is_multivalue` — there is nothing for
-range or colour. So the pack ships its own templatetag library with `is_range` and `is_color` (reading the widget's
-`input_type`), and `field.html` loads it alongside `crispy_forms_field` and branches before the `form-control`
-fall-through. This works for a plain `forms.NumberInput(attrs={"type": "range"})` — no special widget required,
-which is what the `catalog` demo already uses.
+range or colour. So the pack ships its own templatetag library with `is_range` and `is_color`, and `field.html`
+loads it alongside `crispy_forms_field` and branches before the `form-control` fall-through.
+
+**Those filters must read `widget.attrs.get("type")` first and only then fall back to `widget.input_type`.** The
+obvious implementation — `input_type` alone — detects neither of the demo's own fields: `catalog/views.py` asks for
+a slider with `forms.NumberInput(attrs={"type": "range"})`, whose `input_type` is `"number"`, and for a colour
+picker with `forms.TextInput(attrs={"type": "color"})`, whose `input_type` is `"text"`. Getting this wrong makes
+findings 2 and 3 verify as unfixed on the acceptance page. Reading the attribute first also means a plain Django
+widget with a `type` override is fixed without anyone adopting a new widget class.
 
 ### The widgets
 

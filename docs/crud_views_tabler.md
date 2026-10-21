@@ -269,3 +269,7 @@ Discussed in detail, with the current code paths, pros and cons, in
 3. jQuery (used by four of the six core scripts, including modals and POST actions) and a global `bootstrap`. **Resolved on main (#200, jQuery-free core and cv.adapters).**
 4. A way to mark a context action as the page's primary action. **Resolved on main (#201, variants).**
 5. Theme overrides have to copy the package's template logic, and nothing detects when they go stale. **Resolved for buttons on main (#201 leaves, #204 tooltip markers): the theme overrides no button template.**
+
+Where each point stands against upstream main today, and what is left to do (two open points; the four upstream
+asks are filed as #208, #209, #210 and #211):
+[crud_views_upstream_status.md](crud_views_upstream_status.md).

@@ -1,0 +1,108 @@
+# django-crud-views upstream questions: current state
+
+Status snapshot for the five points in
+[crud_views_upstream_questions.md](crud_views_upstream_questions.md). That document keeps the analysis, the code
+paths and the options per point; this one says only where each point stands today and what is left to do. The
+questions document is not edited.
+
+## What this was checked against (2026-10-21)
+
+- **Upstream:** `/home/alex/projects/alex/django-crud-views`, branch `main` at **5e36477** (#205, tooltip
+  lifecycle). The last commit that touches `src/crud_views/templates` is **4b62ed6** (#204), so the template
+  audit recorded in the questions document at 4b62ed6 still describes HEAD; `git show --stat 5e36477` touches
+  JavaScript, tests and docs only.
+- **Theme:** this repository at **7799490** on `main` (clean apart from untracked `.run/`).
+- **Install:** editable — `crud_views.__file__` resolves to the upstream checkout, so the theme runs against main,
+  not against a released wheel.
+- **Tests:** `uv run python manage.py test crud_views_tabler` → 47 tests, OK.
+- **Upstream issue tracker:** six issues open: #191 (create view renders `form.media` twice), #89 (stability
+  docs) and **#208**, **#209**, **#210**, **#211** — all four asks below, filed from this document on 2026-10-21.
+  #202, raised by this theme, and #203, which came out of the #202 acceptance run upstream, are both closed.
+- **Not run this session:** no browser verification. The demo has no formset page, so nothing here exercises
+  `formset.js`.
+
+## The five points
+
+| # | Question | Resolved by | What the theme does now | Residual |
+|---|---|---|---|---|
+| 1 | [Icons hard-coded as Font Awesome classes](crud_views_upstream_questions.md#1-icons-font-awesome-class-names-hard-coded-in-several-places) | 0.30.0 (#198, #199): semantic icon registry | Registers a `tabler` library (inline SVG) and an icon per semantic name from `ready()` | none |
+| 2 | [Button classes set in Python](crud_views_upstream_questions.md#2-button-classes-set-in-python) | #201 (e4bce00): `CrispyDeleteForm` hooks + layered class table | Registers `TABLER_BUTTON_CLASSES` with `form:delete`; uses stock `CrispyDeleteForm` | none |
+| 3 | [jQuery and a global `bootstrap`](crud_views_upstream_questions.md#3-jquery-and-a-global-bootstrap) | #200 (440ac55): jQuery-free core + `cv.adapters`; #205 added the tooltip lifecycle | One asset, `tabler-adapters.js`, one statement; no jQuery, no shim | **open:** `formset.js` is still jQuery |
+| 4 | [Marking a context action as primary](crud_views_upstream_questions.md#4-marking-a-context-action-as-the-pages-primary-action) | #201 (e4bce00): `cv_action_variant` + per-button `variant` | `context:primary` / `secondary` / `danger` in the class table; no key-based special case | none |
+| 5 | [Overrides copy template logic, nothing detects drift](crud_views_upstream_questions.md#5-theme-overrides-have-to-copy-the-packages-template-logic) | #201 (leaves), #204 (tooltip markers) — **for buttons** | Overrides no button template; 10 layout overrides left | **open:** nothing detects a stale override |
+
+Point by point, with the evidence behind "none":
+
+- **1.** The second icon convention is gone too: `CRUD_VIEWS_OBJECT_DETAIL_ICONS_*` are listed as removed settings
+  pointing at `CRUD_VIEWS_ICONS` / `BOOTSTRAP_ICONS` (`src/crud_views/lib/icons.py:226-229`), so core and object
+  detail share one table.
+- **2.** The unused `cv_submit_button` / `cv_cancel_button` / `cv_delete_button` tags the question asked about are
+  removed, replaced by the class table (`docs/reference/buttons.md:248`).
+- **3.** Resolved for every page without a formset. `formset.js` still needs jQuery and says so at runtime
+  (`src/crud_views/static/crud_views/js/formset.js:633`); option C of the question (port it) was deferred and no
+  upstream issue tracks it.
+- **4.** `cv_action_variant` defaults to `secondary` (`lib/view/base.py:109`), `primary` on `CreateView`
+  (`lib/views/create.py:27`) and on the polymorphic create-select view
+  (`src/crud_views_polymorphic/lib/create_select.py:44`), `danger` on `DeleteView` (`lib/views/delete.py:49`);
+  `ContextButton.variant` and `CardAction.variant` override per button. The part of the question that asked for a
+  *visible label* on the primary action was settled the other way: the stock leaf keeps the label visually hidden
+  and the maintainer accepted the icon-only blue button (recorded in
+  [crud_views_tabler.md](crud_views_tabler.md#header-and-actions)).
+- **5.** Option D landed for buttons and the leaf contract is documented (`docs/reference/buttons.md:178, 193`).
+  Nothing was built for the drift problem itself: no template marker, no system check, and no contract
+  documentation for the templates a theme still overrides.
+
+## Still to do
+
+### Upstream asks (all four filed on 2026-10-21)
+
+1. **`cv-key=""` on the stock filter toggle.** `FilterContextButton.get_context()`
+   (`src/crud_views/lib/view/buttons.py:295-328`) never puts `cv_key` in the context, while
+   `templates/crud_views/tags/context_action_filter.html` renders `cv-key="{{ cv_key }}"`. Harmless today (no
+   script reads that attribute on the toggle) but inconsistent with every other toolbar button, and a one-line fix.
+   The theme no longer overrides that template, so it has to be fixed upstream. **Filed as
+   [#208](https://github.com/jacob-consulting/django-crud-views/issues/208)** (2026-10-21), with the golden-file
+   evidence, why the context is missing the key, `self.key` vs the list view's key, and acceptance criteria.
+2. **The class table cannot tell an icon-only card button from a labelled one.** `card:tertiary` carries
+   `btn-icon` because the demo's only tertiary card action is the icon-only delete; a project with a labelled
+   tertiary card button has to override the key
+   ([crud_views_tabler.md](crud_views_tabler.md#card-views), "limitation"). `cv_label_visible` is already part of
+   the leaf contract (`lib/view/button_data.py:51`); it just never reaches `{% cv_button_class cv_location
+   cv_variant %}`. This limitation appeared *with* #201 and is not in the questions document. **Filed as
+   [#209](https://github.com/jacob-consulting/django-crud-views/issues/209)** (2026-10-21), weighing a label-mode
+   segment in the key with a fallback (per mode: fine-tuning later, covers the non-additive ghost-vs-solid case)
+   against one appended `icon-only` key (union: less code, one rule for all) — recommending the per-mode key,
+   because the fallback makes it cost one table entry today while the additive rule cannot express a class swap.
+3. **A jQuery-free `formset.js`** (option C of point 3). **Filed as
+   [#210](https://github.com/jacob-consulting/django-crud-views/issues/210)**: 644 lines, one `$.ajax` plus jQuery
+   selections as instance state, and — the part that lowers the risk — a documented surface that is *not*
+   jQuery-shaped (the `cv:formset:row-added` event and "load jQuery"; the `X*` classes sit on `globalThis.cv` for
+   the unit tests only). The original unknown stays: whether anything in the wild reaches into those classes. Low
+   urgency here — the demo has no formset page.
+4. **Something for drift** (point 5, options B/E), or at least option A for what is left. **Filed as
+   [#211](https://github.com/jacob-consulting/django-crud-views/issues/211)**, with the three cases this theme hit
+   in one upgrade (the `{% cv_filter_icon %}` `TemplateSyntaxError`, the silently dead `tags/icon.html` override,
+   the `data-bs-dismiss` override that only worked by Bootstrap's accident) and two cheaper options than markers: a
+   check for an override of a template the package no longer ships, and a `cv_template_overrides --diff` command for
+   upgrade review. Recommends those two plus documenting the contract of the remaining templates.
+
+### Theme follow-ups
+
+- **Re-diff the 10 overrides whenever an upstream release touches `src/crud_views/templates`.** Nothing newer than
+  4b62ed6 does, so they are current. The drift surface is small but not empty: `tags/list_filter.html` and
+  `tags/list_filter.inner.html` carry the pinned-filter contract, and `view_create.content.html`,
+  `view_update.content.html`, `view_delete.content.html` must keep posting to `request.get_full_path` (so `cv_from`
+  survives) plus delete's protection-error branch. The other five (`tags/card.html`, `view_card.content.html`,
+  `modal/shell.html`, `snippets/pagination.html`, `table/bootstrap5.html`) are layout and markup.
+- **The "no jQuery" claim is verified for pages without formsets only** (`tests.py:159`). If the demo ever gets a
+  formset page, it needs jQuery loaded, and the theme's documentation already says a project must load it itself.
+
+### Questions from the document that are now moot, or still unanswered
+
+| Question (from "Not known / not tested") | State |
+|---|---|
+| 1. Were the object-detail icon settings meant to grow into a package-wide mechanism? | Moot — 0.30.0 unified them into one table |
+| 2. Are the unused `cv_*_button` tags used in the wild? | Moot — removed in #201 |
+| 3. Does external code rely on the core scripts' jQuery usage? | Still unknown; now only `formset.js` is affected |
+| 4. Is the stock look (every toolbar button equal) deliberate? | Answered in practice: the maintainer accepted the icon-only primary action |
+| 5. Was "point 5 matters most" the right call? | Borne out: #201 plus #204 took the theme from 19 overrides to 10 and removed every logic-copying one |

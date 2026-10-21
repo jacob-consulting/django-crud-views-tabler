@@ -71,17 +71,29 @@ Six findings, all seen in the browser on `/product/create/`. **All six are fixed
    "Tags"). The two inline ones were missed at first and caught by this demo; `fs-6` now appears nowhere on
    `/product/create/`.
 
-## Known gap: detail pages still need `crispy_bootstrap5`
+## Known gap: a latent `bootstrap5/` dependency in django-crud-views (harmless here)
 
-`crispy_bootstrap5` stays in `INSTALLED_APPS`. django-crud-views' `crud_views/detail/field.html` hardcodes four
-`bootstrap5/...` includes, so the **detail** page renders Bootstrap-pack partials regardless of
-`CRISPY_TEMPLATE_PACK`. Create, update and delete pages do not. Fixing it in the Tabler theme app is an explicit
-non-goal; it belongs upstream in django-crud-views (issue not yet filed; its number goes here).
-`test_form_and_detail_pages_use_no_bootstrap5_template` guards the other side: it renders the create, update and
-**detail** pages with the `bootstrap5/` templates unavailable (a loader refuses any `bootstrap5/` name), and is **skipped** while `crud_views/detail/field.html` still
-hardcodes them (the skip condition reads the template source, so it un-skips itself once upstream is fixed).
-Because the detail page is in its URL list, un-skipping proves that very fix: it passes only if detail pages
-render without any Bootstrap-pack template.
+django-crud-views' `crud_views/detail/field.html` hardcodes four `bootstrap5/...` includes, so it would render
+Bootstrap-pack partials whatever `CRISPY_TEMPLATE_PACK` says. That is a real defect in that file, but it is
+**latent**: the file appears to be referenced nowhere in django-crud-views (neither by a static template path nor by a
+dynamically built one; the object-detail app builds only `crud_views_object_detail/...` paths), so no current code
+path renders it. Detail pages are not degraded by the switch to `crispy_tabler`.
+
+This demo could not reach it anyway, for two independent reasons, either of which is enough on its own:
+
+1. `crud_views_object_detail` is not in `INSTALLED_APPS`.
+2. `ProductDetailView` and `CustomerDetailView` set their own `template_name` and render hand-written templates, so
+   they never go through crispy. Changing one of these facts does not by itself expose the other.
+
+Consequently `crispy_bootstrap5` stays in `INSTALLED_APPS` as a precaution, not a necessity. Fixing the file is worth
+doing upstream (issue not yet filed; its number goes here), and fixing it in the Tabler theme app is an explicit
+non-goal.
+
+`test_form_and_detail_pages_use_no_bootstrap5_template` renders the create, update and detail pages with a loader that
+refuses any `bootstrap5/` template name. It is **skipped** while `crud_views/detail/field.html` still hardcodes the
+includes (the condition reads the template source, so it un-skips itself when upstream is fixed). It passes for detail
+pages today, so **un-skipping it will prove little by itself**: it would pass whether or not the file was fixed. It
+only becomes meaningful evidence if the demo is changed to actually render that template.
 
 Two things are **not** deltas, although the earlier guess was that they would be:
 

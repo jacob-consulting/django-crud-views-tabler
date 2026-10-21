@@ -20,7 +20,7 @@ crud_views code is patched or subclassed.
 INSTALLED_APPS = [
     ...,
     "crispy_forms",
-    "crispy_bootstrap5",  # detail pages only; see Forms (crispy)
+    "crispy_bootstrap5",  # precaution only; see Forms (crispy)
     "crispy_tabler",
     "django_tables2",
     "django_filters",
@@ -156,8 +156,9 @@ The demo renders forms through the sibling template pack `crispy_tabler` (`CRISP
 see [crispy_tabler_coverage.md](crispy_tabler_coverage.md) for what it fixes). The theme app itself needs **no
 crispy template overrides**: Tabler is Bootstrap 5, so `form-label`, `form-control`, `form-select`, `form-check`,
 `is-invalid` and `invalid-feedback` render natively with either pack, including in dark mode. `crispy_bootstrap5`
-stays in `INSTALLED_APPS` because crud_views' `crud_views/detail/field.html` still includes four `bootstrap5/...`
-partials. Remaining gaps and how the prototype handles them:
+stays in `INSTALLED_APPS` as a precaution: crud_views' `crud_views/detail/field.html` hardcodes four `bootstrap5/...`
+includes, though nothing currently renders that file (see the latent-gap section in
+[crispy_tabler_coverage.md](crispy_tabler_coverage.md)). Remaining gaps and how the prototype handles them:
 
 - **Required marker**: crispy prints `<span class="asteriskField">*</span>`; the theme CSS colours it like Tabler's
   `.form-label.required`.

@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'crispy_forms',
-    'crispy_bootstrap5',  # kept: crud_views' detail/field.html still includes bootstrap5/ partials
+    'crispy_bootstrap5',  # precaution: crud_views' (unreferenced) detail/field.html hardcodes bootstrap5/ includes
     'crispy_tabler',
     'django_tables2',
     'django_filters',

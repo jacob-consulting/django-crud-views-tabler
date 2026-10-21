@@ -141,11 +141,11 @@ class ProductFormCoverageTests(TestCase):
     @unittest.skipIf(
         _detail_field_template_hardcodes_bootstrap5(),
         "django-crud-views' crud_views/detail/field.html hardcodes four bootstrap5/ includes; the gap is latent "
-        "(nothing renders that template), see django-crud-views issue TBD",
+        "(nothing renders that template), see django-crud-views issue #217",
     )
     def test_form_and_detail_pages_use_no_bootstrap5_template(self):
         # Skipped while crud_views/detail/field.html hardcodes four bootstrap5 includes (latent: nothing renders it,
-        # django-crud-views issue TBD). Un-skipping proves little by itself, since the detail pages here never reach
+        # django-crud-views issue #217). Un-skipping proves little by itself, since the detail pages here never reach
         # that template; see docs/crispy_tabler_coverage.md.
         # Removing crispy_bootstrap5 from INSTALLED_APPS would re-run every AppConfig.ready() (crud_views asset
         # bundles register twice), so take its templates away at the loader instead: same effect on rendering.

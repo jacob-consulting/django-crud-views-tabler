@@ -86,7 +86,7 @@ This demo could not reach it anyway, for two independent reasons, either of whic
    they never go through crispy. Changing one of these facts does not by itself expose the other.
 
 Consequently `crispy_bootstrap5` stays in `INSTALLED_APPS` as a precaution, not a necessity. Fixing the file is worth
-doing upstream (issue not yet filed; its number goes here), and fixing it in the Tabler theme app is an explicit
+doing upstream ([django-crud-views#217](https://github.com/jacob-consulting/django-crud-views/issues/217), which asks whether the file is dead code or live), and fixing it in the Tabler theme app is an explicit
 non-goal.
 
 `test_form_and_detail_pages_use_no_bootstrap5_template` renders the create, update and detail pages with a loader that

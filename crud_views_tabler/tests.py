@@ -244,21 +244,39 @@ class ThemeRenderingTests(TestCase):
         self.assertNotIn('<div class="card">', html)
 
     def test_form_pages_frame_through_upstream_content_templates(self):
-        # upstream #239: the theme overrides only the frame and the protection alert, not the form templates
+        # upstream #239: the theme overrides only the frame, not the form templates
         self.assertIn("crud_views_tabler", get_template("crud_views/snippets/form_frame.html").origin.name)
-        self.assertIn("crud_views_tabler", get_template("crud_views/snippets/delete/protection_errors.html").origin.name)
         for name in ("view_create", "view_update", "view_delete", "view_custom_form"):
             template = f"crud_views/{name}.content.html"
             self.assertNotIn("crud_views_tabler", get_template(template).origin.name, template)
+
+    def test_alerts_go_through_the_theme_frame_only(self):
+        # upstream #250: every alert renders through tags/alert.html; the theme overrides that frame and nothing else
+        self.assertIn("crud_views_tabler", get_template("crud_views/tags/alert.html").origin.name)
+        for name in ("tags/messages.html", "snippets/delete/protection_errors.html",
+                     "snippets/delete/related_objects.html", "snippets/alert/text.html", "snippets/alert/list.html"):
+            self.assertNotIn("crud_views_tabler", get_template(f"crud_views/{name}").origin.name, name)
 
     def test_protection_errors_render_as_tabler_alert(self):
         html = render_to_string(
             "crud_views/snippets/delete/protection_errors.html", {"delete_protection_errors": ["Has open orders"]}
         )
         self.assertIn('class="alert alert-danger"', html)
-        self.assertIn('<div class="alert-icon">', html)
-        self.assertIn('class="alert-heading"', html)
-        self.assertIn("<li>Has open orders</li>", html)
+        self.assertIn(f'<div class="alert-icon">{svg("alert-circle", "alert-icon")}</div>', html)
+        self.assertIn('<h4 class="alert-heading">This object cannot be deleted:</h4>', html)
+        self.assertRegex(html, r'<div class="alert-description">\s*<ul[^>]*>\s*<li>Has open orders</li>')
+        self.assertNotIn("btn-close", html)
+
+    def test_related_objects_alerts_get_the_tabler_layout(self):
+        html = render_to_string(
+            "crud_views/snippets/delete/related_objects.html",
+            {"protected_objects": ["Order 7"], "related_summary": {"order": 2}, "related_summary_items": ["order: 2"],
+             "related_objects": []},
+        )
+        self.assertEqual(html.count('<div class="alert-icon">'), 3)
+        self.assertEqual(html.count('class="alert-heading"'), 3)
+        self.assertIn(str(svg("alert-triangle", "alert-icon")), html)  # warning
+        self.assertIn("<li>order: 2</li>", html)
 
     def test_create_and_update_post_multipart(self):
         # upstream #236: without the enctype a FileField arrives empty
@@ -282,8 +300,8 @@ class ThemeRenderingTests(TestCase):
         self.assertIn("alert-dismissible", alert)
         self.assertIn('<div class="alert-icon">', alert)
         self.assertIn(str(svg("check", "alert-icon")), alert)
-        self.assertIn("Deleted »Customer 03«", alert)
-        self.assertIn("crud_views_tabler", get_template("crud_views/tags/messages.html").origin.name)
+        self.assertIn("<div>Deleted »Customer 03«", alert)  # no heading: the text sits in a plain div
+        self.assertNotIn("alert-heading", alert)
 
     def test_delete_modal_partial_has_no_card_and_a_danger_button(self):
         url = reverse("customer-delete", args=[self.customer.pk])

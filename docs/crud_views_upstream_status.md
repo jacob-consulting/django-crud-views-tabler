@@ -131,19 +131,20 @@ Point by point, with the evidence behind "none":
 | [#243](https://github.com/jacob-consulting/django-crud-views/issues/243) **done (73b5037)** | card blocks (title, content, actions) and class keys | `tags/card.html` stays (the footer is structure, as upstream decided), but now uses upstream's block names (`card_footer` → `card_actions`) and `card:root` / `card:body` / `card:title`; the theme registers `card:root` = `card` |
 | [#244](https://github.com/jacob-consulting/django-crud-views/issues/244) **closed, not planned** | card row class, shared empty-state snippet | — `view_card.content.html` stays. Split out of it: [#246](https://github.com/jacob-consulting/django-crud-views/issues/246) **done (337b1f6)**, the stock empty text is translated; the theme's empty state uses the same msgid, so it shows German too (pinned by `test_empty_state_is_translated`) |
 
-Not filed: `table/bootstrap5.html` (the whole django-tables2 template in Tabler markup) and `tags/messages.html`
-(small, genuinely Tabler-specific) stay theme overrides.
+| [#250](https://github.com/jacob-consulting/django-crud-views/issues/250) **adopted from PR #252 (1727a75, not merged yet)** | one data-driven alert template (`{% cv_alert %}`, `tags/alert.html`, text/list body snippets, `alert:*` class keys) for messages and the delete page | `tags/messages.html` and `snippets/delete/protection_errors.html` → one `tags/alert.html`; the related-objects alerts get the Tabler layout too |
+
+Not filed: `table/bootstrap5.html` (the whole django-tables2 template in Tabler markup) stays a theme override.
 
 ### Theme follow-ups
 
-- **Re-diff the 9 overrides whenever an upstream release touches `src/crud_views/templates`.** Two commits up to
+- **Re-diff the 8 overrides whenever an upstream release touches `src/crud_views/templates`.** Two commits up to
   10d81ad do: 3fc4be6 (#213/#218) touched `tags/button/action.html` and 10d81ad (#217) deleted `crud_views/detail/`.
   Neither path is among the 10 overrides, so they are still current. The drift surface is small but not empty: `tags/list_filter.html` and
   `tags/list_filter.inner.html` carry the pinned-filter contract, and `snippets/form_frame.html` must keep the
   `cv_form_body` block and leave the modal bare. (Until #239 the theme copied the create, update and delete
   `<form>`s here, and those copies missed #236 and #191; since 2026-10-22 the form is upstream's.) The others
   (`tags/card.html`, `view_card.content.html`, `modal/shell.html`,
-  `table/bootstrap5.html`, `snippets/delete/protection_errors.html`, `tags/messages.html`) are layout and markup.
+  `table/bootstrap5.html`, `tags/alert.html`) are layout and markup.
 - **The "no jQuery" claim is verified for pages without formsets only** (`tests.py:159`). If the demo ever gets a
   formset page, it needs jQuery loaded, and the theme's documentation already says a project must load it itself.
 

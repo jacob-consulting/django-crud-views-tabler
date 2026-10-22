@@ -126,7 +126,7 @@ Point by point, with the evidence behind "none":
 |---|---|---|
 | [#239](https://github.com/jacob-consulting/django-crud-views/issues/239) **done (8fcb7f2)** | one frame template around the form; delete's protection alert as a snippet | `view_create`, `view_update`, `view_delete` `.content.html` → replaced by `snippets/form_frame.html` + `snippets/delete/protection_errors.html` |
 | [#240](https://github.com/jacob-consulting/django-crud-views/issues/240) | `modal:root` / `modal:dialog` class keys | `modal/shell.html` |
-| [#241](https://github.com/jacob-consulting/django-crud-views/issues/241) | accessible pagination, `page-previous` / `page-next` icons | `snippets/pagination.html` |
+| [#241](https://github.com/jacob-consulting/django-crud-views/issues/241) **done (3d2ee82)** | accessible pagination, `page-previous` / `page-next` icons | `snippets/pagination.html` deleted; the theme maps the two icons, and its table footer pagination uses them too |
 | [#242](https://github.com/jacob-consulting/django-crud-views/issues/242) **closed, not planned** | filter card class instead of `<br>`, heading with class key | — the two filter overrides stay |
 | [#243](https://github.com/jacob-consulting/django-crud-views/issues/243) | card blocks (title, content, actions) and class keys | `tags/card.html` (smaller or gone) |
 | [#244](https://github.com/jacob-consulting/django-crud-views/issues/244) **closed, not planned** | card row class, shared empty-state snippet | — `view_card.content.html` stays. Split out of it: [#246](https://github.com/jacob-consulting/django-crud-views/issues/246) **done (337b1f6)**, the stock empty text is translated; the theme's empty state uses the same msgid, so it shows German too (pinned by `test_empty_state_is_translated`) |
@@ -136,13 +136,13 @@ Not filed: `table/bootstrap5.html` (the whole django-tables2 template in Tabler 
 
 ### Theme follow-ups
 
-- **Re-diff the 10 overrides whenever an upstream release touches `src/crud_views/templates`.** Two commits up to
+- **Re-diff the 9 overrides whenever an upstream release touches `src/crud_views/templates`.** Two commits up to
   10d81ad do: 3fc4be6 (#213/#218) touched `tags/button/action.html` and 10d81ad (#217) deleted `crud_views/detail/`.
   Neither path is among the 10 overrides, so they are still current. The drift surface is small but not empty: `tags/list_filter.html` and
   `tags/list_filter.inner.html` carry the pinned-filter contract, and `snippets/form_frame.html` must keep the
   `cv_form_body` block and leave the modal bare. (Until #239 the theme copied the create, update and delete
   `<form>`s here, and those copies missed #236 and #191; since 2026-10-22 the form is upstream's.) The others
-  (`tags/card.html`, `view_card.content.html`, `modal/shell.html`, `snippets/pagination.html`,
+  (`tags/card.html`, `view_card.content.html`, `modal/shell.html`,
   `table/bootstrap5.html`, `snippets/delete/protection_errors.html`, `tags/messages.html`) are layout and markup.
 - **The "no jQuery" claim is verified for pages without formsets only** (`tests.py:159`). If the demo ever gets a
   formset page, it needs jQuery loaded, and the theme's documentation already says a project must load it itself.

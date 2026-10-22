@@ -66,7 +66,7 @@
       {% block pagination.previous %}
       <li class="page-item{% if not table.page.has_previous %} disabled{% endif %}">
         <a class="page-link" {% if table.page.has_previous %}href="{% cv_querystring table.prefixed_page_field=table.page.previous_page_number %}"{% else %}aria-disabled="true"{% endif %}>
-          {% cv_icon "tabler:chevron-left" css="icon-sm" %}<span class="visually-hidden">{% translate "previous" %}</span>
+          {% cv_icon "page-previous" %}<span class="visually-hidden">{% translate "previous" %}</span>
         </a>
       </li>
       {% endblock pagination.previous %}
@@ -80,7 +80,7 @@
       {% block pagination.next %}
       <li class="page-item{% if not table.page.has_next %} disabled{% endif %}">
         <a class="page-link" {% if table.page.has_next %}href="{% cv_querystring table.prefixed_page_field=table.page.next_page_number %}"{% else %}aria-disabled="true"{% endif %}>
-          <span class="visually-hidden">{% translate "next" %}</span>{% cv_icon "tabler:chevron-right" css="icon-sm" %}
+          <span class="visually-hidden">{% translate "next" %}</span>{% cv_icon "page-next" %}
         </a>
       </li>
       {% endblock pagination.next %}

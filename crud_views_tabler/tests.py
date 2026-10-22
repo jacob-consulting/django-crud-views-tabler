@@ -169,6 +169,14 @@ class ThemeRenderingTests(TestCase):
         self.assertNotIn("<i class=", html)  # every icon on the page is a Tabler SVG
         self.assertIn(svg("building-store"), html)  # the ViewSet header icon, tabler:building-store
 
+    def test_table_pagination_uses_the_semantic_arrows(self):
+        html = self.client.get(reverse("customer-list")).content.decode()
+        footer = html[html.index('class="pagination'):]
+        self.assertIn(str(svg("chevron-right")), footer[:2000])
+        with override_settings(CRUD_VIEWS_ICONS={"page-next": "tabler:arrow-left"}):
+            html = self.client.get(reverse("customer-list")).content.decode()
+        self.assertIn(str(svg("arrow-left")), html[html.index('class="pagination'):][:2000])
+
     def test_disabled_action_renders_a_tabler_icon(self):
         viewer = get_user_model().objects.create_user("viewer", password="viewer-pass")
         viewer.user_permissions.add(Permission.objects.get(codename="view_customer", content_type__app_label="customers"))
@@ -432,6 +440,17 @@ class CardThemeTests(TestCase):
         html = self.get()
         self.assertIn("/update/?cv_from=card", html)
         self.assertIn("/delete/?cv_from=card", html)
+
+    def test_pagination_is_upstream_with_tabler_chevrons(self):
+        # upstream #241: accessible markup and arrows from the icon registry; the theme maps the icons only
+        self.assertNotIn("crud_views_tabler", get_template("crud_views/snippets/pagination.html").origin.name)
+        html = self.get(page=2)
+        nav = re.search(r'<nav aria-label="pagination".*?</nav>', html, re.S).group(0)
+        self.assertIn(str(svg("chevron-left")), nav)
+        self.assertIn(str(svg("chevron-right")), nav)
+        self.assertIn('<li class="page-item active" aria-current="page">', nav)
+        self.assertIn('<a class="page-link" aria-disabled="true">', nav)  # page 2 of 2: no next page
+        self.assertIn('<span class="visually-hidden">previous</span>', nav)
 
     def test_order_bar(self):
         html = self.get(order="revenue", dir="desc")

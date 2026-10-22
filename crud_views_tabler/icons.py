@@ -192,6 +192,8 @@ TABLER_ICONS: dict[str, str] = {
     "message-warning": "tabler:alert-triangle",
     "message-error": "tabler:alert-circle",
     "message-debug": "tabler:bug",
+    "page-previous": "tabler:chevron-left",
+    "page-next": "tabler:chevron-right",
 }
 
 

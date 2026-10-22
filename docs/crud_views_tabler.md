@@ -2,7 +2,7 @@
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by two
 demo apps: `customers` (`/customer/` table list, `/customer/card/` card view) and `catalog` (`/product/`), whose
-create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views main @ 337b1f6 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239 and the translated card empty state #246, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views main @ 3d2ee82 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239, the translated card empty state #246 and accessible card pagination #241, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -115,8 +115,11 @@ Sorting stays server-side django-tables2 ordering; only the header changes (`tab
 ## Pagination
 
 The table renders as a whole card: `.card > .table-responsive > table.table.table-vcenter.card-table`, and a
-`.card-footer` with "Showing x–y of n" and a Tabler `.pagination` with chevron icons. `snippets/pagination.html`
-(card views) uses the same look.
+`.card-footer` with "Showing x–y of n" and a Tabler `.pagination`. Card views use crud_views' own
+`snippets/pagination.html` (#241: `aria-current`, `aria-disabled`, translated hidden labels), which is Tabler's own
+pagination markup, so the theme no longer overrides it. Both paginations take their arrows from the semantic icon
+names `page-previous` / `page-next`, which the theme maps to Tabler's chevrons at the standard icon size, as in
+Tabler's examples (the old override used `icon-sm`). A project changes them with `CRUD_VIEWS_ICONS`.
 
 ## Card views
 
@@ -134,7 +137,7 @@ own):
   add `btn-icon`; they keep a `.visually-hidden` label and get a tooltip,
 - the order bar is crud_views' `snippets/card_order.html` with Tabler's sort-ascending / sort-descending icons and
   the `card-order:*` classes (`btn btn-icon` in a `btn-group`); signed ordering (`submit-on-change`) is unchanged,
-- no results render Tabler's `.empty` state; pagination uses the theme's `snippets/pagination.html`.
+- no results render Tabler's `.empty` state; pagination is crud_views' `snippets/pagination.html` (see Pagination).
 
 **Custom card content** without repeating the actions markup: a view's `cv_card_template` can extend the theme's
 card and fill its blocks (`card_title`, `card_content`, `card_footer`):
@@ -193,7 +196,7 @@ icon through `{% cv_icon %}` with a renderer per library prefix. The theme plugs
 
 - `crud_views_tabler/icons.py` holds Tabler outline icons as SVG paths (`ICONS`), the registry renderer `render`
   (inline SVG with `class="icon …"` and `aria-hidden`), and `TABLER_ICONS`: a Tabler icon for every semantic name
-  the package defines (32 names, from `detail` to the formset, object-detail and `message-*` icons),
+  the package defines (34 names, from `detail` to the formset, object-detail, `message-*` and `page-*` icons),
 - `CrudViewsTablerConfig.ready()` registers the library (`register_icon_library("tabler", renderer=…)`) and the table
   (`register_icons(TABLER_ICONS)`), so a project needs no icon settings; formset, boolean, object-detail and
   language-selector icons are Tabler too, without a template override,
@@ -239,14 +242,13 @@ inside modal content, which Tabler's own page-load initialisation never sees.
 
 ## Overridden templates
 
-Ten templates, all about page layout; none of them renders a button:
+Nine templates, all about page layout; none of them renders a button:
 
 ```
 crud_views/
   modal/shell.html                Tabler modal shell (modal-blur, centered)
   snippets/delete/protection_errors.html   "cannot be deleted" as a Tabler alert
   snippets/form_frame.html        card around the form on create/update/delete/custom-form pages, bare in a modal
-  snippets/pagination.html        card-view pagination
   table/bootstrap5.html           card table, sort headers, footer pagination
   tags/card.html                  card layout with blocks; footer includes crud_views' container leaf
   tags/list_filter.html, list_filter.inner.html   filter as a Tabler card

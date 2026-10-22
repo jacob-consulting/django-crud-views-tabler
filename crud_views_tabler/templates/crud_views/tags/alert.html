@@ -1,0 +1,18 @@
+{% load crud_views i18n %}
+{% comment %}
+Tabler theme: crud_views' alert frame (#250), used by {% cv_messages %}, {% cv_alert %} and the delete page. The level
+icon sits in .alert-icon; with a heading the body is the .alert-description below an .alert-heading. Colours are
+crud_views' alert:* class keys (Tabler spells them like Bootstrap); the body comes from alert.body_template.
+{% endcomment %}
+<div class="{% cv_button_class "alert" alert.level %}{% if alert.dismissible %} alert-dismissible fade show{% endif %}{% if alert.extra_tags %} {{ alert.extra_tags }}{% endif %}" role="alert">
+  <div class="alert-icon">{% cv_icon alert.icon_name css="alert-icon" %}</div>
+  {% if alert.heading %}
+  <div>
+    <h4 class="alert-heading">{{ alert.heading }}</h4>
+    <div class="alert-description">{% include alert.body_template %}</div>
+  </div>
+  {% else %}
+  <div>{% include alert.body_template %}</div>
+  {% endif %}
+  {% if alert.dismissible %}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button>{% endif %}
+</div>

@@ -88,7 +88,7 @@ class CustomerCardListView(BreadcrumbMixin, ListViewTableFilterMixin, CardListVi
     cv_card_actions = [
         CardAction(key="detail", label="Open", variant="primary", flex=True),
         CardAction(key="update", label="Edit"),
-        CardAction(key="delete", no_label=True, variant="tertiary"),
+        CardAction(key="delete", label_mode="icon", variant="tertiary"),
     ]
     cv_order_fields = [("name", "Name"), ("revenue", "Revenue"), ("created_at", "Created")]
     paginate_by = 12

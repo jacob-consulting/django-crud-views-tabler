@@ -1,0 +1,6 @@
+{% comment %}Tabler theme: create, update, delete and custom-form pages put the form in a card; a modal stays bare.{% endcomment %}
+{% block cv_form_frame %}
+{% if request.headers.x_cv_modal != "true" %}<div class="card"><div class="card-body">{% endif %}
+{% block cv_form_body %}{% endblock %}
+{% if request.headers.x_cv_modal != "true" %}</div></div>{% endif %}
+{% endblock %}

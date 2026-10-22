@@ -5,6 +5,28 @@ Status snapshot for the five points in
 paths and the options per point; this one says only where each point stands today and what is left to do. The
 questions document is not edited.
 
+## Update 2026-10-22: caught up with upstream e212dc3
+
+Upstream moved 20 commits between 2026-10-21 and e212dc3 (branch `fix/form-enctype-multipart`, one ahead of `main`
+at c79ec22). Against that checkout, before any theme change, three theme tests failed: the filter toggle now hides
+its icon spans with `hidden` instead of `d-none` (#232), and five new `message-*` icon names had no Tabler mapping
+(#222). What the theme does now:
+
+- **Buttons:** `btn-icon` moved from the base action keys to `location:variant:icon` keys (#209, #216), so a labelled
+  button in any location is no longer squared. The `card:tertiary` workaround is gone (ask 2 below is resolved);
+  the demo's icon-only card action uses `label_mode="icon"` instead of `no_label=True`. Labelled card buttons show
+  icon plus label again (upstream default `both`, #213).
+- **Two bugs inherited by copying:** the theme's `view_create.content.html` lacked
+  `enctype="multipart/form-data"` (#236) and both create and update rendered `{{ form.media }}` a second time
+  (#191). Upstream had fixed both; the copies kept them. Fixed and pinned by tests. This is the drift #211 is
+  about, in its quietest form: nothing failed, file uploads on create just arrived empty.
+- **Messages:** `{% cv_messages %}` replaces the demo's `includes/messages.html`; the theme overrides
+  `tags/messages.html` for Tabler's `.alert-icon` layout and maps the `message-*` icons.
+- **Tests:** 75, OK; `manage.py check --fail-level WARNING` clean.
+- **Overrides:** 11 (the 10 layout overrides plus `tags/messages.html`); 10 after #239 (below), and none of them
+  copies a `<form>` any more. The upstream hooks that would remove most
+  of them are filed as new issues; see "Upstream asks, round 2" below.
+
 ## What this was checked against (2026-10-21)
 
 - **Upstream:** `/home/alex/projects/alex/django-crud-views`, branch `main` at **5e36477** (#205, tooltip
@@ -64,7 +86,8 @@ Point by point, with the evidence behind "none":
    [#208](https://github.com/jacob-consulting/django-crud-views/issues/208)** (2026-10-21), with the golden-file
    evidence, why the context is missing the key, `self.key` vs the list view's key, and acceptance criteria.
    **Fixed upstream in 5cc9240** (the toggle renders `cv-key="filter"`); #209-#211 not re-checked.
-2. **The class table cannot tell an icon-only card button from a labelled one.** `card:tertiary` carries
+2. ~~**The class table cannot tell an icon-only card button from a labelled one.**~~ **Done (#209, #216);
+   the theme uses `:icon` keys since 2026-10-22.** `card:tertiary` carries
    `btn-icon` because the demo's only tertiary card action is the icon-only delete; a project with a labelled
    tertiary card button has to override the key
    ([crud_views_tabler.md](crud_views_tabler.md#card-views), "limitation"). `cv_label_visible` is already part of
@@ -97,15 +120,31 @@ Point by point, with the evidence behind "none":
    `test_form_and_detail_pages_use_no_bootstrap5_template` runs unskipped and green, and `crispy_bootstrap5` is out
    of the demo's `INSTALLED_APPS`.
 
+### Upstream asks, round 2 (filed 2026-10-22): hooks that would remove layout overrides
+
+| Issue | Hook | Tabler override it removes |
+|---|---|---|
+| [#239](https://github.com/jacob-consulting/django-crud-views/issues/239) **done (8fcb7f2)** | one frame template around the form; delete's protection alert as a snippet | `view_create`, `view_update`, `view_delete` `.content.html` → replaced by `snippets/form_frame.html` + `snippets/delete/protection_errors.html` |
+| [#240](https://github.com/jacob-consulting/django-crud-views/issues/240) | `modal:root` / `modal:dialog` class keys | `modal/shell.html` |
+| [#241](https://github.com/jacob-consulting/django-crud-views/issues/241) **done (3d2ee82)** | accessible pagination, `page-previous` / `page-next` icons | `snippets/pagination.html` deleted; the theme maps the two icons, and its table footer pagination uses them too |
+| [#242](https://github.com/jacob-consulting/django-crud-views/issues/242) **closed, not planned** | filter card class instead of `<br>`, heading with class key | — the two filter overrides stay |
+| [#243](https://github.com/jacob-consulting/django-crud-views/issues/243) **done (73b5037)** | card blocks (title, content, actions) and class keys | `tags/card.html` stays (the footer is structure, as upstream decided), but now uses upstream's block names (`card_footer` → `card_actions`) and `card:root` / `card:body` / `card:title`; the theme registers `card:root` = `card` |
+| [#244](https://github.com/jacob-consulting/django-crud-views/issues/244) **closed, not planned** | card row class, shared empty-state snippet | — `view_card.content.html` stays. Split out of it: [#246](https://github.com/jacob-consulting/django-crud-views/issues/246) **done (337b1f6)**, the stock empty text is translated; the theme's empty state uses the same msgid, so it shows German too (pinned by `test_empty_state_is_translated`) |
+
+| [#250](https://github.com/jacob-consulting/django-crud-views/issues/250) **adopted from PR #252 (1727a75, not merged yet)** | one data-driven alert template (`{% cv_alert %}`, `tags/alert.html`, text/list body snippets, `alert:*` class keys) for messages and the delete page | `tags/messages.html` and `snippets/delete/protection_errors.html` → one `tags/alert.html`; the related-objects alerts get the Tabler layout too |
+
+Not filed: `table/bootstrap5.html` (the whole django-tables2 template in Tabler markup) stays a theme override.
+
 ### Theme follow-ups
 
-- **Re-diff the 10 overrides whenever an upstream release touches `src/crud_views/templates`.** Two commits up to
+- **Re-diff the 8 overrides whenever an upstream release touches `src/crud_views/templates`.** Two commits up to
   10d81ad do: 3fc4be6 (#213/#218) touched `tags/button/action.html` and 10d81ad (#217) deleted `crud_views/detail/`.
   Neither path is among the 10 overrides, so they are still current. The drift surface is small but not empty: `tags/list_filter.html` and
-  `tags/list_filter.inner.html` carry the pinned-filter contract, and `view_create.content.html`,
-  `view_update.content.html`, `view_delete.content.html` must keep posting to `request.get_full_path` (so `cv_from`
-  survives) plus delete's protection-error branch. The other five (`tags/card.html`, `view_card.content.html`,
-  `modal/shell.html`, `snippets/pagination.html`, `table/bootstrap5.html`) are layout and markup.
+  `tags/list_filter.inner.html` carry the pinned-filter contract, and `snippets/form_frame.html` must keep the
+  `cv_form_body` block and leave the modal bare. (Until #239 the theme copied the create, update and delete
+  `<form>`s here, and those copies missed #236 and #191; since 2026-10-22 the form is upstream's.) The others
+  (`tags/card.html`, `view_card.content.html`, `modal/shell.html`,
+  `table/bootstrap5.html`, `tags/alert.html`) are layout and markup.
 - **The "no jQuery" claim is verified for pages without formsets only** (`tests.py:159`). If the demo ever gets a
   formset page, it needs jQuery loaded, and the theme's documentation already says a project must load it itself.
 

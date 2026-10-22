@@ -2,7 +2,7 @@
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by two
 demo apps: `customers` (`/customer/` table list, `/customer/card/` card view) and `catalog` (`/product/`), whose
-create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views main @ 10d81ad (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213 and the removal of the dead crispy detail templates #217, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views @ 1727a75 (branch `feat/alert-template`, PR #252, not merged yet; 0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239, the translated card empty state #246, accessible card pagination #241, card blocks and class keys #243 and the alert frame #250, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -65,12 +65,18 @@ Which classes a button gets depends on its **variant**, which comes from the vie
 `create_select` are `primary`, `delete` is `danger`, everything else `secondary`. A view changes it with
 `cv_action_variant`, a single button with `ContextButton.variant` / `CardAction.variant`.
 
-- **Context actions** render as a `fieldset.btn-list` in the page header. Every button is an icon button
-  (`btn btn-icon`); the primary action (create) is `btn btn-primary btn-icon`, a danger action (delete on a detail
-  page) `btn btn-icon btn-outline-danger`. The label stays in a `.visually-hidden` span and is the tooltip. The
-  current view's key gets `active` + `aria-current`.
-- **Row actions** are small ghost icon buttons (`btn btn-sm btn-icon btn-ghost-secondary`, `btn-ghost-danger` for
-  danger), in a `fieldset.btn-list` that is right-aligned and never wraps.
+- **Label mode decides `btn-icon`.** Tabler's `btn-icon` squares a button, which only suits an icon-only one. The
+  table therefore holds each action key twice: `location:variant` without `btn-icon` for a labelled button (label
+  mode `label` or `both`), and `location:variant:icon` with it (#209). crud_views reads the mode key when it is
+  present and falls back to the base key otherwise.
+- **Context actions** render as a `fieldset.btn-list` in the page header. They are icon-only by default (crud_views'
+  default for toolbar and row buttons): `btn btn-icon`; the primary action (create) is `btn btn-primary btn-icon`,
+  a danger action (delete on a detail page) `btn btn-icon btn-outline-danger`. The label stays in a
+  `.visually-hidden` span and is the tooltip. A view that shows labels (`cv_context_actions_label_mode`, #216) gets
+  the same buttons without `btn-icon`. The current view's key gets `active` + `aria-current`.
+- **Row actions** are small ghost buttons (`btn btn-sm btn-icon btn-ghost-secondary` icon-only, `btn-ghost-danger`
+  for danger; without `btn-icon` when `cv_list_actions_label_mode` shows a label), in a `fieldset.btn-list` that is
+  right-aligned and never wraps.
 - **Overflow menu**: the `⋯` toggle uses the same icon-button classes per location inside a Tabler `dropdown`
   wrapper; crud_views adds `dropdown-toggle`, so it shows a caret. The dropdown items are crud_views' own; the
   stylesheet sizes and mutes their `.cv-icon-fw` icon slot like Tabler's `dropdown-item-icon`, so labels line up
@@ -88,7 +94,7 @@ Which classes a button gets depends on its **variant**, which comes from the vie
 | Where | Before | Now |
 |---|---|---|
 | Toolbar "Create" | `btn-primary` with icon and text label | icon-only `btn-primary`; the label is the tooltip |
-| Labelled card buttons ("Open", "Edit") | icon plus label | label only |
+| Labelled card buttons ("Open", "Edit") | icon plus label | icon plus label again (crud_views' card default `both`, #213) |
 | `⋯` menu toggles | no caret | caret (`dropdown-toggle`) |
 | Row and toolbar containers | `div.btn-list` | `fieldset.btn-list` (lays out the same) |
 | Card-order bar | `form-label text-secondary` label, full-size select, `aria-pressed` | crud_views' bar: plain label, `form-select-sm`, `active` only |
@@ -109,8 +115,11 @@ Sorting stays server-side django-tables2 ordering; only the header changes (`tab
 ## Pagination
 
 The table renders as a whole card: `.card > .table-responsive > table.table.table-vcenter.card-table`, and a
-`.card-footer` with "Showing x–y of n" and a Tabler `.pagination` with chevron icons. `snippets/pagination.html`
-(card views) uses the same look.
+`.card-footer` with "Showing x–y of n" and a Tabler `.pagination`. Card views use crud_views' own
+`snippets/pagination.html` (#241: `aria-current`, `aria-disabled`, translated hidden labels), which is Tabler's own
+pagination markup, so the theme no longer overrides it. Both paginations take their arrows from the semantic icon
+names `page-previous` / `page-next`, which the theme maps to Tabler's chevrons at the standard icon size, as in
+Tabler's examples (the old override used `icon-sm`). A project changes them with `CRUD_VIEWS_ICONS`.
 
 ## Card views
 
@@ -120,20 +129,24 @@ own):
 - cards sit in a `.row.row-deck.row-cards` grid, so cards in a row share their height;
   `cv_card_container_class` still sets the column width (the demo uses `col-sm-6 col-lg-4`),
 - each card is `.card > .card-body` (title + content) and a `.card-footer`, which includes crud_views' container
-  leaf (`tags/button/container.html`, a `div.btn-list`) for the actions and the overflow menu,
+  leaf (`tags/button/container.html`, a `div.btn-list`) for the actions and the overflow menu. The footer is why the
+  theme still overrides `tags/card.html`: crud_views' card keeps its actions inside the body, and where they sit is
+  structure, not classes (#243). The override uses crud_views' block names and its `card:root` / `card:body` /
+  `card:title` class keys; the theme registers `card:root` = `card` (crud_views' default adds `mb-3`, which the
+  `row-deck` grid does not need),
 - variants map to Tabler buttons through the class table: `primary` → `btn btn-sm btn-primary`, `secondary` → the
-  default `btn btn-sm`, `tertiary` → `btn btn-sm btn-icon btn-ghost-secondary`, `danger` →
-  `btn btn-sm btn-ghost-danger`; `flex` → `flex-grow-1`. A button with a visible label shows the label only,
-- `no_label` buttons keep a `.visually-hidden` label and get a tooltip,
-- **limitation**: the class table cannot tell an icon-only card button from a labelled one. `card:tertiary` carries
-  `btn-icon` because the demo's only tertiary card action is the icon-only delete; a project with a labelled
-  tertiary card button overrides that key in `CRUD_VIEWS_BUTTON_CLASSES`,
+  default `btn btn-sm`, `tertiary` → `btn btn-sm btn-ghost-secondary`, `danger` → `btn btn-sm btn-ghost-danger`;
+  `flex` → `flex-grow-1`. Labelled buttons show icon and label (crud_views' card default, label mode `both`),
+- icon-only buttons (`CardAction(label_mode="icon")`, as the demo's delete) use the `card:<variant>:icon` keys, which
+  add `btn-icon`; they keep a `.visually-hidden` label and get a tooltip,
 - the order bar is crud_views' `snippets/card_order.html` with Tabler's sort-ascending / sort-descending icons and
   the `card-order:*` classes (`btn btn-icon` in a `btn-group`); signed ordering (`submit-on-change`) is unchanged,
-- no results render Tabler's `.empty` state; pagination uses the theme's `snippets/pagination.html`.
+- no results render Tabler's `.empty` state; pagination is crud_views' `snippets/pagination.html` (see Pagination).
 
-**Custom card content** without repeating the actions markup: a view's `cv_card_template` can extend the theme's
-card and fill its blocks (`card_title`, `card_content`, `card_footer`):
+**Custom card content** without repeating the actions markup: a view's `cv_card_template` extends
+`crud_views/tags/card.html` and fills crud_views' blocks (`card_title`, `card_content`, `card_actions`; #243). Under
+this theme that resolves to the Tabler card, so the same template works with or without the theme. Emptying
+`card_actions` drops the footer along with the actions:
 
 ```html
 {% extends "crud_views/tags/card.html" %}
@@ -189,7 +202,7 @@ icon through `{% cv_icon %}` with a renderer per library prefix. The theme plugs
 
 - `crud_views_tabler/icons.py` holds Tabler outline icons as SVG paths (`ICONS`), the registry renderer `render`
   (inline SVG with `class="icon …"` and `aria-hidden`), and `TABLER_ICONS`: a Tabler icon for every semantic name
-  the package defines (27 names, from `detail` to the formset and object-detail icons),
+  the package defines (34 names, from `detail` to the formset, object-detail, `message-*` and `page-*` icons),
 - `CrudViewsTablerConfig.ready()` registers the library (`register_icon_library("tabler", renderer=…)`) and the table
   (`register_icons(TABLER_ICONS)`), so a project needs no icon settings; formset, boolean, object-detail and
   language-selector icons are Tabler too, without a template override,
@@ -235,17 +248,17 @@ inside modal content, which Tabler's own page-load initialisation never sees.
 
 ## Overridden templates
 
-Ten templates, all about page layout; none of them renders a button:
+Eight templates, all about page layout; none of them renders a button:
 
 ```
 crud_views/
   modal/shell.html                Tabler modal shell (modal-blur, centered)
-  snippets/pagination.html        card-view pagination
+  snippets/form_frame.html        card around the form on create/update/delete/custom-form pages, bare in a modal
   table/bootstrap5.html           card table, sort headers, footer pagination
-  tags/card.html                  card layout with blocks; footer includes crud_views' container leaf
+  tags/card.html                  actions in a .card-footer; crud_views' blocks and card:* class keys
+  tags/alert.html                 every alert (messages, delete page) in Tabler's layout: .alert-icon, .alert-heading
   tags/list_filter.html, list_filter.inner.html   filter as a Tabler card
   view_card.content.html          card grid and empty state
-  view_create.content.html, view_update.content.html, view_delete.content.html   card around the form, bare in a modal
 static/crud_views_tabler/
   crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons
   tabler-adapters.js              cv.adapters -> window.tabler, toolbar tooltips below
@@ -254,6 +267,27 @@ static/crud_views_tabler/
 The theme used to override the context, list and card action templates, both containers, the `⋯` toggle, the filter
 toggle and the card-order bar (nine templates). crud_views' class table, leaves and tooltip markers made all of them
 unnecessary.
+
+The form pages used to be three full copies (`view_create`, `view_update`, `view_delete` `.content.html`) whose only
+change was the card around the form. Being copies, they missed two upstream fixes until the theme caught up: the
+create form's `enctype="multipart/form-data"` (#236, file fields arrived empty) and `{{ form.media }}` after the form
+(#191, widget media rendered twice). Since #239 the four form content templates extend
+`crud_views/snippets/form_frame.html`, so the theme overrides only that frame; the `<form>`, its `enctype`, `action` and media handling are upstream's
+again (custom-form pages get the card too). Tests pin the frame, the bare modal and that the content templates are
+not overridden.
+
+The demo's flash messages render with crud_views' `{% cv_messages %}` (#222) in `layouts/app.html`; the demo's own
+`includes/messages.html` is gone.
+
+**Alerts** (#250): crud_views renders every alert — the flash messages, the delete page's protection and
+related-objects alerts — through one frame, `crud_views/tags/alert.html`, with the body chosen in Python (a text
+snippet, a list snippet, or the related-objects tree). The theme overrides only that frame: the level icon in
+`.alert-icon`, and with a heading an `.alert-heading` above an `.alert-description`; without one the text sits in a
+plain `<div>`, as in Tabler's examples. The body snippets (`snippets/alert/text.html`, `snippets/alert/list.html`,
+upstream's `<ul>`) and the `alert:*` colour keys are crud_views' own: Tabler spells `alert-danger`, `alert-warning`,
+… like Bootstrap. `TABLER_ICONS` maps the `message-success` / `-info` / `-warning` / `-error` / `-debug` names. The
+theme's former `tags/messages.html` and `snippets/delete/protection_errors.html` overrides are gone, and the
+related-objects alerts, which used to render in plain Bootstrap style, now get the Tabler layout too.
 
 ## Not covered yet
 

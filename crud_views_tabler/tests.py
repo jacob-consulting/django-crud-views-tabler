@@ -1,23 +1,36 @@
 import re
 from unittest import mock
 
+from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.checks import run_checks
 from django.core.management import call_command
 from django.template import TemplateDoesNotExist
-from django.template.loader import get_template
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.template.loader import get_template, render_to_string
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from crud_views.lib.button_classes import DEFAULT_BUTTON_CLASSES, get_button_classes
 from crud_views.lib.crispy import CrispyDeleteForm
 from crud_views.lib.icons import DEFAULT_ICONS
 from crud_views.lib.icons import render_icon as cv_render_icon
+from crud_views.lib.view.label_mode import LABEL_MODES
+from crud_views.lib.view.variant import VARIANTS
 from crud_views_tabler.buttons import TABLER_BUTTON_CLASSES
 from crud_views_tabler.icons import ICONS, TABLER_ICONS, render, svg
 from customers.models import Customer
 from customers.views import CustomerDeleteView, CustomerListView
+
+
+class ProbeWidget(forms.TextInput):
+    class Media:
+        js = ("probe/probe.js",)
+        css = {"all": ("probe/probe.css",)}
+
+
+class ProbeForm(forms.Form):
+    x = forms.CharField(widget=ProbeWidget)
 
 
 class TablerIconTests(SimpleTestCase):
@@ -64,22 +77,45 @@ class ButtonClassTests(SimpleTestCase):
             self.assertEqual(resolved[key], classes, key)
 
     def test_every_theme_key_is_an_upstream_key(self):
-        self.assertLessEqual(set(TABLER_BUTTON_CLASSES), set(DEFAULT_BUTTON_CLASSES))
+        # A label-mode key (location:variant:mode, #209) extends an upstream action key.
+        for key in TABLER_BUTTON_CLASSES:
+            base, _, mode = key.rpartition(":") if key.count(":") == 2 else (key, "", "")
+            self.assertIn(base, DEFAULT_BUTTON_CLASSES, key)
+            if mode:
+                self.assertIn(mode, LABEL_MODES, key)
+
+    def test_btn_icon_only_on_icon_only_buttons(self):
+        # btn-icon squares a button; a labelled button (label or both) must not get it.
+        for key, classes in TABLER_BUTTON_CLASSES.items():
+            if key.split(":")[0] in ("context", "list", "card") and key.split(":")[1] in VARIANTS:
+                self.assertEqual("btn-icon" in classes.split(), key.endswith(":icon"), key)
 
     def test_table_values(self):
         expected = {
-            "context:primary": "btn btn-primary btn-icon",
-            "context:secondary": "btn btn-icon",
-            "context:tertiary": "btn btn-icon",
-            "context:danger": "btn btn-icon btn-outline-danger",
-            "list:primary": "btn btn-sm btn-icon btn-ghost-primary",
-            "list:secondary": "btn btn-sm btn-icon btn-ghost-secondary",
-            "list:tertiary": "btn btn-sm btn-icon btn-ghost-secondary",
-            "list:danger": "btn btn-sm btn-icon btn-ghost-danger",
+            "context:primary": "btn btn-primary",
+            "context:secondary": "btn",
+            "context:tertiary": "btn",
+            "context:danger": "btn btn-outline-danger",
+            "list:primary": "btn btn-sm btn-ghost-primary",
+            "list:secondary": "btn btn-sm btn-ghost-secondary",
+            "list:tertiary": "btn btn-sm btn-ghost-secondary",
+            "list:danger": "btn btn-sm btn-ghost-danger",
             "card:primary": "btn btn-sm btn-primary",
             "card:secondary": "btn btn-sm",
-            "card:tertiary": "btn btn-sm btn-icon btn-ghost-secondary",
+            "card:tertiary": "btn btn-sm btn-ghost-secondary",
             "card:danger": "btn btn-sm btn-ghost-danger",
+            "context:primary:icon": "btn btn-primary btn-icon",
+            "context:secondary:icon": "btn btn-icon",
+            "context:tertiary:icon": "btn btn-icon",
+            "context:danger:icon": "btn btn-icon btn-outline-danger",
+            "list:primary:icon": "btn btn-sm btn-icon btn-ghost-primary",
+            "list:secondary:icon": "btn btn-sm btn-icon btn-ghost-secondary",
+            "list:tertiary:icon": "btn btn-sm btn-icon btn-ghost-secondary",
+            "list:danger:icon": "btn btn-sm btn-icon btn-ghost-danger",
+            "card:primary:icon": "btn btn-sm btn-icon btn-primary",
+            "card:secondary:icon": "btn btn-sm btn-icon",
+            "card:tertiary:icon": "btn btn-sm btn-icon btn-ghost-secondary",
+            "card:danger:icon": "btn btn-sm btn-icon btn-ghost-danger",
             "context:container": "btn-list",
             "list:container": "btn-list flex-nowrap justify-content-end gap-1",
             "card:container": "btn-list",
@@ -193,6 +229,31 @@ class ThemeRenderingTests(TestCase):
         self.assertIn('<div class="card"><div class="card-body">', html)
         self.assertIn('class="cv-form"', html)
 
+    def test_create_and_update_post_multipart(self):
+        # upstream #236: without the enctype a FileField arrives empty
+        for url in (reverse("customer-create"), reverse("customer-update", args=[self.customer.pk])):
+            html = self.client.get(url).content.decode()
+            form = re.search(r'<form class="cv-form"[^>]*>', html).group(0)
+            self.assertIn('enctype="multipart/form-data"', form, url)
+
+    def test_create_and_update_emit_widget_media_once(self):
+        # upstream #191: crispy already renders form.media; the content template must not add it again
+        request = RequestFactory().get("/")
+        for template in ("crud_views/view_create.content.html", "crud_views/view_update.content.html"):
+            html = render_to_string(template, {"form": ProbeForm(), "request": request, "view": None}, request=request)
+            self.assertEqual(html.count("probe/probe.js"), 1, template)
+            self.assertEqual(html.count("probe/probe.css"), 1, template)
+
+    def test_messages_render_as_tabler_alerts(self):
+        url = reverse("customer-delete", args=[self.customer.pk])
+        html = self.client.post(url, {"confirm": "on", "delete": "Delete"}, follow=True).content.decode()
+        alert = re.search(r'<div class="alert alert-success[^"]*"[^>]*>.*?</div>\s*</div>', html, re.S).group(0)
+        self.assertIn("alert-dismissible", alert)
+        self.assertIn('<div class="alert-icon">', alert)
+        self.assertIn(str(svg("check", "alert-icon")), alert)
+        self.assertIn("Deleted »Customer 03«", alert)
+        self.assertIn("crud_views_tabler", get_template("crud_views/tags/messages.html").origin.name)
+
     def test_delete_modal_partial_has_no_card_and_a_danger_button(self):
         url = reverse("customer-delete", args=[self.customer.pk])
         html = self.client.get(url, headers={"X-CV-Modal": "true"}).content.decode()
@@ -233,7 +294,7 @@ class ThemeRenderingTests(TestCase):
         self.assertIn('class="btn btn-icon"', button)
         self.assertIn('data-cv-tooltip="context"', button)
         self.assertIn('<span data-cv-filter-icon="open">', button)
-        self.assertIn('<span data-cv-filter-icon="close" class="d-none">', button)
+        self.assertIn('<span data-cv-filter-icon="close" hidden>', button)
         self.assertEqual(button.count("<svg"), 2)
 
     def test_filter_toggle_reflects_the_session_state(self):
@@ -244,7 +305,7 @@ class ThemeRenderingTests(TestCase):
         html = self.client.get(reverse("customer-list")).content.decode()
         button = re.search(r'<button[^>]*id="cv-filter-toggle"[^>]*>.*?</button>', html, re.S).group(0)
         self.assertIn('aria-expanded="true"', button)
-        self.assertIn('<span data-cv-filter-icon="open" class="d-none">', button)
+        self.assertIn('<span data-cv-filter-icon="open" hidden>', button)
         self.assertIn('<span data-cv-filter-icon="close">', button)
         self.assertIn('class="collapse show" id="filter-collapse"', html)
 
@@ -338,9 +399,11 @@ class CardThemeTests(TestCase):
 
     def test_card_action_variants(self):
         html = self.get()
-        self.assertIn("btn btn-sm btn-primary flex-grow-1", html)  # primary + flex
-        self.assertIn("btn btn-sm btn-icon btn-ghost-secondary", html)  # tertiary (icon-only in the demo)
-        self.assertIn("<span>Open</span>", html)  # a visible label renders as text only
+        self.assertIn('class="btn btn-sm btn-primary flex-grow-1"', html)  # primary + flex, labelled: no btn-icon
+        self.assertIn('class="btn btn-sm btn-icon btn-ghost-secondary"', html)  # tertiary:icon (the demo's delete)
+        open_ = re.search(r'<a\b[^>]*cv-key="detail"[^>]*>.*?</a>', html, re.S).group(0)
+        self.assertIn("<svg", open_)  # label mode "both", upstream's card default (#213): icon and text
+        self.assertIn("<span>Open</span>", open_)
         self.assertIn('<span class="visually-hidden">Delete</span>', html)  # icon-only keeps a name
 
     def test_card_links_carry_their_origin(self):
@@ -369,7 +432,7 @@ class CardThemeTests(TestCase):
 
     def test_icon_only_card_action_has_a_crud_views_tooltip(self):
         html = self.get()
-        delete = re.search(r'<a\b[^>]*/delete/\?cv_from=card[^>]*>', html).group(0)  # the no_label card action
+        delete = re.search(r'<a\b[^>]*/delete/\?cv_from=card[^>]*>', html).group(0)  # the label_mode="icon" action
         self.assertIn("btn-icon", delete)
         self.assertIn('data-cv-tooltip="card"', delete)
         self.assertNotIn('data-bs-toggle="tooltip"', delete)

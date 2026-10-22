@@ -10,6 +10,12 @@ from django.utils.safestring import SafeString
 
 ICONS: dict[str, list[str]] = {
     "alert-circle": ["M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0", "M12 8v4", "M12 16h.01"],
+    "alert-triangle": [
+        "M12 9v4",
+        "M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536"
+        "a1.914 1.914 0 0 0 -3.274 0",
+        "M12 16h.01",
+    ],
     "arrow-down": ["M12 5l0 14", "M18 13l-6 6", "M6 13l6 6"],
     "arrow-left": ["M5 12l14 0", "M5 12l6 6", "M5 12l6 -6"],
     "arrow-up": ["M12 5l0 14", "M18 11l-6 -6", "M6 11l6 -6"],
@@ -19,6 +25,17 @@ ICONS: dict[str, list[str]] = {
         "M5 21l0 -10.15",
         "M19 21l0 -10.15",
         "M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4",
+    ],
+    "bug": [
+        "M9 9v-1a3 3 0 0 1 6 0v1",
+        "M8 9h8a6 6 0 0 1 1 3v3a5 5 0 0 1 -10 0v-3a6 6 0 0 1 1 -3",
+        "M3 13l4 0",
+        "M17 13l4 0",
+        "M12 20l0 -6",
+        "M4 19l3.35 -2",
+        "M20 19l-3.35 -2",
+        "M4 7l3.75 2.4",
+        "M20 7l-3.75 2.4",
     ],
     "caret-down": ["M6 10l6 6l6 -6h-12"],
     "caret-up": ["M18 14l-6 -6l-6 6h12"],
@@ -170,6 +187,11 @@ TABLER_ICONS: dict[str, str] = {
     "boolean-false": "tabler:circle-x",
     "property-detail": "tabler:info-circle",
     "text-icon": "tabler:file-text",
+    "message-success": "tabler:check",
+    "message-info": "tabler:info-circle",
+    "message-warning": "tabler:alert-triangle",
+    "message-error": "tabler:alert-circle",
+    "message-debug": "tabler:bug",
 }
 
 

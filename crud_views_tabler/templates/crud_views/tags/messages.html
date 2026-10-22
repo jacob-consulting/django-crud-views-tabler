@@ -1,0 +1,9 @@
+{% load crud_views i18n %}
+{# Tabler theme: the level icon sits in .alert-icon. Icons come from the message-* names in TABLER_ICONS. #}
+{% for alert in cv_message_alerts %}
+<div class="alert alert-{{ alert.css_class }} alert-dismissible fade show{% if alert.extra_tags %} {{ alert.extra_tags }}{% endif %}" role="alert">
+  <div class="alert-icon">{% cv_icon alert.icon_name css="alert-icon" %}</div>
+  <div>{{ alert.message }}</div>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button>
+</div>
+{% endfor %}

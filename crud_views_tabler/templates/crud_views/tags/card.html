@@ -1,20 +1,22 @@
 {% load crud_views %}
 {% comment %}
-Tabler theme card. A view's cv_card_template can extend this template and fill the blocks:
-  card_title    - the heading (default: str(object))
+Tabler theme card: crud_views' card (#243) with the actions in a .card-footer. Same block names, so a view's
+cv_card_template that extends crud_views/tags/card.html works under either theme:
+  card_title    - the heading text (default: str(object))
   card_content  - anything below the heading, inside .card-body
-  card_footer   - the actions row (crud_views' container leaf); override only to change where actions go
+  card_actions  - the footer with the actions (crud_views' container leaf); empty it to drop actions and footer
+Classes come from the class table: card:root, card:body, card:title (card:container for the actions).
 {% endcomment %}
 {% cv_card_action_group object as group %}
-<div class="card">
-  <div class="card-body">
-    <h3 class="card-title">{% block card_title %}{{ object }}{% endblock card_title %}</h3>
+<div class="{% cv_button_class "card" "root" %}">
+  <div class="{% cv_button_class "card" "body" %}">
+    <h3 class="{% cv_button_class "card" "title" %}">{% block card_title %}{{ object }}{% endblock card_title %}</h3>
     {% block card_content %}{% endblock card_content %}
   </div>
-  {% block card_footer %}
+  {% block card_actions %}
   <div class="card-footer">
     {% for ctx in group.menu %}{% cv_render_list_action_form ctx %}{% endfor %}
     {% include "crud_views/tags/button/container.html" with cv_buttons=group.inline cv_group=group cv_location="card" cv_container_tag="div" %}
   </div>
-  {% endblock card_footer %}
+  {% endblock card_actions %}
 </div>

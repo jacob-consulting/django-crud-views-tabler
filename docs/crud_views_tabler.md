@@ -2,7 +2,7 @@
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by two
 demo apps: `customers` (`/customer/` table list, `/customer/card/` card view) and `catalog` (`/product/`), whose
-create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views main @ 3d2ee82 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239, the translated card empty state #246 and accessible card pagination #241, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views main @ 73b5037 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239, the translated card empty state #246, accessible card pagination #241 and card blocks and class keys #243, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -129,7 +129,11 @@ own):
 - cards sit in a `.row.row-deck.row-cards` grid, so cards in a row share their height;
   `cv_card_container_class` still sets the column width (the demo uses `col-sm-6 col-lg-4`),
 - each card is `.card > .card-body` (title + content) and a `.card-footer`, which includes crud_views' container
-  leaf (`tags/button/container.html`, a `div.btn-list`) for the actions and the overflow menu,
+  leaf (`tags/button/container.html`, a `div.btn-list`) for the actions and the overflow menu. The footer is why the
+  theme still overrides `tags/card.html`: crud_views' card keeps its actions inside the body, and where they sit is
+  structure, not classes (#243). The override uses crud_views' block names and its `card:root` / `card:body` /
+  `card:title` class keys; the theme registers `card:root` = `card` (crud_views' default adds `mb-3`, which the
+  `row-deck` grid does not need),
 - variants map to Tabler buttons through the class table: `primary` → `btn btn-sm btn-primary`, `secondary` → the
   default `btn btn-sm`, `tertiary` → `btn btn-sm btn-ghost-secondary`, `danger` → `btn btn-sm btn-ghost-danger`;
   `flex` → `flex-grow-1`. Labelled buttons show icon and label (crud_views' card default, label mode `both`),
@@ -139,8 +143,10 @@ own):
   the `card-order:*` classes (`btn btn-icon` in a `btn-group`); signed ordering (`submit-on-change`) is unchanged,
 - no results render Tabler's `.empty` state; pagination is crud_views' `snippets/pagination.html` (see Pagination).
 
-**Custom card content** without repeating the actions markup: a view's `cv_card_template` can extend the theme's
-card and fill its blocks (`card_title`, `card_content`, `card_footer`):
+**Custom card content** without repeating the actions markup: a view's `cv_card_template` extends
+`crud_views/tags/card.html` and fills crud_views' blocks (`card_title`, `card_content`, `card_actions`; #243). Under
+this theme that resolves to the Tabler card, so the same template works with or without the theme. Emptying
+`card_actions` drops the footer along with the actions:
 
 ```html
 {% extends "crud_views/tags/card.html" %}
@@ -250,7 +256,7 @@ crud_views/
   snippets/delete/protection_errors.html   "cannot be deleted" as a Tabler alert
   snippets/form_frame.html        card around the form on create/update/delete/custom-form pages, bare in a modal
   table/bootstrap5.html           card table, sort headers, footer pagination
-  tags/card.html                  card layout with blocks; footer includes crud_views' container leaf
+  tags/card.html                  actions in a .card-footer; crud_views' blocks and card:* class keys
   tags/list_filter.html, list_filter.inner.html   filter as a Tabler card
   tags/messages.html              {% cv_messages %} as Tabler alerts (icon in .alert-icon)
   view_card.content.html          card grid and empty state

@@ -128,7 +128,7 @@ Point by point, with the evidence behind "none":
 | [#240](https://github.com/jacob-consulting/django-crud-views/issues/240) | `modal:root` / `modal:dialog` class keys | `modal/shell.html` |
 | [#241](https://github.com/jacob-consulting/django-crud-views/issues/241) **done (3d2ee82)** | accessible pagination, `page-previous` / `page-next` icons | `snippets/pagination.html` deleted; the theme maps the two icons, and its table footer pagination uses them too |
 | [#242](https://github.com/jacob-consulting/django-crud-views/issues/242) **closed, not planned** | filter card class instead of `<br>`, heading with class key | — the two filter overrides stay |
-| [#243](https://github.com/jacob-consulting/django-crud-views/issues/243) | card blocks (title, content, actions) and class keys | `tags/card.html` (smaller or gone) |
+| [#243](https://github.com/jacob-consulting/django-crud-views/issues/243) **done (73b5037)** | card blocks (title, content, actions) and class keys | `tags/card.html` stays (the footer is structure, as upstream decided), but now uses upstream's block names (`card_footer` → `card_actions`) and `card:root` / `card:body` / `card:title`; the theme registers `card:root` = `card` |
 | [#244](https://github.com/jacob-consulting/django-crud-views/issues/244) **closed, not planned** | card row class, shared empty-state snippet | — `view_card.content.html` stays. Split out of it: [#246](https://github.com/jacob-consulting/django-crud-views/issues/246) **done (337b1f6)**, the stock empty text is translated; the theme's empty state uses the same msgid, so it shows German too (pinned by `test_empty_state_is_translated`) |
 
 Not filed: `table/bootstrap5.html` (the whole django-tables2 template in Tabler markup) and `tags/messages.html`

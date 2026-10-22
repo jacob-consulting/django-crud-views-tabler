@@ -32,6 +32,8 @@ TABLER_BUTTON_CLASSES: dict[str, str] = {
     "context:menu-toggle": "btn btn-icon",
     "list:menu-toggle": "btn btn-sm btn-icon btn-ghost-secondary",
     "card:menu-toggle": "btn btn-sm btn-icon",
+    # The card itself (#243): no mb-3, the .row-deck.row-cards grid spaces the cards.
+    "card:root": "card",
     "context:menu-wrapper": "dropdown",
     "list:menu-wrapper": "dropdown",
     "form:delete": "btn btn-danger",

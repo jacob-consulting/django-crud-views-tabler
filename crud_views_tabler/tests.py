@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.checks import run_checks
 from django.core.management import call_command
-from django.template import TemplateDoesNotExist
+from django.template import Context, Template, TemplateDoesNotExist
 from django.template.loader import get_template, render_to_string
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
@@ -122,6 +122,7 @@ class ButtonClassTests(SimpleTestCase):
             "context:menu-toggle": "btn btn-icon",
             "list:menu-toggle": "btn btn-sm btn-icon btn-ghost-secondary",
             "card:menu-toggle": "btn btn-sm btn-icon",
+            "card:root": "card",
             "context:menu-wrapper": "dropdown",
             "list:menu-wrapper": "dropdown",
             "form:delete": "btn btn-danger",
@@ -435,6 +436,23 @@ class CardThemeTests(TestCase):
         self.assertIn("<svg", open_)  # label mode "both", upstream's card default (#213): icon and text
         self.assertIn("<span>Open</span>", open_)
         self.assertIn('<span class="visually-hidden">Delete</span>', html)  # icon-only keeps a name
+
+    def test_card_follows_upstream_block_names_and_class_keys(self):
+        # upstream #243: same block names as crud_views' card, so a cv_card_template works under either theme
+        template = Template(
+            '{% extends "crud_views/tags/card.html" %}'
+            "{% block card_title %}T{% endblock %}{% block card_content %}<p>C</p>{% endblock %}"
+            "{% block card_actions %}{% endblock %}"
+        )
+        page = self.client.get(reverse("customer-card")).context
+        customer = Customer.objects.get(name="Customer 03")
+        with override_settings(CRUD_VIEWS_BUTTON_CLASSES={"card:title": "card-title x-title"}):
+            html = template.render(Context({"object": customer, "view": page["view"], "request": page["request"]}))
+        self.assertIn('<div class="card">', html)  # card:root without mb-3: the row-deck grid spaces the cards
+        self.assertIn('<h3 class="card-title x-title">T</h3>', html)
+        self.assertIn("<p>C</p>", html)
+        self.assertNotIn("card-footer", html)  # dropping the actions drops the footer with them
+        self.assertNotIn("cv-card-container", html)
 
     def test_card_links_carry_their_origin(self):
         html = self.get()

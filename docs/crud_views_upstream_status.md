@@ -127,9 +127,9 @@ Point by point, with the evidence behind "none":
 | [#239](https://github.com/jacob-consulting/django-crud-views/issues/239) **done (8fcb7f2)** | one frame template around the form; delete's protection alert as a snippet | `view_create`, `view_update`, `view_delete` `.content.html` → replaced by `snippets/form_frame.html` + `snippets/delete/protection_errors.html` |
 | [#240](https://github.com/jacob-consulting/django-crud-views/issues/240) | `modal:root` / `modal:dialog` class keys | `modal/shell.html` |
 | [#241](https://github.com/jacob-consulting/django-crud-views/issues/241) | accessible pagination, `page-previous` / `page-next` icons | `snippets/pagination.html` |
-| [#242](https://github.com/jacob-consulting/django-crud-views/issues/242) | filter card class instead of `<br>`, heading with class key | `tags/list_filter.html`, `tags/list_filter.inner.html` |
+| [#242](https://github.com/jacob-consulting/django-crud-views/issues/242) **closed, not planned** | filter card class instead of `<br>`, heading with class key | — the two filter overrides stay |
 | [#243](https://github.com/jacob-consulting/django-crud-views/issues/243) | card blocks (title, content, actions) and class keys | `tags/card.html` (smaller or gone) |
-| [#244](https://github.com/jacob-consulting/django-crud-views/issues/244) | card row class, shared empty-state snippet | `view_card.content.html` → empty snippet only |
+| [#244](https://github.com/jacob-consulting/django-crud-views/issues/244) **closed, not planned** | card row class, shared empty-state snippet | — `view_card.content.html` stays. Split out of it: [#246](https://github.com/jacob-consulting/django-crud-views/issues/246) **done (337b1f6)**, the stock empty text is translated; the theme's empty state uses the same msgid, so it shows German too (pinned by `test_empty_state_is_translated`) |
 
 Not filed: `table/bootstrap5.html` (the whole django-tables2 template in Tabler markup) and `tags/messages.html`
 (small, genuinely Tabler-specific) stay theme overrides.

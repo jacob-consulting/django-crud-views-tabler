@@ -446,6 +446,13 @@ class CardThemeTests(TestCase):
         self.assertIn('class="empty"', html)
         self.assertIn("No items found.", html)
 
+    @override_settings(LANGUAGE_CODE="de")
+    def test_empty_state_is_translated(self):
+        # the theme's empty state shares its msgid with crud_views' card list, translated upstream (#246)
+        html = self.get(name="nothing-matches", submit="Apply Filter")
+        self.assertIn('class="empty"', html)
+        self.assertIn("Keine Einträge gefunden.", html)
+
     def test_delete_from_card_returns_to_cards(self):
         customer = Customer.objects.get(name="Customer 03")
         url = reverse("customer-delete", args=[customer.pk]) + "?cv_from=card"

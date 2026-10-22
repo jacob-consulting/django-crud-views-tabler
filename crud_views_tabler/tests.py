@@ -229,6 +229,28 @@ class ThemeRenderingTests(TestCase):
         self.assertIn('<div class="card"><div class="card-body">', html)
         self.assertIn('class="cv-form"', html)
 
+    def test_modal_form_has_no_card(self):
+        html = self.client.get(reverse("customer-create"), headers={"X-CV-Modal": "true"}).content.decode()
+        self.assertIn('class="cv-form"', html)
+        self.assertNotIn('<div class="card">', html)
+
+    def test_form_pages_frame_through_upstream_content_templates(self):
+        # upstream #239: the theme overrides only the frame and the protection alert, not the form templates
+        self.assertIn("crud_views_tabler", get_template("crud_views/snippets/form_frame.html").origin.name)
+        self.assertIn("crud_views_tabler", get_template("crud_views/snippets/delete/protection_errors.html").origin.name)
+        for name in ("view_create", "view_update", "view_delete", "view_custom_form"):
+            template = f"crud_views/{name}.content.html"
+            self.assertNotIn("crud_views_tabler", get_template(template).origin.name, template)
+
+    def test_protection_errors_render_as_tabler_alert(self):
+        html = render_to_string(
+            "crud_views/snippets/delete/protection_errors.html", {"delete_protection_errors": ["Has open orders"]}
+        )
+        self.assertIn('class="alert alert-danger"', html)
+        self.assertIn('<div class="alert-icon">', html)
+        self.assertIn('class="alert-heading"', html)
+        self.assertIn("<li>Has open orders</li>", html)
+
     def test_create_and_update_post_multipart(self):
         # upstream #236: without the enctype a FileField arrives empty
         for url in (reverse("customer-create"), reverse("customer-update", args=[self.customer.pk])):

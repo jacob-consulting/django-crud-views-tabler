@@ -23,7 +23,8 @@ its icon spans with `hidden` instead of `d-none` (#232), and five new `message-*
 - **Messages:** `{% cv_messages %}` replaces the demo's `includes/messages.html`; the theme overrides
   `tags/messages.html` for Tabler's `.alert-icon` layout and maps the `message-*` icons.
 - **Tests:** 75, OK; `manage.py check --fail-level WARNING` clean.
-- **Overrides:** 11 (the 10 layout overrides plus `tags/messages.html`). The upstream hooks that would remove most
+- **Overrides:** 11 (the 10 layout overrides plus `tags/messages.html`); 10 after #239 (below), and none of them
+  copies a `<form>` any more. The upstream hooks that would remove most
   of them are filed as new issues; see "Upstream asks, round 2" below.
 
 ## What this was checked against (2026-10-21)
@@ -123,7 +124,7 @@ Point by point, with the evidence behind "none":
 
 | Issue | Hook | Tabler override it removes |
 |---|---|---|
-| [#239](https://github.com/jacob-consulting/django-crud-views/issues/239) | one frame template around the form; delete's protection alert as a snippet | `view_create`, `view_update`, `view_delete` `.content.html` → one frame + one snippet |
+| [#239](https://github.com/jacob-consulting/django-crud-views/issues/239) **done (8fcb7f2)** | one frame template around the form; delete's protection alert as a snippet | `view_create`, `view_update`, `view_delete` `.content.html` → replaced by `snippets/form_frame.html` + `snippets/delete/protection_errors.html` |
 | [#240](https://github.com/jacob-consulting/django-crud-views/issues/240) | `modal:root` / `modal:dialog` class keys | `modal/shell.html` |
 | [#241](https://github.com/jacob-consulting/django-crud-views/issues/241) | accessible pagination, `page-previous` / `page-next` icons | `snippets/pagination.html` |
 | [#242](https://github.com/jacob-consulting/django-crud-views/issues/242) | filter card class instead of `<br>`, heading with class key | `tags/list_filter.html`, `tags/list_filter.inner.html` |
@@ -135,13 +136,14 @@ Not filed: `table/bootstrap5.html` (the whole django-tables2 template in Tabler 
 
 ### Theme follow-ups
 
-- **Re-diff the 11 overrides whenever an upstream release touches `src/crud_views/templates`.** Two commits up to
+- **Re-diff the 10 overrides whenever an upstream release touches `src/crud_views/templates`.** Two commits up to
   10d81ad do: 3fc4be6 (#213/#218) touched `tags/button/action.html` and 10d81ad (#217) deleted `crud_views/detail/`.
   Neither path is among the 10 overrides, so they are still current. The drift surface is small but not empty: `tags/list_filter.html` and
-  `tags/list_filter.inner.html` carry the pinned-filter contract, and `view_create.content.html`,
-  `view_update.content.html`, `view_delete.content.html` must keep posting to `request.get_full_path` (so `cv_from`
-  survives) plus delete's protection-error branch. The other five (`tags/card.html`, `view_card.content.html`,
-  `modal/shell.html`, `snippets/pagination.html`, `table/bootstrap5.html`) are layout and markup.
+  `tags/list_filter.inner.html` carry the pinned-filter contract, and `snippets/form_frame.html` must keep the
+  `cv_form_body` block and leave the modal bare. (Until #239 the theme copied the create, update and delete
+  `<form>`s here, and those copies missed #236 and #191; since 2026-10-22 the form is upstream's.) The others
+  (`tags/card.html`, `view_card.content.html`, `modal/shell.html`, `snippets/pagination.html`,
+  `table/bootstrap5.html`, `snippets/delete/protection_errors.html`, `tags/messages.html`) are layout and markup.
 - **The "no jQuery" claim is verified for pages without formsets only** (`tests.py:159`). If the demo ever gets a
   formset page, it needs jQuery loaded, and the theme's documentation already says a project must load it itself.
 

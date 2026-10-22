@@ -2,7 +2,7 @@
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by two
 demo apps: `customers` (`/customer/` table list, `/customer/card/` card view) and `catalog` (`/product/`), whose
-create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views @ e212dc3 (branch `fix/form-enctype-multipart`, one commit ahead of main; 0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191 and multipart create forms #236, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views main @ 8fcb7f2 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236 and the form frame #239, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -239,18 +239,19 @@ inside modal content, which Tabler's own page-load initialisation never sees.
 
 ## Overridden templates
 
-Eleven templates, all about page layout; none of them renders a button:
+Ten templates, all about page layout; none of them renders a button:
 
 ```
 crud_views/
   modal/shell.html                Tabler modal shell (modal-blur, centered)
+  snippets/delete/protection_errors.html   "cannot be deleted" as a Tabler alert
+  snippets/form_frame.html        card around the form on create/update/delete/custom-form pages, bare in a modal
   snippets/pagination.html        card-view pagination
   table/bootstrap5.html           card table, sort headers, footer pagination
   tags/card.html                  card layout with blocks; footer includes crud_views' container leaf
   tags/list_filter.html, list_filter.inner.html   filter as a Tabler card
   tags/messages.html              {% cv_messages %} as Tabler alerts (icon in .alert-icon)
   view_card.content.html          card grid and empty state
-  view_create.content.html, view_update.content.html, view_delete.content.html   card around the form, bare in a modal
 static/crud_views_tabler/
   crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons
   tabler-adapters.js              cv.adapters -> window.tabler, toolbar tooltips below
@@ -260,10 +261,14 @@ The theme used to override the context, list and card action templates, both con
 toggle and the card-order bar (nine templates). crud_views' class table, leaves and tooltip markers made all of them
 unnecessary.
 
-`view_create.content.html` and `view_update.content.html` differ from crud_views' only by the card around the form.
-Being copies, they missed two upstream fixes until the theme caught up: the create form's
-`enctype="multipart/form-data"` (#236, file fields arrived empty) and `{{ form.media }}` after the form (#191, widget
-media rendered twice; crispy already includes it). Tests now pin both.
+The form pages used to be three full copies (`view_create`, `view_update`, `view_delete` `.content.html`) whose only
+change was the card around the form. Being copies, they missed two upstream fixes until the theme caught up: the
+create form's `enctype="multipart/form-data"` (#236, file fields arrived empty) and `{{ form.media }}` after the form
+(#191, widget media rendered twice). Since #239 the four form content templates extend
+`crud_views/snippets/form_frame.html`, so the theme overrides only that frame and the delete page's
+`snippets/delete/protection_errors.html`; the `<form>`, its `enctype`, `action` and media handling are upstream's
+again (custom-form pages get the card too). Tests pin the frame, the bare modal and that the content templates are
+not overridden.
 
 The demo's flash messages render with crud_views' `{% cv_messages %}` (#222) in `layouts/app.html`; the demo's own
 `includes/messages.html` is gone. The theme's `tags/messages.html` gives the alerts Tabler's `.alert-icon` layout,

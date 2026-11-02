@@ -23,19 +23,20 @@ INSTALLED_APPS = [
     "crispy_tabler",
     "django_tables2",
     "django_filters",
+    "django_tabler",
     "crud_views_tabler",                 # before crud_views
     "crud_views.apps.CrudViewsConfig",
 ]
 CRISPY_TEMPLATE_PACK = "crispy_tabler"
 CRISPY_ALLOWED_TEMPLATE_PACKS = ("crispy_tabler",)
-CRUD_VIEWS_EXTENDS = "crud_views_page.html"                   # project template, see below
+CRUD_VIEWS_EXTENDS = "crud_views_tabler/page.html"            # the theme's page, see below
 DJANGO_TABLES2_TEMPLATE = "crud_views/table/bootstrap5.html"  # the theme's table template
 ```
 
 ## The page: CRUD_VIEWS_EXTENDS
 
-`templates/crud_views_page.html` is a **project** template, not part of the theme: it extends the app's own Tabler
-layout (`layouts/app.html`, top navbar) and maps the crud_views pieces onto Tabler's page header:
+`crud_views_tabler/page.html` is part of the theme: it extends the Tabler layout from the `django_tabler` package
+(`django_tabler/layouts/app.html`, top navbar) and maps the crud_views pieces onto Tabler's page header:
 
 | crud_views | Tabler page |
 |---|---|
@@ -200,7 +201,7 @@ django-crud-views 0.30.0 refers to icons by semantic name (`detail`, `delete`, `
 layered table (package defaults, theme registrations, `CRUD_VIEWS_ICONS`) to `prefix:name` values, and renders every
 icon through `{% cv_icon %}` with a renderer per library prefix. The theme plugs into that:
 
-- `crud_views_tabler/icons.py` holds Tabler outline icons as SVG paths (`ICONS`), the registry renderer `render`
+- `django_tabler/icons.py` holds Tabler outline icons as SVG paths (`ICONS`); `crud_views_tabler/icons.py` holds the registry renderer `render`
   (inline SVG with `class="icon …"` and `aria-hidden`), and `TABLER_ICONS`: a Tabler icon for every semantic name
   the package defines (34 names, from `detail` to the formset, object-detail, `message-*` and `page-*` icons),
 - `CrudViewsTablerConfig.ready()` registers the library (`register_icon_library("tabler", renderer=…)`) and the table
@@ -276,8 +277,8 @@ create form's `enctype="multipart/form-data"` (#236, file fields arrived empty) 
 again (custom-form pages get the card too). Tests pin the frame, the bare modal and that the content templates are
 not overridden.
 
-The demo's flash messages render with crud_views' `{% cv_messages %}` (#222) in `layouts/app.html`; the demo's own
-`includes/messages.html` is gone.
+On crud_views pages, flash messages render with crud_views' `{% cv_messages %}` (#222) in `crud_views_tabler/page.html`.
+Other pages get the same markup from the layout's default, `django_tabler/includes/messages.html`.
 
 **Alerts** (#250): crud_views renders every alert — the flash messages, the delete page's protection and
 related-objects alerts — through one frame, `crud_views/tags/alert.html`, with the body chosen in Python (a text

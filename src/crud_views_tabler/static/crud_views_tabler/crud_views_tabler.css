@@ -18,6 +18,12 @@
   margin-bottom: 1rem;
 }
 
+/* crud_views wraps the toggle's icons in a span. Tabler's .btn-icon .icon has a negative margin that only works on a
+   direct flex child of the button, so the span must generate no box. :not([hidden]) keeps the other icon hidden. */
+#cv-filter-toggle [data-cv-filter-icon]:not([hidden]) {
+  display: contents;
+}
+
 /* crud_views' modal header: the header icon sits beside the title text. */
 #cv-modal .modal-title {
   display: flex;

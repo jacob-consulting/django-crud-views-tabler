@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 from unittest import mock
 
 from django import forms
@@ -19,6 +20,7 @@ from crud_views.lib.icons import DEFAULT_ICONS
 from crud_views.lib.icons import render_icon as cv_render_icon
 from crud_views.lib.view.label_mode import LABEL_MODES
 from crud_views.lib.view.variant import VARIANTS
+import crud_views_tabler
 from crud_views_tabler.buttons import TABLER_BUTTON_CLASSES
 from crud_views_tabler.icons import TABLER_ICONS, render
 from customers.models import Customer
@@ -568,3 +570,12 @@ class MessagesParityTests(SimpleTestCase):
         plain = render_to_string("django_tabler/includes/messages.html", {"messages": messages})
         themed = Template("{% load crud_views %}{% cv_messages %}").render(Context({"messages": messages}))
         self.assertEqual(normalized(plain), normalized(themed))
+
+
+class FilterToggleIconTests(SimpleTestCase):
+    def test_icon_wrapper_generates_no_box(self):
+        # Tabler's .btn-icon .icon has a negative margin that only works on a direct flex child;
+        # inside crud_views' wrapper span the icon falls out of the bottom of the button.
+        # :not([hidden]) matters: display: contents would otherwise reveal the hidden icon.
+        css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
+        self.assertRegex(css, r"#cv-filter-toggle \[data-cv-filter-icon\]:not\(\[hidden\]\) \{\s*display: contents;")

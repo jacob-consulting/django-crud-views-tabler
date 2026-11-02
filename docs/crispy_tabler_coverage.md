@@ -2,7 +2,7 @@
 
 The `catalog` app exists to make one page — `/product/create/` — render **every branch of the crispy
 template pack at once**, so the Tabler theme can be judged field by field instead of guessing. It is the
-groundwork for the `crispy_tabler` template pack, which now lives in `src/crispy_tabler`
+groundwork for the `crispy_tabler` template pack, which now lives in `src/django_tabler`
 and which the demo renders through (`CRISPY_TEMPLATE_PACK = "crispy_tabler"`).
 
 The findings below were recorded on 2026-10-21 against crispy-bootstrap5 2026.9 (`CRISPY_TEMPLATE_PACK = "bootstrap5"`) and
@@ -56,7 +56,7 @@ Six findings, all seen in the browser on `/product/create/`. **All six are fixed
 1. **`UneditableField` had no Tabler equivalent.** Bootstrap's template emitted `class="uneditable-input textinput"`
    (a Bootstrap 2 class) and no `form-control`. **Fixed:** now `form-control-plaintext`, and `uneditable-input` is
    absent. crispy's own `UneditableField` hardcodes the dead class in Python, so the demo imports `UneditableField`
-   from `crispy_tabler.layout`, not `crispy_forms.bootstrap`.
+   from `django_tabler.crispy.layout`, not `crispy_forms.bootstrap`.
 2. **`type="range"` got `form-control`.** **Fixed:** now `form-range` **alone**. Tabler's `.form-range` resets
    `appearance` and `background-color`, which `form-control` would fight.
 3. **`type="color"` got `form-control`.** **Fixed:** now `form-control form-control-color`, **both**. Unlike range,
@@ -83,7 +83,7 @@ directory — `field.html` and `widgets/{attrs,bool,display}.html` — together 
 `bootstrap5/` any more (`src/crud_views/templates/`), so a non-Bootstrap crispy pack has nothing left to trip over.
 
 Consequently `crispy_bootstrap5` is out of `INSTALLED_APPS` and nothing depends on it being there. The
-`crispy-bootstrap5` *distribution* is still installed — `crispy_tabler.layout` subclasses its `FloatingField` and
+`crispy-bootstrap5` *distribution* is still installed — `django_tabler.crispy.layout` subclasses its `FloatingField` and
 `Switch`, and django-crud-views still declares it in `dependencies` — but that is a Python import, not a template
 lookup, and unrelated to this gap.
 
@@ -115,5 +115,7 @@ widget stays a `Select` and `radioselect_inline.html` renders `<input type="sele
 browser paints as small boxes showing the raw choice values. `catalog/tests.py` asserts `type="select"` never
 appears.
 
-`crispy_tabler` was copied from `jacob-consulting/crispy-tabler` at `2f86558`; this repository now holds the working
-copy, and nothing syncs back automatically.
+The pack was copied from `jacob-consulting/crispy-tabler` at `2f86558` and then folded into `django_tabler`. It keeps the
+pack name `crispy_tabler`; its templates are in `templates/crispy_tabler/`, its template tags in
+`templatetags/crispy_tabler_field.py` and its Python in `django_tabler.crispy`. This repository holds the working copy,
+and nothing syncs back automatically.

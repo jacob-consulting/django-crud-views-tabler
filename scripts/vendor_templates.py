@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Vendor the crispy-bootstrap5 template pack into crispy_tabler.
+"""Vendor the crispy-bootstrap5 template pack into django_tabler.
 
 Usage (from the repo root, with the test extra installed):
 
     uv run --group test python scripts/vendor_templates.py [--force]
 
 Copies every template of the installed crispy-bootstrap5 into
-src/crispy_tabler/templates/crispy_tabler/ and applies exactly two changes
+src/django_tabler/templates/crispy_tabler/ and applies exactly two changes
 per file: the quoted ``bootstrap5/`` include prefix becomes ``crispy_tabler/``,
 and one provenance comment is prepended. Everything else stays byte-identical
 so a later re-vendor can be diffed against upstream.
@@ -24,10 +24,10 @@ from pathlib import Path
 
 import crispy_bootstrap5
 
-from crispy_tabler.vendored import CRISPY_BOOTSTRAP5_VERSION
+from django_tabler.crispy.vendored import CRISPY_BOOTSTRAP5_VERSION
 
 SRC = Path(crispy_bootstrap5.__file__).parent / "templates" / "bootstrap5"
-DEST = Path(__file__).resolve().parent.parent / "src/crispy_tabler/templates/crispy_tabler"
+DEST = Path(__file__).resolve().parent.parent / "src/django_tabler/templates/crispy_tabler"
 # Templates edited by hand after vendoring; a re-run would silently revert them.
 HAND_EDITED = (
     "field.html",

@@ -1,7 +1,7 @@
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import Fieldset, Submit
 
-from crispy_tabler.layout import UneditableField
+from django_tabler.crispy.layout import UneditableField
 
 from tests.crispy_tabler.helpers import render_horizontal, render_layout
 

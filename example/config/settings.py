@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'crispy_forms',
-    'crispy_tabler',
     'django_tables2',
     'django_filters',
     'django_tabler',

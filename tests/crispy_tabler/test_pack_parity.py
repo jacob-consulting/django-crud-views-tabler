@@ -1,14 +1,14 @@
 from pathlib import Path
 
 import crispy_bootstrap5
-import crispy_tabler
+import django_tabler
 from crispy_forms.utils import render_crispy_form
 
-from crispy_tabler.vendored import CRISPY_BOOTSTRAP5_VERSION
+from django_tabler.crispy.vendored import CRISPY_BOOTSTRAP5_VERSION
 from tests.crispy_tabler.forms import CoverageForm
 
 BS5_ROOT = Path(crispy_bootstrap5.__file__).parent / "templates" / "bootstrap5"
-PACK_ROOT = Path(crispy_tabler.__file__).parent / "templates" / "crispy_tabler"
+PACK_ROOT = Path(django_tabler.__file__).parent / "templates" / "crispy_tabler"
 
 
 def _names(root: Path, *, skip: tuple[str, ...] = ()) -> set[str]:

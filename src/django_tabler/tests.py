@@ -1,4 +1,6 @@
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 from django.contrib.messages import constants
@@ -43,7 +45,36 @@ class MessagesIncludeTests(SimpleTestCase):
         self.assertRegex(html, r'class="alert [^"]*\bprobe\b')
 
 
+WITHOUT_CRISPY = """
+import sys
+sys.modules["crispy_forms"] = None
+sys.modules["crispy_bootstrap5"] = None
+
+import django
+from django.conf import settings
+
+settings.configure(
+    INSTALLED_APPS=["django_tabler"],
+    TEMPLATES=[{"BACKEND": "django.template.backends.django.DjangoTemplates", "APP_DIRS": True}],
+)
+django.setup()
+
+from django.contrib.messages import constants
+from django.contrib.messages.storage.base import Message
+from django.template.loader import render_to_string
+
+import django_tabler.crispy.fields
+
+html = render_to_string("django_tabler/includes/messages.html", {"messages": [Message(constants.INFO, "x")]})
+assert "alert-info" in html
+"""
+
+
 class PackageTests(SimpleTestCase):
+    def test_package_works_without_crispy_installed(self):
+        result = subprocess.run([sys.executable, "-c", WITHOUT_CRISPY], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_package_does_not_reference_crud_views(self):
         for path in PACKAGE.rglob("*"):
             if path.is_file() and path.name != "tests.py" and "__pycache__" not in path.parts:

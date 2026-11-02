@@ -40,11 +40,12 @@ Seeded demo users have no usable password and cannot sign in.
 
 - `src/django_tabler/`: the HTML shell and top-navbar layout (`templates/django_tabler/`), sign-in page, messages and
   form-field partials, the `{% icon %}` template tags (`{% load tabler %}`) and the Tabler icons. It does not depend on
-  django-crud-views.
+  django-crud-views. It also holds the django-crispy-forms template pack for Tabler (`templates/crispy_tabler/`, with
+  fields, widgets and layout objects in `django_tabler.crispy`), originally from `jacob-consulting/crispy-tabler`. The
+  pack needs the `crispy` extra; everything else in the package works without crispy.
 - `src/crud_views_tabler/`: Tabler theme for django-crud-views (template overrides, Tabler icon library, JS adapter),
   including `crud_views_tabler/page.html`, the page every crud_views view extends (`CRUD_VIEWS_EXTENDS`); design notes in
   [`docs/crud_views_tabler.md`](docs/crud_views_tabler.md)
-- `src/crispy_tabler/`: django-crispy-forms template pack for Tabler, copied from `jacob-consulting/crispy-tabler`
 - `example/`: the demo project: `manage.py`, `config/`, the `dashboard`, `customers` and `catalog` apps, and
   `templates/django_tabler/includes/`, whose `site_name.html`, `nav_menu.html` and `brand.html` override the package
   defaults with the Acme content
@@ -59,7 +60,7 @@ The built-in secret key is for local development only.
 
 ```shell
 uv run python example/manage.py test django_tabler crud_views_tabler dashboard catalog customers
-uv run --group test pytest                                                  # crispy_tabler
+uv run --group test pytest                                                  # the crispy template pack
 ```
 
 `crud_views_tabler`'s tests use the demo's `customers` app, so they run with the example's settings.

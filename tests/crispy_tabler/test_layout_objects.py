@@ -1,6 +1,6 @@
 """FloatingField and Switch hardcode "bootstrap5/..." and so escape the pack."""
 
-from crispy_tabler.layout import FloatingField, Switch
+from django_tabler.crispy.layout import FloatingField, Switch
 
 from tests.crispy_tabler.helpers import render_layout
 

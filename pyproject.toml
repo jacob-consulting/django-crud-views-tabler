@@ -5,6 +5,11 @@ requires-python = ">=3.14"
 dependencies = [
     "django>=6.1,<6.2",
     "django-crud-views>=0.30.0",
+]
+
+[project.optional-dependencies]
+# The django_tabler template pack and django_tabler.crispy need these; the rest of django_tabler does not.
+crispy = [
     "django-crispy-forms>=2.4",
     "crispy-bootstrap5>=2026.9",
 ]
@@ -23,6 +28,7 @@ where = ["src"]
 "*" = ["templates/**/*.html", "static/**/*"]
 
 [dependency-groups]
+dev = ["tabler-test[crispy]"]  # the example project renders its forms through the pack
 test = ["pytest", "pytest-django", "crispy-bootstrap5==2026.9"]
 
 [tool.pytest.ini_options]

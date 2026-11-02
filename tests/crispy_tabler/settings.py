@@ -6,7 +6,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "crispy_forms",
     "crispy_bootstrap5",
-    "crispy_tabler",
+    "django_tabler",
 ]
 
 TEMPLATES = [

@@ -10,7 +10,7 @@ import django_filters
 import django_tables2 as tables
 from crispy_forms.bootstrap import AppendedText, InlineCheckboxes, InlineRadios, PrependedText
 from crispy_forms.layout import Fieldset, Layout, Row
-from crispy_tabler.layout import FloatingField, Switch, UneditableField
+from django_tabler.crispy.layout import FloatingField, Switch, UneditableField
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
 from crud_views.lib.crispy import Column3, Column4, Column6, Column12, CrispyDeleteForm, CrispyModelForm, CrispyViewMixin
 from crud_views.lib.table import LinkDetailColumn, Table

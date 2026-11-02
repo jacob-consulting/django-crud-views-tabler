@@ -20,10 +20,9 @@ crud_views code is patched or subclassed.
 INSTALLED_APPS = [
     ...,
     "crispy_forms",
-    "crispy_tabler",
     "django_tables2",
     "django_filters",
-    "django_tabler",
+    "django_tabler",                     # also provides the crispy_tabler template pack
     "crud_views_tabler",                 # before crud_views
     "crud_views.apps.CrudViewsConfig",
 ]
@@ -165,14 +164,14 @@ templates post to `request.get_full_path`, which keeps that origin across valida
 
 ## Forms (crispy)
 
-The demo renders forms through the sibling template pack `crispy_tabler` (`CRISPY_TEMPLATE_PACK = "crispy_tabler"`;
+The demo renders forms through `django_tabler`'s template pack `crispy_tabler` (`CRISPY_TEMPLATE_PACK = "crispy_tabler"`;
 see [crispy_tabler_coverage.md](crispy_tabler_coverage.md) for what it fixes). The theme app itself needs **no
 crispy template overrides**: Tabler is Bootstrap 5, so `form-label`, `form-control`, `form-select`, `form-check`,
 `is-invalid` and `invalid-feedback` render natively with either pack, including in dark mode. `crispy_bootstrap5`
 is **not** in `INSTALLED_APPS` and nothing needs it: upstream removed `crud_views/detail/` — the last templates in
 the package carrying hardcoded `bootstrap5/...` includes — in 10d81ad (#217), so the former precaution is gone (see
 [crispy_tabler_coverage.md](crispy_tabler_coverage.md)). The `crispy-bootstrap5` *distribution* stays installed, as a
-dependency of `crispy-tabler`, whose `layout` module subclasses its `FloatingField` and `Switch`. Remaining gaps and
+dependency of the `crispy` extra: `django_tabler.crispy.layout` subclasses its `FloatingField` and `Switch`. Remaining gaps and
 how the prototype handles them:
 
 - **Required marker**: crispy prints `<span class="asteriskField">*</span>`; the theme CSS colours it like Tabler's
@@ -185,7 +184,7 @@ how the prototype handles them:
 - **Cards vs. modals**: `view_create/update/delete.content.html` wrap the form in a card on a full page and leave it
   bare inside a modal, by checking `request.headers.x_cv_modal` (the header crud_views' modal.js sends).
 - A dedicated pack turned out to be needed after all for the range, colour, read-only, fieldset and form-actions
-  paths (six findings, now fixed in `crispy_tabler`); plain Bootstrap 5 markup was enough only for the common inputs.
+  paths (six findings, now fixed in the `crispy_tabler` pack); plain Bootstrap 5 markup was enough only for the common inputs.
 
 ## Filter
 

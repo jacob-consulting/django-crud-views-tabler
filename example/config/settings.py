@@ -26,7 +26,10 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-$g1@&v70a8&!v(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,cv.jacob-consulting.org').split(',')
+
+# The Cloudflare tunnel terminates HTTPS, so Django sees an https Origin on a plain http request.
+CSRF_TRUSTED_ORIGINS = ['https://cv.jacob-consulting.org']
 
 
 # Application definition

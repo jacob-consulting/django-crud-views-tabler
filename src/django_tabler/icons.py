@@ -157,7 +157,6 @@ ICONS: dict[str, list[str]] = {
 }
 
 
-
 def svg(name: str | None, css: str = "") -> SafeString:
     """Inline SVG for a Tabler icon name; empty for no name or one not in ``ICONS``."""
     if not name or name not in ICONS:

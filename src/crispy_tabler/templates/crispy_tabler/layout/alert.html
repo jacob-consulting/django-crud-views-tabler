@@ -1,0 +1,5 @@
+{# vendored from crispy-bootstrap5 2026.9: layout/alert.html #}
+<div class="{{ alert.css_class }}{% if dismiss %} alert-dismissible fade show{% endif %}" role="alert"{% if alert.css_id %} id="{{ alert.css_id }}"{% endif %}>
+    {{ content|safe }}
+    {% if dismiss %}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>{% endif %}
+</div>

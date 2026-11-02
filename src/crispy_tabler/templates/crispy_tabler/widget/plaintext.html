@@ -1,0 +1,2 @@
+{# class, required and disabled are resolved in PlaintextInput.get_context #}
+<div class="{{ widget.css_class }}"{% for name, value in widget.attrs.items %}{% if value is not False %} {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}>{{ widget.value|default_if_none:"" }}</div>

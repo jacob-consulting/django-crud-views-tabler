@@ -1,0 +1,10 @@
+{# vendored from crispy-bootstrap5 2026.9: errors_formset.html #}
+{% if formset.non_form_errors %}
+    <div class="alert alert-block alert-danger">
+        {% if formset_error_title %}<h4 class="alert-heading">{{ formset_error_title }}</h4>{% endif %}
+        <ul class="m-0">
+            {{ formset.non_form_errors|unordered_list }}
+        </ul>
+    </div>
+{% endif %}
+

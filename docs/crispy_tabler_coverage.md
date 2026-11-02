@@ -2,7 +2,7 @@
 
 The `catalog` app exists to make one page — `/product/create/` — render **every branch of the crispy
 template pack at once**, so the Tabler theme can be judged field by field instead of guessing. It is the
-groundwork for the `crispy_tabler` template pack, which now exists as the sibling package `../crispy-tabler`
+groundwork for the `crispy_tabler` template pack, which now lives in `src/crispy_tabler`
 and which the demo renders through (`CRISPY_TEMPLATE_PACK = "crispy_tabler"`).
 
 The findings below were recorded on 2026-10-21 against crispy-bootstrap5 2026.9 (`CRISPY_TEMPLATE_PACK = "bootstrap5"`) and
@@ -114,3 +114,6 @@ Two things are **not** deltas, although the earlier guess was that they would be
 widget stays a `Select` and `radioselect_inline.html` renders `<input type="select">` — invalid HTML that the
 browser paints as small boxes showing the raw choice values. `catalog/tests.py` asserts `type="select"` never
 appears.
+
+`crispy_tabler` was copied from `jacob-consulting/crispy-tabler` at `2f86558`; this repository now holds the working
+copy, and nothing syncs back automatically.

@@ -1,0 +1,15 @@
+{# vendored from crispy-bootstrap5 2026.9: whole_uni_form.html #}
+{% load crispy_forms_utils %}
+
+{% specialspaceless %}
+{% if form_tag %}<form {{ flat_attrs }} method="{{ form_method }}" {% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>{% endif %}
+    {% if form_method|lower == 'post' and not disable_csrf %}
+        {% csrf_token %}
+    {% endif %}
+
+    {% include "crispy_tabler/display_form.html" %}
+
+    {% include "crispy_tabler/inputs.html" %}
+
+{% if form_tag %}</form>{% endif %}
+{% endspecialspaceless %}

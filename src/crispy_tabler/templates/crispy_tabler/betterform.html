@@ -1,0 +1,23 @@
+{# vendored from crispy-bootstrap5 2026.9: betterform.html #}
+{% for fieldset in form.fieldsets %}
+    <fieldset class="fieldset-{{ forloop.counter }} {{ fieldset.classes }}">
+        {% if fieldset.legend %}
+            <legend>{{ fieldset.legend }}</legend>
+        {% endif %}
+
+        {% if fieldset.description %}
+            <p class="description">{{ fieldset.description }}</p>
+        {% endif %}
+
+        {% for field in fieldset %}
+            {% if field.is_hidden %}
+                {{ field }}
+            {% else %}
+                {% include "crispy_tabler/field.html" %}
+            {% endif %}
+        {% endfor %}
+    {% if not forloop.last or not fieldset_open %}
+        </fieldset>
+    {% endif %}
+{% endfor %}
+

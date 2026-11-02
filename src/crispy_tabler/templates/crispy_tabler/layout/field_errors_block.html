@@ -1,0 +1,8 @@
+{# vendored from crispy-bootstrap5 2026.9: layout/field_errors_block.html #}
+{% if form_show_errors and field.errors %}
+    <div id="{{field.errors.field_id}}_error" class="invalid-feedback">
+    {% for error in field.errors %}
+        <p id="error_{{ forloop.counter }}_{{ field.auto_id }}"><strong>{{ error }}</strong></p>
+    {% endfor %}
+    </div>
+{% endif %}

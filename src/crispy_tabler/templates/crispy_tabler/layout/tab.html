@@ -1,0 +1,7 @@
+{# vendored from crispy-bootstrap5 2026.9: layout/tab.html #}
+<ul{% if tabs.css_id %} id="{{ tabs.css_id }}"{% endif %} class="nav nav-tabs{% if tabs.css_class %} {{ tabs.css_class }}{% endif %}">
+    {{ links|safe }}
+</ul>
+<div class="tab-content card-body">
+    {{ content|safe }}
+</div>

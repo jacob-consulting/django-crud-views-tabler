@@ -1,0 +1,5 @@
+{# vendored from crispy-bootstrap5 2026.9: layout/div.html #}
+<div {% if div.css_id %}id="{{ div.css_id }}"{% endif %} 
+    {% if div.css_class %}class="{{ div.css_class }}"{% endif %} {{ div.flat_attrs }}>
+        {{ fields|safe }}
+</div>

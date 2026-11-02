@@ -1,0 +1,10 @@
+{# vendored from crispy-bootstrap5 2026.9: display_form.html #}
+{% if form.form_html %}
+    {% if include_media %}{{ form.media }}{% endif %}
+    {% if form_show_errors %}
+        {% include "crispy_tabler/errors.html" %}
+    {% endif %}
+    {{ form.form_html }}
+{% else %}
+    {% include "crispy_tabler/uni_form.html" %}
+{% endif %}

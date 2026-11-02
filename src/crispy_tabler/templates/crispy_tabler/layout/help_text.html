@@ -1,0 +1,8 @@
+{# vendored from crispy-bootstrap5 2026.9: layout/help_text.html #}
+{% if field.help_text %}
+    {% if help_text_inline %}
+        <span id="{{ field.auto_id }}_helptext" class="form-text">{{ field.help_text|safe}}</span>
+    {% else %}
+        <div {% if field.auto_id %}id="{{ field.auto_id }}_helptext" {% endif %}class="form-text">{{ field.help_text|safe }}</div>
+    {% endif %}
+{% endif %}

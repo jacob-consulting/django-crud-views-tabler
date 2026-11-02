@@ -1,0 +1,9 @@
+{# vendored from crispy-bootstrap5 2026.9: uni_formset.html #}
+{% with formset.management_form as form %}
+    {% include 'crispy_tabler/uni_form.html' %}
+{% endwith %}
+{% for form in formset %}
+    <div class="multiField">
+        {% include 'crispy_tabler/uni_form.html' %}
+    </div>
+{% endfor %}

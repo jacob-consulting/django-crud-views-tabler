@@ -5,12 +5,12 @@ requires-python = ">=3.14"
 dependencies = [
     "django>=6.1,<6.2",
     "django-crud-views>=0.30.0",
-    "crispy-tabler",
+    "django-crispy-forms>=2.4",
+    "crispy-bootstrap5>=2026.9",
 ]
 
 [tool.uv.sources]
 django-crud-views = { path = "../django-crud-views", editable = true }
-crispy-tabler = { path = "../crispy-tabler", editable = true }
 
 [build-system]
 requires = ["setuptools>=77"]
@@ -21,3 +21,12 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "*" = ["templates/**/*.html", "static/**/*"]
+
+[dependency-groups]
+test = ["pytest", "pytest-django", "crispy-bootstrap5==2026.9"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.crispy_tabler.settings"
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "--strict-markers"

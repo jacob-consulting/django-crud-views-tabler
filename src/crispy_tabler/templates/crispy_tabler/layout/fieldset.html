@@ -1,0 +1,7 @@
+{# vendored from crispy-bootstrap5 2026.9: layout/fieldset.html #}
+<fieldset {% if fieldset.css_id %}id="{{ fieldset.css_id }}"{% endif %} 
+    class="form-fieldset{% if fieldset.css_class %} {{ fieldset.css_class }}{% endif %}"
+    {{ fieldset.flat_attrs }}>
+    {% if legend %}<legend>{{ legend|safe }}</legend>{% endif %}
+    {{ fields|safe }} 
+</fieldset>

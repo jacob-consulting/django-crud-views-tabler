@@ -23,6 +23,9 @@ class CrudViewsTablerConfig(AppConfig):
 
         register_icon_library("tabler", renderer="crud_views_tabler.icons.render")
         register_icons(TABLER_ICONS)
+        from crud_views.lib.view.label_mode import register_label_mode_defaults
+
+        register_label_mode_defaults({"form": "both"})
         register_button_classes(TABLER_BUTTON_CLASSES)
         register_assets(
             "crud_views_tabler",

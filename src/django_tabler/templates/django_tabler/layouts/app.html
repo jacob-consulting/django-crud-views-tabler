@@ -1,6 +1,8 @@
 {% extends "django_tabler/base.html" %}
+{% load static %}
 {% block body %}
 <div class="page">
+  {% include "django_tabler/includes/sidebar.html" %}
   {% include "django_tabler/includes/navbar.html" %}
   <div class="page-wrapper">
     <div class="page-header d-print-none">
@@ -43,4 +45,5 @@
     </footer>
   </div>
 </div>
+<script src="{% static 'django_tabler/layout-switch.js' %}" defer></script>
 {% endblock %}

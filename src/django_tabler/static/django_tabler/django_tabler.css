@@ -1,0 +1,6 @@
+/* A folded sidebar has room for the brand's mark only: brand.html's first child. */
+@media (min-width: 992px) {
+  html[data-bs-sidebar^="folded"] .navbar-vertical .navbar-brand a > :not(:first-child) {
+    display: none;
+  }
+}

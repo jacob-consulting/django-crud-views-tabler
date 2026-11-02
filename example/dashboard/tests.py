@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.contrib.staticfiles import finders
 from django.core.management import call_command
 from django.template.loader import render_to_string
 from django.test import SimpleTestCase, TestCase
@@ -117,6 +118,81 @@ class UserListTests(TestCase):
         self.client.force_login(viewer)
         response = self.client.post(reverse("dashboard:user_create"), {"username": "x"})
         self.assertEqual(response.status_code, 403)
+
+
+class LayoutSwitchTests(TestCase):
+    def setUp(self):
+        self.client.force_login(User.objects.create_user("switcher"))
+        self.html = self.client.get(reverse("dashboard:index")).content.decode()
+
+    def test_page_renders_both_navigations(self):
+        self.assertEqual(self.html.count("<header class=\"navbar navbar-expand-md"), 1)
+        self.assertEqual(self.html.count("<aside class=\"navbar navbar-vertical navbar-expand-lg"), 1)
+
+    def test_sidebar_comes_before_the_page_wrapper_inside_page(self):
+        # Tabler's CSS shows or hides each navigation through `.page > .navbar`.
+        self.assertRegex(self.html, r"<div class=\"page\">\s*<aside class=\"navbar navbar-vertical")
+
+    def test_each_navigation_has_its_own_menu_target(self):
+        self.assertIn('data-bs-target="#navbar-menu"', self.html)
+        self.assertIn('id="navbar-menu"', self.html)
+        self.assertIn('data-bs-target="#sidebar-menu"', self.html)
+        self.assertIn('id="sidebar-menu"', self.html)
+
+    def test_no_id_is_used_twice(self):
+        ids = re.findall(r"\sid=\"([^\"]+)\"", self.html)
+        self.assertEqual(sorted(ids), sorted(set(ids)))
+
+    def test_each_navigation_has_a_layout_switch(self):
+        self.assertEqual(self.html.count('aria-label="Layout settings"'), 2)
+
+    def test_sidebar_tools_are_in_the_footer_outside_the_collapse(self):
+        # Tabler restyles every dropdown inside a folded .navbar-collapse as a small flyout,
+        # which collapses the layout panel and traps the user in the folded sidebar.
+        sidebar = self.html[self.html.index("<aside"):self.html.index("</aside>")]
+        footer = sidebar[sidebar.index('class="navbar-footer"'):sidebar.index('id="sidebar-menu"')]
+        for label in ("Layout settings", "Enable dark mode", "Open user menu"):
+            with self.subTest(label=label):
+                self.assertIn(f'aria-label="{label}"', footer)
+
+    def test_sidebar_tools_share_one_row_on_a_phone(self):
+        # Below the sidebar's lg breakpoint the footer sits in the top bar.
+        self.assertRegex(self.html, r'class="navbar-footer">\s*<ul class="navbar-nav flex-row flex-lg-column">')
+
+    def test_sidebar_switch_menu_is_anchored_to_its_start(self):
+        # Tabler anchors a footer dropup to its end on a phone, which runs off the left edge.
+        sidebar = self.html[self.html.index("<aside"):self.html.index("</aside>")]
+        self.assertRegex(sidebar, r'aria-label="Layout settings"[\s\S]*?<div class="dropdown-menu start-0 end-auto p-3"')
+
+    def test_switch_offers_every_option_with_its_tabler_settings(self):
+        for label, settings in (
+            ("Top", '{"navbar-position":"horizontal","sidebar":"default"}'),
+            ("Side", '{"navbar-position":"vertical","sidebar":"default"}'),
+            ("Folded", '{"navbar-position":"vertical","sidebar":"folded"}'),
+            ("Fluid", '{"layout":"fluid"}'),
+            ("Boxed", '{"layout":"boxed"}'),
+            ("Dark", '{"navbar-theme":"dark"}'),
+            ("Floating", '{"navbar-style":"floating"}'),
+        ):
+            with self.subTest(label=label):
+                self.assertRegex(self.html, rf"data-layout-settings='{re.escape(settings)}'[^>]*>\s*{label}\s*<")
+
+    def test_sidebar_switch_opens_upwards(self):
+        # It sits at the bottom of the sidebar: opening sideways runs off the window.
+        sidebar = self.html[self.html.index("<aside"):self.html.index("</aside>")]
+        self.assertRegex(sidebar, r'<li class="nav-item dropup">\s*<button[^>]*aria-label="Layout settings"')
+
+    def test_stylesheet_is_loaded_and_exists(self):
+        self.assertIn('href="/static/django_tabler/django_tabler.css"', self.html)
+        self.assertIsNotNone(finders.find("django_tabler/django_tabler.css"))
+
+    def test_switch_script_is_loaded_and_exists(self):
+        self.assertIn('src="/static/django_tabler/layout-switch.js"', self.html)
+        self.assertIsNotNone(finders.find("django_tabler/layout-switch.js"))
+
+    def test_nothing_is_set_on_html_by_the_server(self):
+        # localStorage is the only store: a server value would be a second source of truth.
+        self.assertIn('<html lang="en">', self.html)
 
 
 class LayoutBoundaryTests(SimpleTestCase):

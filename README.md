@@ -43,6 +43,8 @@ Seeded demo users have no usable password and cannot sign in.
   django-crud-views. It also holds the django-crispy-forms template pack for Tabler (`templates/crispy_tabler/`, with
   fields, widgets and layout objects in `django_tabler.crispy`), originally from `jacob-consulting/crispy-tabler`. The
   pack needs the `crispy` extra; everything else in the package works without crispy.
+  A gear in the navigation lets each user pick the layout (top, side or folded navigation, width, navbar colour and
+  style); the choice stays in that browser's `localStorage`, through Tabler's own `tabler-*` keys.
 - `src/crud_views_tabler/`: Tabler theme for django-crud-views (template overrides, Tabler icon library, JS adapter),
   including `crud_views_tabler/page.html`, the page every crud_views view extends (`CRUD_VIEWS_EXTENDS`); design notes in
   [`docs/crud_views_tabler.md`](docs/crud_views_tabler.md)

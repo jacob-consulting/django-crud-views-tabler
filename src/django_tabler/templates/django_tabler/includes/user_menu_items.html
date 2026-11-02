@@ -1,0 +1,9 @@
+{% if user.is_staff %}
+<a href="{% url 'admin:index' %}" class="dropdown-item">Admin site</a>
+<a href="{% url 'admin:password_change' %}" class="dropdown-item">Change password</a>
+<div class="dropdown-divider"></div>
+{% endif %}
+<form method="post" action="{% url 'logout' %}">
+  {% csrf_token %}
+  <button type="submit" class="dropdown-item">Sign out</button>
+</form>

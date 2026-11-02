@@ -121,6 +121,7 @@ requires-dist = [
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pydantic", specifier = ">=2.2.1" },
     { name = "pygments", marker = "extra == 'examples'" },
+    { name = "pymdown-extensions", marker = "extra == 'dev'", specifier = ">=10.0" },
     { name = "pytest", marker = "extra == 'test'" },
     { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "pytest-django", marker = "extra == 'test'" },

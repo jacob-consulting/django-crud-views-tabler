@@ -10,8 +10,8 @@ are now fixed by `crispy_tabler`; the third column of the table shows the state 
 Tabler 1.6.1 and django-crud-views main.
 
 ```
-uv run python manage.py seed_demo_catalog     # 40 products, 5 categories, 6 tags, 4 channels
-uv run python manage.py test catalog          # pins the coverage below
+uv run python example/manage.py seed_demo_catalog     # 40 products, 5 categories, 6 tags, 4 channels
+uv run python example/manage.py test catalog          # pins the coverage below
 ```
 
 `catalog/tests.py` asserts one marker per render path, now against the fixed markup. If a field is removed from

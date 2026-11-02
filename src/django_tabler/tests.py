@@ -48,7 +48,7 @@ class PackageTests(SimpleTestCase):
         for path in PACKAGE.rglob("*"):
             if path.is_file() and path.name != "tests.py" and "__pycache__" not in path.parts:
                 with self.subTest(path=path):
-                    self.assertIsNone(re.search(r"crud_views|cv_", path.read_text()))
+                    self.assertIsNone(re.search(r"crud[-_ ]views|cv_", path.read_text(), re.IGNORECASE))
 
     def test_default_site_name(self):
         self.assertEqual((INCLUDES / "site_name.html").read_text(), "Django Tabler")

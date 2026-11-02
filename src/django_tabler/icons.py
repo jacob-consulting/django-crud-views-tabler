@@ -156,7 +156,6 @@ ICONS: dict[str, list[str]] = {
     ],
 }
 
-# django-crud-views semantic icon name -> Tabler icon (registered from apps.py; CRUD_VIEWS_ICONS overrides per key).
 
 
 def svg(name: str | None, css: str = "") -> SafeString:

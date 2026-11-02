@@ -1,8 +1,17 @@
 from django import template
+from django.contrib.messages import constants
 
-from crud_views_tabler.icons import svg
+from django_tabler.icons import svg
 
 register = template.Library()
+
+MESSAGE_ALERTS = {
+    constants.DEBUG: {"css": "alert alert-secondary", "icon": "bug"},
+    constants.INFO: {"css": "alert alert-info", "icon": "info-circle"},
+    constants.SUCCESS: {"css": "alert alert-success", "icon": "check"},
+    constants.WARNING: {"css": "alert alert-warning", "icon": "alert-triangle"},
+    constants.ERROR: {"css": "alert alert-danger", "icon": "alert-circle"},
+}
 
 AVATAR_COLORS = ["blue", "green", "purple", "azure", "orange", "pink", "teal", "red"]
 
@@ -39,3 +48,9 @@ def form_control(field, css_class="form-control"):
     elif field.help_text:
         attrs["aria-describedby"] = f"{field.auto_id}-help"
     return field.as_widget(attrs=attrs)
+
+
+@register.filter
+def message_alert(message):
+    """Alert class and icon for a Django message; a custom level renders as info."""
+    return MESSAGE_ALERTS.get(getattr(message, "level", None), MESSAGE_ALERTS[constants.INFO])

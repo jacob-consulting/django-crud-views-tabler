@@ -1,0 +1,9 @@
+{% load i18n tabler %}
+{% for message in messages %}{% with alert=message|message_alert %}
+<div class="{{ alert.css }} alert-dismissible fade show{% if message.extra_tags %} {{ message.extra_tags }}{% endif %}" role="alert">
+  <div class="alert-icon">{% icon alert.icon "alert-icon" %}</div>
+  <div>{{ message.message|default:"" }}
+  </div>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button>
+</div>
+{% endwith %}{% endfor %}

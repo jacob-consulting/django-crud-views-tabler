@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'crispy_tabler',
     'django_tables2',
     'django_filters',
+    'django_tabler',
     # The Tabler theme overrides crud_views templates, so it must come before crud_views.
     'crud_views_tabler',
     'crud_views.apps.CrudViewsConfig',
@@ -155,5 +156,5 @@ MAILERS = {
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = ('crispy_tabler',)
 CRISPY_TEMPLATE_PACK = 'crispy_tabler'
-CRUD_VIEWS_EXTENDS = 'crud_views_page.html'
+CRUD_VIEWS_EXTENDS = 'crud_views_tabler/page.html'
 DJANGO_TABLES2_TEMPLATE = 'crud_views/table/bootstrap5.html'

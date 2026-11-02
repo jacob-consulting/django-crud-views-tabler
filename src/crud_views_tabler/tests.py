@@ -4,6 +4,8 @@ from unittest import mock
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.contrib.messages import constants
+from django.contrib.messages.storage.base import Message
 from django.core.checks import run_checks
 from django.core.management import call_command
 from django.template import Context, Template, TemplateDoesNotExist
@@ -18,9 +20,10 @@ from crud_views.lib.icons import render_icon as cv_render_icon
 from crud_views.lib.view.label_mode import LABEL_MODES
 from crud_views.lib.view.variant import VARIANTS
 from crud_views_tabler.buttons import TABLER_BUTTON_CLASSES
-from crud_views_tabler.icons import ICONS, TABLER_ICONS, render, svg
+from crud_views_tabler.icons import TABLER_ICONS, render
 from customers.models import Customer
 from customers.views import CustomerDeleteView, CustomerListView
+from django_tabler.icons import ICONS, svg
 
 
 class ProbeWidget(forms.TextInput):
@@ -546,3 +549,22 @@ class IconCheckTests(SimpleTestCase):
         messages = [m for m in run_checks() if m.id == "crud_views_tabler.W001"]
         self.assertEqual(len(messages), 1)
         self.assertIn("'nope'", messages[0].msg)
+
+
+class MessagesParityTests(SimpleTestCase):
+    def test_plain_include_matches_cv_messages(self):
+        messages = [
+            Message(constants.DEBUG, "d"),
+            Message(constants.INFO, "i"),
+            Message(constants.SUCCESS, "s", extra_tags="probe"),
+            Message(constants.WARNING, "<b>w</b>"),
+            Message(constants.ERROR, "e"),
+            Message(35, "custom"),
+        ]
+
+        def normalized(html):
+            return re.sub(r">\s+<", "><", re.sub(r"\s+", " ", html)).strip()
+
+        plain = render_to_string("django_tabler/includes/messages.html", {"messages": messages})
+        themed = Template("{% load crud_views %}{% cv_messages %}").render(Context({"messages": messages}))
+        self.assertEqual(normalized(plain), normalized(themed))

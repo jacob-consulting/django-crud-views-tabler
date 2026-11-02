@@ -1,4 +1,4 @@
-{% extends "layouts/app.html" %}
+{% extends "django_tabler/layouts/app.html" %}
 {% load humanize tabler %}
 {% block title %}Users{% endblock %}
 {% block pretitle %}Management{% endblock %}
@@ -85,13 +85,13 @@
       <div class="modal-body">
         {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors|join:" " }}</div>{% endif %}
         <div class="row">
-          <div class="col-12 mb-3">{% include "includes/field.html" with field=form.username %}</div>
-          <div class="col-sm-6 mb-3">{% include "includes/field.html" with field=form.first_name %}</div>
-          <div class="col-sm-6 mb-3">{% include "includes/field.html" with field=form.last_name %}</div>
-          <div class="col-12 mb-3">{% include "includes/field.html" with field=form.email %}</div>
-          <div class="col-sm-6 mb-3">{% include "includes/field.html" with field=form.password1 %}</div>
-          <div class="col-sm-6 mb-3">{% include "includes/field.html" with field=form.password2 %}</div>
-          <div class="col-12">{% include "includes/field.html" with field=form.is_staff %}</div>
+          <div class="col-12 mb-3">{% include "django_tabler/includes/field.html" with field=form.username %}</div>
+          <div class="col-sm-6 mb-3">{% include "django_tabler/includes/field.html" with field=form.first_name %}</div>
+          <div class="col-sm-6 mb-3">{% include "django_tabler/includes/field.html" with field=form.last_name %}</div>
+          <div class="col-12 mb-3">{% include "django_tabler/includes/field.html" with field=form.email %}</div>
+          <div class="col-sm-6 mb-3">{% include "django_tabler/includes/field.html" with field=form.password1 %}</div>
+          <div class="col-sm-6 mb-3">{% include "django_tabler/includes/field.html" with field=form.password2 %}</div>
+          <div class="col-12">{% include "django_tabler/includes/field.html" with field=form.is_staff %}</div>
         </div>
       </div>
       <div class="modal-footer">

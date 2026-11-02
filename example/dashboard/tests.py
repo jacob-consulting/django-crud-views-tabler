@@ -1,9 +1,15 @@
+import re
+from pathlib import Path
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.management import call_command
-from django.test import TestCase
+from django.template.loader import render_to_string
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
+
+import django_tabler
 
 from .views import _month_starts
 
@@ -111,3 +117,17 @@ class UserListTests(TestCase):
         self.client.force_login(viewer)
         response = self.client.post(reverse("dashboard:user_create"), {"username": "x"})
         self.assertEqual(response.status_code, 403)
+
+
+class LayoutBoundaryTests(SimpleTestCase):
+    def test_example_overrides_the_site_name(self):
+        self.assertEqual(render_to_string("django_tabler/includes/site_name.html"), "Acme Admin")
+
+    def test_src_does_not_import_the_example(self):
+        src = Path(django_tabler.__file__).parents[1]
+        allowed = src / "crud_views_tabler" / "tests.py"
+        pattern = re.compile(r"^\s*(from|import)\s+(catalog|customers|dashboard|config)\b", re.MULTILINE)
+        for path in src.rglob("*.py"):
+            if path != allowed:
+                with self.subTest(path=path):
+                    self.assertIsNone(pattern.search(path.read_text()))

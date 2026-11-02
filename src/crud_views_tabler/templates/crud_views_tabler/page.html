@@ -1,4 +1,4 @@
-{% extends "layouts/app.html" %}
+{% extends "django_tabler/layouts/app.html" %}
 {% load crud_views %}
 {# Base template for every django-crud-views page (CRUD_VIEWS_EXTENDS): maps the crud_views blocks onto the Tabler page. #}
 {% block title %}{% cv_header %}{% endblock %}
@@ -7,6 +7,7 @@
 {% block page_title %}<span class="d-inline-flex align-items-center gap-2">{% cv_header_icon %}{% cv_header %}</span>{% endblock %}
 {% block subtitle %}{% block cv_paragraph %}<div class="page-subtitle mt-1">{% cv_paragraph %}</div>{% endblock cv_paragraph %}{% endblock %}
 {% block actions %}{% block cv_context %}{% cv_context_actions object %}{% endblock cv_context %}{% endblock %}
+{% block messages %}{% cv_messages %}{% endblock %}
 {% block content %}
 {% block cv_filter %}{% endblock cv_filter %}
 {% block cv_content %}{% endblock cv_content %}

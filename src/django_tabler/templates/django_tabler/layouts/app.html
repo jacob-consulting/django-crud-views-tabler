@@ -1,8 +1,7 @@
-{% extends "base.html" %}
-{% load crud_views %}
+{% extends "django_tabler/base.html" %}
 {% block body %}
 <div class="page">
-  {% include "includes/navbar.html" %}
+  {% include "django_tabler/includes/navbar.html" %}
   <div class="page-wrapper">
     <div class="page-header d-print-none">
       <div class="container-xl">
@@ -21,7 +20,7 @@
     </div>
     <main class="page-body">
       <div class="container-xl">
-        {% cv_messages %}
+        {% block messages %}{% include "django_tabler/includes/messages.html" %}{% endblock %}
         {% block content %}{% endblock %}
       </div>
     </main>
@@ -35,7 +34,7 @@
           </div>
           <div class="col-12 col-lg-auto mt-3 mt-lg-0">
             <ul class="list-inline list-inline-dots mb-0">
-              <li class="list-inline-item">Copyright © {% now "Y" %} Acme Admin</li>
+              <li class="list-inline-item">Copyright © {% now "Y" %} {% include "django_tabler/includes/site_name.html" %}</li>
               <li class="list-inline-item">Tabler 1.6.1</li>
             </ul>
           </div>

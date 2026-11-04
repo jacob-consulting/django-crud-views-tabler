@@ -575,3 +575,66 @@ class ShowCodeTests(TestCase):
         self.client.logout()
         response = self.client.get(reverse("theming"))
         self.assertRedirects(response, f"{reverse('login')}?next={reverse('theming')}")
+
+
+def _grant(user, *codenames):
+    for codename in codenames:
+        app_label, codename = codename.split(".")
+        user.user_permissions.add(Permission.objects.get(content_type__app_label=app_label, codename=codename))
+
+
+class NavigationTests(TestCase):
+    """The sidebar shows section headings; the top bar folds each section into a dropdown so it fits at 1280 px."""
+
+    def setUp(self):
+        self.user = User.objects.create_user("navi")
+        self.client.force_login(self.user)
+
+    def page(self, url):
+        html = self.client.get(url).content.decode()
+        header = html[html.index("<header class=\"navbar"):html.index("</header>")]
+        sidebar = html[html.index("<aside"):html.index("</aside>")]
+        return header, sidebar
+
+    def test_top_bar_folds_sections_into_dropdowns(self):
+        _grant(self.user, "sales.view_customer", "sales.view_order", "catalog.view_product", "catalog.view_category",
+               "roastery.view_greenlot")
+        header, sidebar = self.page(reverse("dashboard:index"))
+        for section in ("Sales", "Catalog", "Roastery"):
+            self.assertRegex(header, rf'class="nav-link dropdown-toggle"[^>]*>[\s\S]*?<span class="nav-link-title">{section}</span>')
+        self.assertRegex(header, r'<a class="dropdown-item" href="/customer/">\s*Customers\s*</a>')
+        self.assertNotIn("nav-section", header)
+        self.assertIn('class="nav-item nav-section', sidebar)
+        self.assertNotIn("dropdown-toggle", sidebar)
+        self.assertRegex(sidebar, r'href="/customer/"[^>]*>[\s\S]*?<span class="nav-link-title">Customers</span>')
+
+    def test_active_entry_marks_its_section_in_the_top_bar(self):
+        _grant(self.user, "sales.view_customer", "sales.view_order")
+        header, sidebar = self.page(reverse("orders-list"))
+        self.assertRegex(header, r'<li class="nav-item dropdown active">\s*<a class="nav-link dropdown-toggle"[^>]*>[\s\S]*?Sales')
+        self.assertRegex(header, r'<a class="dropdown-item active" href="/orders/" aria-current="page">')
+        self.assertRegex(sidebar, r'<li class="nav-item active">\s*<a class="nav-link" href="/orders/" aria-current="page">')
+
+    def test_a_section_with_one_entry_is_a_plain_link_in_the_top_bar(self):
+        header, sidebar = self.page(reverse("dashboard:index"))
+        self.assertNotIn("dropdown-toggle", header.split('id="navbar-menu"')[1].split("</ul>")[0])
+        self.assertRegex(header, r'<a class="nav-link" href="/theming/">')
+        self.assertIn("Developer", sidebar)
+
+    def test_sections_follow_the_permissions(self):
+        header, sidebar = self.page(reverse("dashboard:index"))
+        for section in ("Sales", "Catalog", "Roastery", "Users"):
+            self.assertNotIn(f">{section}<", header + sidebar)
+        _grant(self.user, "sales.view_order")
+        header, sidebar = self.page(reverse("dashboard:index"))
+        # Shipments live under Roastery and need only the order permission.
+        self.assertIn("Roastery", sidebar)
+        self.assertIn('href="/shipment/"', sidebar)
+        self.assertNotIn('href="/lot/"', sidebar)
+
+    def test_customers_open_for_account_managers_without_a_global_view(self):
+        _grant(self.user, "sales.add_customer")
+        header, sidebar = self.page(reverse("dashboard:index"))
+        self.assertIn('href="/customer/"', sidebar)
+        self.assertIn('href="/customer/"', header)
+

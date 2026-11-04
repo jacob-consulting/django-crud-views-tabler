@@ -89,3 +89,17 @@ class PackageTests(SimpleTestCase):
 
     def test_default_nav_menu_is_empty(self):
         self.assertEqual((INCLUDES / "nav_menu.html").read_text().strip(), "")
+
+    def test_page_header_actions_wrap_below_the_title_on_phones(self):
+        layout = (INCLUDES.parent / "layouts" / "app.html").read_text()
+        self.assertRegex(layout, r'<div class="col-12 col-md">\s*\{% block breadcrumb %\}')
+        self.assertIn('<div class="col-auto ms-auto d-print-none">', layout)
+
+    def test_nav_menu_is_told_which_navigation_it_renders(self):
+        # A project's nav_menu.html can render sections as headings in the sidebar and as dropdowns in the top bar.
+        for include, layout in (("navbar.html", "horizontal"), ("sidebar.html", "vertical")):
+            with self.subTest(include=include):
+                self.assertIn(
+                    f'{{% include "django_tabler/includes/nav_menu.html" with nav_layout="{layout}" %}}',
+                    (INCLUDES / include).read_text(),
+                )

@@ -10,3 +10,4 @@ media/
 build/
 dist/
 .superpowers/
+.playwright-mcp/

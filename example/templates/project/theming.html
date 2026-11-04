@@ -63,7 +63,7 @@
     {% for source in group.sources %}
     <div class="card mb-3" id="src-{{ source.label|slugify }}">
       <div class="card-header py-2">
-        <h4 class="card-title font-monospace fs-4">{{ source.label }}</h4>
+        <h4 class="card-title font-monospace fs-4 text-break">{{ source.label }}</h4>
         <div class="card-actions text-secondary small">{{ source.lines }} lines</div>
       </div>
       <div class="card-body p-2"><div class="code-block code-block-full">{{ source.html }}</div></div>

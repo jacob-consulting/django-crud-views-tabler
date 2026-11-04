@@ -91,8 +91,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
-            # config/ is not an app, so its "Show code" tag library is registered by hand
-            'libraries': {'showcode': 'config.templatetags.showcode'},
+            # config/ is not an app, so its tag libraries ("Show code" panel, navigation) are registered by hand
+            'libraries': {'showcode': 'config.templatetags.showcode', 'acme_nav': 'config.templatetags.acme_nav'},
         },
     },
 ]

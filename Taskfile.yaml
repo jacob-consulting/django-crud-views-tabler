@@ -78,7 +78,7 @@ tasks:
     cmds:
       - uv run --group test pytest
       - uv run --group test pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
-      - "{{.MANAGE}} test django_tabler dashboard showcase"
+      - "{{.MANAGE}} test django_tabler dashboard sales catalog roastery shipping showcase"
       - "{{.MANAGE}} check --fail-level WARNING"
 
   run:

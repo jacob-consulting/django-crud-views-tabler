@@ -10,8 +10,15 @@
   --tblr-link-hover-color-rgb: 128, 66, 36;
 }
 
-/* Sidebar section headings (nav_menu.html); the horizontal top bar has no room for them. */
-header.navbar .nav-section { display: none; }
+/* Top bar (nav_menu.html, nav_layout "horizontal"): between Tabler's md breakpoint, where the bar stops
+   collapsing, and 1200px the section icons do not fit next to their titles. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  header.navbar #navbar-menu .nav-link-icon { display: none; }
+}
+/* Below 992px the brand keeps only its mark (brand.html's first child), as in the folded sidebar. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  header.navbar .navbar-brand a > :not(:first-child) { display: none; }
+}
 
 /* "Show code" panel and "How this is themed" (config/showcode.py). The token colours and the background come from
    /_code/pygments.css: Pygments' default style in light mode, github-dark under [data-bs-theme=dark]. */

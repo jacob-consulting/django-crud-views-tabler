@@ -135,6 +135,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
+# config/formats/en/formats.py: "05 Jan 2026" instead of Django's "Jan. 5, 2026"
+FORMAT_MODULE_PATH = ['config.formats']
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True

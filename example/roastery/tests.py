@@ -150,6 +150,13 @@ class LotTests(RoasteryTestCase):
         self.assertContains(self.client.get(reverse("lot-detail", kwargs={"pk": lot.pk})), lot.code)
         self.assertContains(self.client.get(reverse("lot-list")), lot.code)
 
+    def test_detail_dates_use_the_project_format(self):
+        # config/formats/en: "05 Jan 2026" as on the hand-written pages, not Django's "Jan. 5, 2026"
+        self.login()
+        html = self.client.get(reverse("lot-detail", kwargs={"pk": self.lot.pk})).content.decode()
+        self.assertIn("05 Jan 2026", html)
+        self.assertNotIn("Jan. 5, 2026", html)
+
     def test_kim_can_edit_roastery_sam_cannot(self):
         url = reverse("lot-update", kwargs={"pk": self.lot.pk})
         self.login("kim")

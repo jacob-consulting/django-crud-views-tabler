@@ -156,11 +156,17 @@ _ACTIVE_BADGE = BadgeConfig(
     color_map={True: "success", False: "secondary"}, label_map={True: _("Active"), False: _("Inactive")}, pill=True
 )
 
-COMMERCE = {
-    "title": _("Commerce"),
-    "icon": "tabler:tags",
-    "properties": ["sku", "price", "stock", x("is_active", badge=_ACTIVE_BADGE), "category"],
-}
+
+def commerce(model):
+    """The Commerce group; the stock row only for kinds that are stocked (``show_stock``), as on the card."""
+    stock = ["stock"] if model.show_stock else []
+    return {
+        "title": _("Commerce"),
+        "icon": "tabler:tags",
+        "properties": ["sku", "price", *stock, x("is_active", badge=_ACTIVE_BADGE), "category"],
+    }
+
+
 ABOUT = {"title": _("About"), "icon": "tabler:info-circle", "properties": ["description"]}
 
 PROPERTY_DISPLAY = {
@@ -177,12 +183,12 @@ PROPERTY_DISPLAY = {
                 "flavor_notes",
             ],
         },
-        COMMERCE,
+        commerce(Beans),
         ABOUT,
     ],
     Equipment: [
         {"title": _("Equipment"), "icon": "tabler:tool", "properties": ["brand", "warranty_months", "weight_kg"]},
-        COMMERCE,
+        commerce(Equipment),
         ABOUT,
     ],
     Subscription: [
@@ -195,7 +201,7 @@ PROPERTY_DISPLAY = {
                 x("get_bag_size_display", title=_("Bag size")),
             ],
         },
-        COMMERCE,
+        commerce(Subscription),
         ABOUT,
     ],
 }

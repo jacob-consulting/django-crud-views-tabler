@@ -638,3 +638,15 @@ class NavigationTests(TestCase):
         self.assertIn('href="/customer/"', sidebar)
         self.assertIn('href="/customer/"', header)
 
+
+class FaviconTests(TestCase):
+    def test_every_page_links_the_brand_favicon(self):
+        # Without a <link rel="icon"> browsers ask for /favicon.ico, a 404 on every page.
+        self.client.force_login(User.objects.create_user("fav"))
+        for url in (reverse("dashboard:index"), reverse("theming")):
+            with self.subTest(url=url):
+                self.assertContains(self.client.get(url), '<link rel="icon" href="/static/acme/favicon.svg" type="image/svg+xml" />')
+        self.client.logout()
+        self.assertContains(self.client.get(reverse("login")), 'href="/static/acme/favicon.svg"')
+        self.assertIn("#a0522d", Path(finders.find("acme/favicon.svg")).read_text())
+

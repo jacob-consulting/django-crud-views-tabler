@@ -112,6 +112,14 @@ class ProductViewTests(CatalogTestCase):
             for label in absent:
                 self.assertNotIn(label, html, model)
 
+    def test_stock_row_only_for_stocked_kinds(self):
+        """Subscriptions are not stocked (``show_stock = False``): their detail has no Stock row, like their card."""
+        self.login()
+        for model, shown in ((Beans, True), (Equipment, True), (Subscription, False)):
+            html = self.client.get(reverse("product-detail", kwargs={"pk": model.objects.first().pk})).content.decode()
+            with self.subTest(model=model.__name__):
+                (self.assertRegex if shown else self.assertNotRegex)(html, r">\s*Stock\s*<")
+
     def test_update_and_delete_pages_render(self):
         self.login()
         for obj in (Beans.objects.first(), Equipment.objects.first(), Subscription.objects.first()):

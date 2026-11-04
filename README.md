@@ -79,8 +79,10 @@ The sidebar (or, in the top-bar layout, one dropdown per section) shows what the
 | | How this is themed | `/theming/` | the theme's files and line counts, computed at render time |
 | Users | Users | `/users/` | searchable user list, create in a modal (`auth.view_user` / `auth.add_user`) |
 
-Plus `/accounts/login/` and `/admin/` (staff). The navbar's gear switches the layout (top bar, sidebar, folded
-sidebar, width, navbar colour and style); dark mode is the moon/sun toggle. Both stay in the browser's `localStorage`.
+Plus `/accounts/login/` and `/admin/` (staff). The demo opens with the dark sidebar of the approved mockup (its
+default layout, `example/templates/django_tabler/includes/layout_defaults.html`). The gear (in the sidebar footer,
+or in the top bar) switches the layout (top bar, sidebar, folded sidebar, width, navbar colour and style); dark mode
+is the moon/sun toggle. A choice stays in the browser's `localStorage` and wins over the default.
 
 ## Layout
 
@@ -89,8 +91,10 @@ sidebar, width, navbar colour and style); dark mode is the moon/sun toggle. Both
   template tags (`{% load tabler %}`) and the Tabler icons. It does not depend on django-crud-views. It also holds the
   django-crispy-forms template pack for Tabler (`templates/crispy_tabler/`, with fields, widgets and layout objects in
   `django_tabler.crispy`), originally from `jacob-consulting/crispy-tabler`; the pack needs the `crispy` extra.
-  A project overrides `django_tabler/includes/{site_name,brand,nav_menu,head}.html`; `nav_menu.html` is included
-  twice, with `nav_layout` set to `"horizontal"` (top bar) or `"vertical"` (sidebar).
+  A project overrides `django_tabler/includes/{site_name,brand,nav_menu,head,layout_defaults}.html`; `nav_menu.html`
+  is included twice, with `nav_layout` set to `"horizontal"` (top bar) or `"vertical"` (sidebar).
+  `layout_defaults.html` holds the project's default layout as a JSON object of Tabler layout settings (`layout`,
+  `navbar-position`, `navbar-style`, `navbar-theme`, `sidebar`); empty, Tabler's top bar is the default.
 - `src/crud_views_tabler/`: Tabler theme for django-crud-views (template overrides, Tabler icon library, button
   classes, CSS, JS adapter), including `crud_views_tabler/page.html`, the page every crud_views view extends; design
   notes in [`docs/crud_views_tabler.md`](docs/crud_views_tabler.md).

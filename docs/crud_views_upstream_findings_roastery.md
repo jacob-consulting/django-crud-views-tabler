@@ -30,7 +30,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 2 | [Tooltip recipe says to replace `init`](#2-the-tooltip-recipe-still-says-to-replace-init) | annoyance | theme wraps `init` and calls the original |
 | 3 | [`Column1..12` hard-code `col-md-N`](#3-column1column12-hard-code-col-md-n) | cosmetic | nothing (Tabler uses the same grid) |
 | 4 | [Workflow badge is a solid Bootstrap pill](#4-workflow-badgeenum-values-are-bootstrap-colour-names-the-badge-is-a-solid-pill) | annoyance | theme template override `crud_views_workflow/badge.html` |
-| 5 | [Workflow page has no card frame, history table not responsive](#5-the-workflow-page-is-not-framed-and-its-history-table-is-not-responsive) | cosmetic | theme CSS lets a bare content table scroll on phones; no frame |
+| 5 | [Workflow page has no card frame, history table not responsive](#5-the-workflow-page-is-not-framed-and-its-history-table-is-not-responsive) | cosmetic | theme CSS lets the content scroll sideways around a bare table on phones; no frame |
 | 6 | [One permission gates every workflow transition](#6-workflowviewpermissionrequired-has-one-permission-for-every-transition) | annoyance | `cv_permission = "view"` plus django-fsm `permission=` per step |
 | 7 | [No refusal message, `WorkflowForm.clean()` returns None, no transition helper](#7-workflow-no-refusal-with-message-hook-workflowformclean-returns-none-no-helper-outside-the-view) | annoyance | form subclass; `sales/workflow.py:run_transition` copies the view |
 | 8 | [Card template has no block above the title](#8-the-card-template-has-no-block-above-the-title) | annoyance | demo replaces the product card template outright |
@@ -136,9 +136,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   sideways.
 - **Where:** `src/crud_views_workflow/templates/crud_views_workflow/view_workflow.content.html:3-5`,
   `view_workflow.history.html:6` (the table), `view_workflow.action.html:7` (the form).
-- **What we did:** theme CSS (`crud_views_tabler.css`): below 768 px a `table.table` that sits straight in the page
-  content (`.page-body > .container-xl > table.table`) becomes `display: block; overflow-x: auto`, so it scrolls
-  inside itself. No frame: the order page has its own history and transition buttons; the workflow page is the
+- **What we did:** theme CSS (`crud_views_tabler.css`): below 768 px the content container that holds such a table
+  (`.page-body > .container-xl:has(> table.table)`) gets `overflow-x: auto`, so it scrolls instead of the page; the
+  table stays a table, so a narrow one still spans the full width (`display: block` on the table would shrink it).
+  The scrollbar sits at the bottom of the content, not under the table. No frame: the order page has its own history and transition buttons; the workflow page is the
   fallback for steps that need a comment.
 - **Suggested upstream change:** use the form frame for the action form, wrap the history in `.table-responsive`
   (or a `workflow:history` class key).
@@ -403,8 +404,9 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Where:** `src/crud_views/lib/settings.py:27` (default), `src/crud_views/lib/views/manage.py:35`
   (`has_permission`); `src/crud_views/lib/viewset/__init__.py:323` adds the "manage" context action.
 - **What we did:** `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'no')` in
-  `example/config/settings.py` (tested in `example/dashboard/tests.py`), so the pages answer 403 and the toolbar has
-  no manage button unless the environment opts in. No CSS for the tables, since the pages are off.
+  `example/config/settings.py` (tested in `example/dashboard/tests.py`). The manage URLs stay registered and answer
+  403 (`ManageView.has_permission`), even for a superuser, and the toolbar has no manage button unless the
+  environment opts in. No CSS for the tables, since the pages are off.
 - **Suggested upstream change:** keep `debug_only` but also require staff (or the manage group) in it, or document
   the exposure next to the setting; wrap the manage tables in `.table-responsive`.
 - **Severity:** annoyance.
@@ -526,8 +528,8 @@ Left as they are, each more than a quick fix or outside this repo:
 
 - The cupping score formset repeats its labels on every row (#22).
 - The workflow page has no card frame, and the datetimepicker keeps its blue look (#5, #32).
-- Tabler's primary-colour themes (`data-bs-theme-primary`, `?theme-primary=green`) need Tabler's separate
-  `tabler-themes.min.css`, which `django_tabler` does not load. With such a choice stored the brand's sienna steps
+- *django_tabler gap, not crud_views:* Tabler's primary-colour themes (`data-bs-theme-primary`,
+  `?theme-primary=green`) need Tabler's separate `tabler-themes.min.css`, which `django_tabler` does not load. With such a choice stored the brand's sienna steps
   aside (`acme.css` applies only to `:root:not([data-bs-theme-primary])`) and Tabler's base blue shows. Picking
   "blue" is Tabler's default and is not stored, so sienna stays. The layout switch offers no colour choice, so this
   only shows when the URL parameter is used.

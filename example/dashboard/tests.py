@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from unittest import mock
 
 from io import StringIO
 
@@ -9,7 +10,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.staticfiles import finders
 from django.core.management import call_command
 from django.template.loader import render_to_string
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -207,9 +208,15 @@ class LayoutSwitchTests(TestCase):
         self.assertIn('src="/static/django_tabler/layout-switch.js"', self.html)
         self.assertIsNotNone(finders.find("django_tabler/layout-switch.js"))
 
-    def test_nothing_is_set_on_html_by_the_server(self):
-        # localStorage is the only store: a server value would be a second source of truth.
-        self.assertIn('<html lang="en">', self.html)
+    def test_server_sets_only_the_demo_default_layout(self):
+        # The demo's default (layout_defaults.html): the dark sidebar of the approved mockup. These are server
+        # values; what the user picks lands in localStorage and wins over them.
+        self.assertIn(
+            '<html lang="en" data-bs-navbar-position="vertical" data-bs-navbar-theme="dark" '
+            'data-tabler-layout-defaults="{&quot;navbar-position&quot;: &quot;vertical&quot;, '
+            '&quot;navbar-theme&quot;: &quot;dark&quot;}">',
+            self.html,
+        )
 
 
 class LayoutBoundaryTests(SimpleTestCase):
@@ -652,10 +659,21 @@ class FaviconTests(TestCase):
 
 
 class ManageViewsTests(TestCase):
-    def test_manage_pages_are_off_by_default(self):
-        # DEBUG defaults to on and the demo is served publicly; upstream's "debug_only" would let Sam read every
-        # view's permission holders. Opt in with the environment variable of the same name.
-        self.assertEqual(settings.CRUD_VIEWS_MANAGE_VIEWS_ENABLED, "no")
+    # DEBUG defaults to on and the demo is served publicly; upstream's "debug_only" would let Sam read every view's
+    # permission holders. Opt in with the environment variable of the same name.
+
+    def test_settings_default_to_no_without_the_environment_variable(self):
+        source = (Path(settings.BASE_DIR) / "config" / "settings.py").read_text()
+        self.assertIn("CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'no')", source)
+
+    @override_settings(DEBUG=True)
+    def test_no_closes_the_manage_pages_even_under_debug(self):
+        # crud_views reads its settings once at import, so the value is patched on its settings object.
+        from crud_views.lib.settings import crud_views_settings
+
         self.client.force_login(User.objects.create_superuser("root", password="x"))
-        self.assertIn(self.client.get("/customer/manage/").status_code, (403, 404))
-        self.assertNotContains(self.client.get(reverse("customer-list")), "/customer/manage/")
+        with mock.patch.object(crud_views_settings, "manage_views_enabled", "debug_only"):
+            self.assertEqual(self.client.get("/customer/manage/").status_code, 200)
+        with mock.patch.object(crud_views_settings, "manage_views_enabled", "no"):
+            # the URL stays registered; ManageView.has_permission refuses: 403, even for a superuser
+            self.assertEqual(self.client.get("/customer/manage/").status_code, 403)

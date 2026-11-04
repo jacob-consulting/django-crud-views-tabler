@@ -1,5 +1,11 @@
+import json
+import re
+
 from django import template
 from django.contrib.messages import constants
+from django.template.loader import render_to_string
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from django_tabler.icons import svg
 
@@ -54,3 +60,39 @@ def form_control(field, css_class="form-control"):
 def message_alert(message):
     """Alert class and icon for a Django message; a custom level renders as info."""
     return MESSAGE_ALERTS.get(getattr(message, "level", None), MESSAGE_ALERTS[constants.INFO])
+
+
+# Tabler's layout settings (tabler-theme.js themeDefaults) that a project may preset, with Tabler's defaults.
+TABLER_LAYOUT_DEFAULTS = {
+    "layout": "default",
+    "navbar-position": "horizontal",
+    "navbar-style": "default",
+    "navbar-theme": "default",
+    "sidebar": "default",
+}
+_LAYOUT_VALUE = re.compile(r"^[a-z0-9-]{1,32}$")  # tabler-theme.js's VALUE_PATTERN
+
+
+@register.simple_tag
+def layout_defaults_attrs():
+    """Attributes for <html> from the project's default layout (``django_tabler/includes/layout_defaults.html``).
+
+    Each value that differs from Tabler's default becomes ``data-bs-<key>``, which tabler-theme.js treats as the
+    server value: a choice the user stored in localStorage still wins. ``data-tabler-layout-defaults`` hands the
+    defaults to layout-switch.js. Renders nothing for the package's empty default.
+    """
+    raw = render_to_string("django_tabler/includes/layout_defaults.html").strip()
+    try:
+        defaults = json.loads(raw or "{}")
+    except json.JSONDecodeError as error:
+        raise ValueError(f"django_tabler/includes/layout_defaults.html is not JSON: {error}") from None
+    if not isinstance(defaults, dict):
+        raise ValueError("django_tabler/includes/layout_defaults.html must hold a JSON object")
+    for key, value in defaults.items():
+        if key not in TABLER_LAYOUT_DEFAULTS or not isinstance(value, str) or not _LAYOUT_VALUE.match(value):
+            raise ValueError(f"layout default {key!r}: {value!r} is not a Tabler layout setting")
+    if not defaults:
+        return ""
+    attrs = [format_html(' data-bs-{}="{}"', k, v) for k, v in defaults.items() if v != TABLER_LAYOUT_DEFAULTS[k]]
+    attrs.append(format_html(' data-tabler-layout-defaults="{}"', json.dumps(defaults)))
+    return mark_safe("".join(attrs))

@@ -66,7 +66,7 @@ Taskfile's `seed:showcase` guards against that with a `status:` check that skips
 with blocks `breadcrumb`, `page_heading` (wraps `page_title`), `subtitle`, `actions`, `messages`, `content`) ← `crud_views_tabler/page.html`,
 which is `CRUD_VIEWS_EXTENDS` and maps crud_views tags/blocks (`cv_header`, `cv_context_actions`, `cv_filter`,
 `cv_content`, `cv_css`/`cv_js`) onto those blocks. Projects customise branding by overriding
-`django_tabler/includes/{site_name,nav_menu,brand,head}.html` (the example does so in `example/templates/`).
+`django_tabler/includes/{site_name,nav_menu,brand,head,layout_defaults}.html` (the example does so in `example/templates/`).
 `nav_menu.html` is included by both navigations with `nav_layout` `"horizontal"` (top bar) or `"vertical"`
 (sidebar); the example renders its sections as dropdowns in the top bar and as headings in the sidebar, from the menu
 defined once in `example/config/templatetags/acme_nav.py`. The example's `CRUD_VIEWS_EXTENDS` is
@@ -101,7 +101,14 @@ crispy-bootstrap5's `FloatingField`/`Switch`, so that distribution stays install
 `docs/crispy_tabler_coverage.md` documents which template branches the `showcase` demo form exercises.
 
 **Layout switch.** The navbar gear (`layout_switch_menu.html` + `static/django_tabler/layout-switch.js`) stores the
-user's layout choice in `localStorage` using Tabler's own `tabler-*` keys; nothing is server-side.
+user's layout choice in `localStorage` using Tabler's own `tabler-*` keys. A project's *default* layout is the JSON
+object in `django_tabler/includes/layout_defaults.html` (empty in the package: Tabler's top bar); the
+`{% layout_defaults_attrs %}` tag on `<html>` turns it into `data-bs-<key>` server values, which `tabler-theme.js`
+uses when nothing is stored, plus `data-tabler-layout-defaults` for layout-switch.js, which stores a choice only when
+it differs from the project default and falls back to Tabler's defaults. The example sets the vertical, dark
+(`navbar-theme: dark`) sidebar of the mockup. Gap: Tabler's primary-colour themes (`data-bs-theme-primary`,
+`?theme-primary=…`) need `tabler-themes.min.css`, which `django_tabler/base.html` does not load, so such a choice
+shows Tabler's base blue; the switch offers no colour choice.
 
 ## Conventions
 

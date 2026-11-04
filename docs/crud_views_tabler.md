@@ -298,8 +298,8 @@ crud_views_workflow/
   badge.html                      workflow state badge as Tabler's light badge (bg-<colour>-lt), see above
 static/crud_views_tabler/
   crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons,
-                                  toggle-group and formset legends, the typeahead --bs-* bridge, bare content
-                                  tables that scroll on phones (the workflow history)
+                                  toggle-group and formset legends, the typeahead --bs-* bridge, content that
+                                  scrolls sideways around a bare table on phones (the workflow history)
   tabler-adapters.js              cv.adapters -> window.tabler, toolbar tooltips below
 ```
 

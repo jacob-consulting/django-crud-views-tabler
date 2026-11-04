@@ -1,13 +1,27 @@
 // The layout switch: writes the settings Tabler's theme script reads on the next
 // page load (tabler-<key> in localStorage) and applies them to <html> right away.
+// A project's default layout (django_tabler/includes/layout_defaults.html) arrives
+// as data-tabler-layout-defaults on <html>, plus a data-bs-<key> server value that
+// tabler-theme.js uses when nothing is stored.
 (function () {
-  const DEFAULTS = {
+  // Tabler's own defaults (tabler-theme.js): it removes data-bs-<key> for these values.
+  const TABLER_DEFAULTS = {
     layout: "default",
     "navbar-position": "horizontal",
     "navbar-style": "default",
     "navbar-theme": "default",
     sidebar: "default",
   };
+
+  function projectDefaults() {
+    try {
+      return JSON.parse(document.documentElement.dataset.tablerLayoutDefaults || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  const DEFAULTS = { ...TABLER_DEFAULTS, ...projectDefaults() };
   const buttons = document.querySelectorAll("[data-layout-settings]");
 
   function settingsOf(button) {
@@ -15,7 +29,7 @@
   }
 
   function current(key) {
-    return document.documentElement.getAttribute("data-bs-" + key) ?? DEFAULTS[key];
+    return document.documentElement.getAttribute("data-bs-" + key) ?? TABLER_DEFAULTS[key];
   }
 
   function store(key, value) {
@@ -28,7 +42,7 @@
   }
 
   function apply(key, value) {
-    if (value === DEFAULTS[key]) document.documentElement.removeAttribute("data-bs-" + key);
+    if (value === TABLER_DEFAULTS[key]) document.documentElement.removeAttribute("data-bs-" + key);
     else document.documentElement.setAttribute("data-bs-" + key, value);
   }
 

@@ -84,5 +84,8 @@ class PackageTests(SimpleTestCase):
     def test_default_site_name(self):
         self.assertEqual((INCLUDES / "site_name.html").read_text(), "Django Tabler")
 
+    def test_default_head_include_is_empty(self):
+        self.assertEqual(re.sub(r"\{#.*?#\}", "", (INCLUDES / "head.html").read_text()).strip(), "")
+
     def test_default_nav_menu_is_empty(self):
         self.assertEqual((INCLUDES / "nav_menu.html").read_text().strip(), "")

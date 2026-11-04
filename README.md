@@ -61,7 +61,7 @@ is `demo` for all three, and the sign-in page has a button per account that fill
   including `crud_views_tabler/page.html`, the page every crud_views view extends (`CRUD_VIEWS_EXTENDS`); design notes in
   [`docs/crud_views_tabler.md`](docs/crud_views_tabler.md)
 - `example/`: the demo project: `manage.py`, `config/`, the `dashboard` and `showcase` apps, and
-  `templates/django_tabler/includes/`, whose `site_name.html`, `nav_menu.html` and `brand.html` override the package
+  `templates/django_tabler/includes/`, whose `site_name.html`, `nav_menu.html`, `brand.html` and `head.html` override the package
   defaults with the Acme content
 - `tests/crispy_tabler/`: the template pack's test suite; `scripts/vendor_templates.py` re-vendors its templates
 

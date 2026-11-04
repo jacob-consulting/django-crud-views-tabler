@@ -6,6 +6,7 @@
     <title>{% block title %}{% endblock %} · {% include "django_tabler/includes/site_name.html" %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css" integrity="sha384-tT2UAGE9hxG/p5d0iGIvZ/s8El3nWWG3tfG02i8iOY5Pbf8cZZRVmcrrVs+JG5Vw" crossorigin="anonymous" />
     <link rel="stylesheet" href="{% static 'django_tabler/django_tabler.css' %}" />
+    {% include "django_tabler/includes/head.html" %}
     {% block extra_head %}{% endblock %}
   </head>
   <body>

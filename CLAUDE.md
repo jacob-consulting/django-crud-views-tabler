@@ -55,7 +55,7 @@ Taskfile's `seed:*` tasks guard against that with `status:` checks that skip a s
 with blocks `breadcrumb`, `page_heading` (wraps `page_title`), `subtitle`, `actions`, `messages`, `content`) ← `crud_views_tabler/page.html`,
 which is `CRUD_VIEWS_EXTENDS` and maps crud_views tags/blocks (`cv_header`, `cv_context_actions`, `cv_filter`,
 `cv_content`, `cv_css`/`cv_js`) onto those blocks. Projects customise branding by overriding
-`django_tabler/includes/{site_name,nav_menu,brand}.html` (the example does so in `example/templates/`).
+`django_tabler/includes/{site_name,nav_menu,brand,head}.html` (the example does so in `example/templates/`).
 
 **How the crud_views theme works** (details in `docs/crud_views_tabler.md`): django-crud-views has no theme setting.
 The theme is an app listed *before* `crud_views` in `INSTALLED_APPS`, so its `templates/crud_views/...` files shadow

@@ -100,7 +100,7 @@ class CustomerViewTests(SalesTestCase):
         self.assertIn(reverse("address-list", kwargs={"customer_pk": customer.pk}), html)  # the Addresses link
         self.assertIn("Wholesale", html)
         self.assertIn(reverse("order-list", kwargs={"customer_pk": customer.pk}), html)  # the Orders link
-        # TODO(Task 7): assert the Subscriptions link once that child view exists
+        self.assertIn(reverse("subscription-list", kwargs={"customer_pk": customer.pk}), html)  # the Subscriptions link
 
     def test_consumer_detail_has_no_wholesale_terms(self):
         self.login()

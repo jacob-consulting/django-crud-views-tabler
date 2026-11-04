@@ -313,3 +313,30 @@ here in the same commit that introduces it.
   fallback for steps that need a comment.
 - **Suggested upstream change:** use the form frame in the workflow templates.
 - **Severity:** cosmetic.
+
+## A no-object custom form has no way to carry a custom permission except `cv_permission` plus a model `Meta.permissions` entry
+
+- **What happened:** "Run subscriptions" is not a CRUD action, and only the Owner may run it, so it needs its own
+  permission. `permission_required` looks `cv_permission` up in `ViewSet.permissions`, which is built from the model's
+  `Permission` rows by stripping `_<model>` from each codename. The working recipe is a `Meta.permissions` entry
+  `run_customersubscription` on the model and `cv_permission = "run"` on the view. It works, but nothing in the docs
+  or the `custom_form` example says so; the examples reuse `view`. A `cv_permission` naming a permission that does
+  not exist yet fails at request time with an assert, not at check time.
+- **Where:** `src/crud_views/lib/view/base.py:1062` (`permission_required`), `src/crud_views/lib/viewset/__init__.py:437`
+  (`default_permissions`).
+- **What we did:** the model permission above; the button shows disabled (`cv_inaccessible_actions = "disable"`)
+  and the URL answers 403.
+- **Suggested upstream change:** document the recipe next to `CustomFormNoObjectViewPermissionRequired`, and add a system
+  check that `cv_permission` resolves to a permission of the viewset's model.
+- **Severity:** annoyance.
+
+## A top-level ViewSet's list header is the model's verbose name
+
+- **What happened:** the nested and top-level subscription lists both default to the header "Customer subscriptions"
+  (from `CustomerSubscription._meta.verbose_name`), also in the breadcrumb; only the page header can be changed per
+  view (`cv_header_template_code`), the breadcrumb and create/update headers keep the model name. Both ViewSets on
+  one model therefore read the same.
+- **Where:** `src/crud_views/lib/view/base.py` (header and breadcrumb defaults).
+- **What we did:** `cv_header_template_code = "Subscriptions"` on the two lists; the breadcrumb keeps the model name.
+- **Suggested upstream change:** a `ViewSet(verbose_name=...)` override, so every default label follows it.
+- **Severity:** cosmetic.

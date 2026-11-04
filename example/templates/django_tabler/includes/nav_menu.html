@@ -26,6 +26,14 @@
           </a>
         </li>
         {% endif %}
+        {% if perms.sales.view_customersubscription %}
+        <li class="nav-item{% if url_name|slice:':13' == 'subscription-' or url_name|slice:':14' == 'subscriptions-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'subscriptions-list' %}"{% if url_name == 'subscriptions-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "repeat" %}</span>
+            <span class="nav-link-title">Subscriptions</span>
+          </a>
+        </li>
+        {% endif %}
         {% endif %}
         {% if perms.catalog.view_product or perms.catalog.view_category %}
         <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Catalog</div></li>

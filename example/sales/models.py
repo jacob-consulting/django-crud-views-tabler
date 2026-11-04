@@ -1,5 +1,6 @@
 """The roastery's customers (wholesale accounts and consumers) with delivery addresses, and their orders."""
 
+from datetime import timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from crud_views_workflow.lib import BadgeEnum, WorkflowComment, WorkflowModelMixin
@@ -283,3 +284,33 @@ class OrderLine(models.Model):
         if self.unit_price is None or self.order.is_editable:  # prices are fixed once the order is roasted
             self.unit_price = self.product.price
         super().save(*args, **kwargs)
+
+
+# --------------------------------------------------------------------------- subscriptions
+
+INTERVAL_DAYS = {"weekly": 7, "biweekly": 14, "monthly": 30}
+
+
+class CustomerSubscription(models.Model):
+    """A customer's standing delivery of a ``catalog.Subscription`` product; "Run subscriptions" turns due ones into orders."""
+
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="subscriptions")
+    product = models.ForeignKey("catalog.Subscription", on_delete=models.PROTECT, related_name="customer_subscriptions")
+    started_on = models.DateField(default=timezone.localdate)
+    next_delivery = models.DateField()
+    is_active = models.BooleanField(default=True, help_text="Paused subscriptions are skipped by the run.")
+
+    class Meta:
+        ordering = ["next_delivery", "customer__name"]
+        permissions = [("run_customersubscription", "Can run subscriptions (create orders for all due ones)")]
+
+    def __str__(self):
+        return f"{self.customer}: {self.product}"
+
+    @property
+    def interval_days(self) -> int:
+        return INTERVAL_DAYS[self.product.interval]
+
+    def advance(self) -> None:
+        """Move ``next_delivery`` on by the product's interval (7, 14 or 30 days); the caller saves."""
+        self.next_delivery += timedelta(days=self.interval_days)

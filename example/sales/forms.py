@@ -17,10 +17,11 @@ from django import forms
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
 from django.template.loader import render_to_string
+from django.utils import timezone
 
-from catalog.models import Beans, Equipment, Product
+from catalog.models import Beans, Equipment, Product, Subscription
 
-from .models import Address, Customer, Order, OrderLine
+from .models import Address, Customer, CustomerSubscription, Order, OrderLine
 from .permissions import can_on_customer
 
 WHOLESALE_FIELDS = ["company", "vat_id", "price_tier", "payment_terms"]
@@ -249,3 +250,42 @@ class OrderWorkflowForm(WorkflowForm):
         if self.cleaned_data.get("transition") == "wf_confirm" and (problem := self.cv_view.object.confirm_problem()):
             self.add_error("transition", problem)
         return self.cleaned_data
+
+
+# --------------------------------------------------------------------------- subscriptions
+
+
+class CustomerSubscriptionForm(CrispyModelForm):
+    submit_label = "Save"
+
+    class Meta:
+        model = CustomerSubscription
+        fields = ["product", "started_on", "next_delivery", "is_active"]
+        widgets = {"started_on": DatePickerInput(), "next_delivery": DatePickerInput()}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        on_sale = Q(is_active=True) | Q(pk=self.instance.product_id) if self.instance.pk else Q(is_active=True)
+        self.fields["product"].queryset = Subscription.objects.filter(on_sale)
+        self.fields["product"].label = "Subscription"
+        self.fields["is_active"].label = "Active"
+
+    def get_layout_fields(self):
+        return [Row(Column6("product")), Row(Column3("started_on"), Column3("next_delivery")), Row(Column12("is_active"))]
+
+
+class RunSubscriptionsForm(CrispyForm):
+    submit_label = "Run subscriptions"
+    submit_icon = None
+
+    due = forms.DateField(
+        widget=DatePickerInput(), label="Deliver up to",
+        help_text="Every active subscription due on or before this date gets a draft order; each moves on by its interval.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["due"].initial = timezone.localdate()
+
+    def get_layout_fields(self):
+        return [Row(Column4("due"))]

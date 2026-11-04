@@ -9,6 +9,7 @@ from django.urls import reverse
 
 from catalog.models import Beans, Equipment, Origin
 from sales.models import Address, Customer, Order, OrderLine, OrderState
+from sales.permissions import grant_customer
 
 from .test_customers import SalesTestCase
 
@@ -182,7 +183,11 @@ class OrderWorkflowTests(OrderTestCase):
         self.assertTrue(Order.objects.filter(pk=order.pk).exists())
         for state in (OrderState.DELIVERED, OrderState.CANCELLED):
             other = self.make_order(state=state)
-            self.assertEqual(self.client.get(reverse("order-update", kwargs=self.order_kwargs(other))).status_code, 403)
+            for name in ("order-update", "order-delete"):
+                url = reverse(name, kwargs=self.order_kwargs(other))
+                self.assertEqual(self.client.get(url).status_code, 403, (state, name))
+                self.assertEqual(self.client.post(url, {"confirm": "on"}).status_code, 403, (state, name))
+            self.assertTrue(Order.objects.filter(pk=other.pk).exists(), state)
 
     def test_seeded_orders_cover_every_state_with_history(self):
         self.assertEqual(set(Order.objects.values_list("state", flat=True)), set(OrderState.values))
@@ -221,6 +226,16 @@ class OrderPageTests(OrderTestCase):
         response = self.client.post(reverse("orders-create"), {"customer": str(self.other.pk)})
         self.assertEqual(response.status_code, 200)
         self.assertIn("customer", response.context["form"].errors)
+
+    def test_view_only_grant_cannot_place_orders(self):
+        viewable = Customer.objects.filter(owner=None, kind="consumer").first()
+        grant_customer(self.sam, viewable, actions=("view",))
+        self.login("sam")
+        before = Order.objects.count()
+        response = self.client.post(reverse("orders-create"), {"customer": str(viewable.pk), "requested_roast_date": ""})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("You may not place orders for this customer.", response.context["form"].errors["customer"])
+        self.assertEqual(Order.objects.count(), before)
 
     def test_customer_with_orders_is_protected(self):
         self.login()
@@ -270,11 +285,20 @@ class OrderRoleTests(OrderTestCase):
         mine = self.make_order(customer=self.mine)
         self.assertEqual(self.client.get(reverse("order-list", kwargs={"customer_pk": self.other.pk})).status_code, 403)
         for name in ("order-detail", "order-update", "order-workflow", "order-packing_slip", "order-duplicate"):
-            self.assertIn(self.client.get(reverse(name, kwargs=self.order_kwargs(theirs))).status_code, (403, 404), name)
+            self.assertEqual(self.client.get(reverse(name, kwargs=self.order_kwargs(theirs))).status_code, 403, name)
             # cross-parent: Sam's customer in the URL, someone else's order
             cross = {"customer_pk": self.mine.pk, "pk": theirs.pk}
             self.assertEqual(self.client.get(reverse(name, kwargs=cross)).status_code, 404, name)
         self.assertEqual(self.client.post(reverse("order-create", kwargs={"customer_pk": self.other.pk}), {}).status_code, 403)
+        # POSTs are refused as well, and change nothing
+        count = Order.objects.count()
+        for kwargs, expected in ((self.order_kwargs(theirs), 403), ({"customer_pk": self.mine.pk, "pk": theirs.pk}, 404)):
+            self.assertEqual(self.client.post(reverse("order-workflow", kwargs=kwargs), {"transition": "wf_confirm"}).status_code, expected)
+            self.assertEqual(self.client.post(reverse("order-duplicate", kwargs=kwargs), {"requested_roast_date": ""}).status_code, expected)
+        theirs.refresh_from_db()
+        self.assertEqual(theirs.state, OrderState.DRAFT)
+        self.assertEqual(Order.objects.count(), count)
+        self.assertFalse(history(theirs).exists())
         # his own customer's orders open, and he may take the steps
         self.assertEqual(self.client.get(reverse("order-detail", kwargs=self.order_kwargs(mine))).status_code, 200)
         url = reverse("order-workflow", kwargs=self.order_kwargs(mine))

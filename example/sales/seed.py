@@ -7,9 +7,9 @@ from datetime import timedelta
 from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
 
-from catalog.models import Beans, Equipment, Product
+from catalog.models import Beans, Equipment, Product, Subscription
 
-from .models import Address, Customer, Order, OrderLine
+from .models import Address, Customer, CustomerSubscription, Order, OrderLine
 from .permissions import grant_customer
 from .workflow import run_transition
 
@@ -87,13 +87,16 @@ def seed(rng: random.Random, world: dict) -> None:
         perm("add_customer"),
         *(perm(f"{a}_address") for a in ("view", "add", "change", "delete")),
         *(perm(f"{a}_order") for a in ("view", "add", "change")),
+        *(perm(f"{a}_customersubscription") for a in ("view", "add", "change")),  # for granted customers only
     )
     Group.objects.get(name="Roasters").permissions.add(
-        perm("view_customer"), perm("view_address"), perm("view_order"), perm("roast_order")
+        perm("view_customer"), perm("view_address"), perm("view_order"), perm("roast_order"),
+        perm("view_customersubscription"),
     )
 
     world["customers"] = customers
     world["orders"] = seed_orders(rng, customers, users)
+    world["subscriptions"] = seed_subscriptions(rng, customers, world["products"])
 
 
 # How far each seeded order got along the happy path (or cancelled after the draft), oldest first.
@@ -153,3 +156,23 @@ def seed_orders(rng: random.Random, customers: list[Customer], users: dict) -> l
         Order.objects.filter(pk=order.pk).update(created_at=created, shipped_at=order.shipped_at)
         orders.append(order)
     return orders
+
+
+# Days from today to the next delivery, one entry per subscription: some overdue, some due today, most ahead.
+SUBSCRIPTION_OFFSETS = [-9, -4, -2, 0, 0, 1, 3, 5, 7, 9, 12, 16, 21, 27, 33, -6, 4]
+PAUSED = {5, 12, 15}  # indexes into SUBSCRIPTION_OFFSETS
+
+
+def seed_subscriptions(rng: random.Random, customers: list[Customer], products: list) -> list[CustomerSubscription]:
+    """About 17 subscriptions (14 active), spread over Sam's customers and others, wholesale first."""
+    plans = [p for p in products if isinstance(p, Subscription)]
+    sams = [c for c in customers if c.owner and c.owner.username == "sam"]
+    pool = [*rng.sample(sams, min(5, len(sams))), *rng.sample([c for c in customers if c not in sams], 12)]
+    today = timezone.localdate()
+    subs = []
+    for n, (customer, offset) in enumerate(zip(pool, SUBSCRIPTION_OFFSETS)):
+        subs.append(CustomerSubscription.objects.create(
+            customer=customer, product=rng.choice(plans), started_on=today - timedelta(days=rng.randint(40, 300)),
+            next_delivery=today + timedelta(days=offset), is_active=n not in PAUSED,
+        ))
+    return subs

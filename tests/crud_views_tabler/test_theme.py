@@ -661,6 +661,17 @@ class FilterToggleIconTests(SimpleTestCase):
         self.assertRegex(css, r"#cv-filter-toggle \[data-cv-filter-icon\]:not\(\[hidden\]\) \{\s*display: contents;")
 
 
+class BareTableTests(SimpleTestCase):
+    def test_bare_content_table_scrolls_inside_itself_on_a_phone(self):
+        # crud_views_workflow's history table sits straight in the page content, without .table-responsive.
+        css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
+        self.assertRegex(
+            css,
+            r"@media \(max-width: 767\.98px\) \{\s*\.page-body > \.container-xl > table\.table \{\s*display: block;\s*"
+            r"overflow-x: auto;",
+        )
+
+
 class ThemeAdoptionTests(TestCase):
     """Native form floor, exact registrations and real action rendering contracts."""
     @classmethod

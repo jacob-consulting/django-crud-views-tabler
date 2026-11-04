@@ -1,8 +1,16 @@
 # crud_views_tabler: a Tabler theme for django-crud-views (draft)
 
-Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by two
-demo app `showcase` (`/showcase/`), whose
-create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Last checked against django-crud-views `feature/examples-pre-1.0-restructure` @ eac0c21 (2026-11-04: main up to Phase 06.7 plus 06.8, short action tooltips); originally built against main @ 32a3533 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239, the translated card empty state #246, accessible card pagination #241, card blocks and class keys #243 and the alert frame #250, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+Status: **prototype**, living in this project as the `crud_views_tabler` app. It is exercised by the Acme Roasters
+demo (`example/`: apps `sales`, `catalog`, `roastery`, `shipping`), which puts nested ViewSets, formsets,
+conditional groups, workflow, polymorphic models, object detail packs, Guardian, resources, card views and the
+django-crud-views-extensions widgets through it, and by the `showcase` app (`/showcase/`), whose create form renders
+every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Everything the
+demo needed beyond upstream hooks is listed, with upstream references, in
+[crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md).
+
+Last checked against django-crud-views `main` @ cf2bfc0f (2026-11-04, the roastery demo; built from b73337ce, #309,
+the merge of `feature/examples-pre-1.0-restructure`). Before that against `feature/examples-pre-1.0-restructure` @
+eac0c21 (main up to Phase 06.7 plus 06.8, short action tooltips); originally built against main @ 32a3533 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239, the translated card empty state #246, accessible card pagination #241, card blocks and class keys #243 and the alert frame #250, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -275,7 +283,7 @@ class (`h2`, `h3`). `django_tabler/layouts/app.html` has a `page_heading` block 
 
 ## Overridden templates
 
-Eight templates, all about page layout; none of them renders a button:
+Nine templates, all about page layout; none of them renders a button:
 
 ```
 crud_views/
@@ -286,10 +294,19 @@ crud_views/
   tags/alert.html                 every alert (messages, delete page) in Tabler's layout: .alert-icon, .alert-heading
   tags/list_filter.html, list_filter.inner.html   filter as a Tabler card
   view_card.content.html          card grid and empty state
+crud_views_workflow/
+  badge.html                      workflow state badge as Tabler's light badge (bg-<colour>-lt), see above
 static/crud_views_tabler/
-  crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons
+  crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons,
+                                  toggle-group and formset legends, the typeahead --bs-* bridge, bare content
+                                  tables that scroll on phones (the workflow history)
   tabler-adapters.js              cv.adapters -> window.tabler, toolbar tooltips below
 ```
+
+The CSS rules added for the roastery demo each have a finding in
+[crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md): the bare `<legend>` of toggle
+groups and formsets (#21), the typeahead skins reading Bootstrap's `--bs-*` properties (#31, plain CSS, the theme
+does not import the extensions package), and the workflow history table without `.table-responsive` (#5).
 
 The theme used to override the context, list and card action templates, both containers, the `⋯` toggle, the filter
 toggle and the card-order bar (nine templates). crud_views' class table, leaves and tooltip markers made all of them
@@ -318,15 +335,16 @@ related-objects alerts, which used to render in plain Bootstrap style, now get t
 
 ## Not covered yet
 
-- **Property-grid detail** (`crud_views_object_detail`): it has its own template packs and icon library settings
-  (`bootstrap` / `fontawesome`); a Tabler datagrid layout would be the natural fit. The demo detail page uses a
-  hand-written Tabler `.datagrid` instead.
-- **Formsets** (`formsets/*.html`, formset.js; the theme registers `formset:control` = `btn btn-icon` and
-  `formset:control-danger` = `btn btn-icon btn-danger`, untested because the demo has no formsets), **delete
-  related-objects** snippets, the **manage** view, **language selector**, and the workflow / polymorphic / guardian
-  extensions' templates.
+The roastery demo now renders object detail packs (`split-card`, `card-rows`, `tabs-vertical`), formsets with their
+control buttons, conditional toggle groups, the workflow badge/history/form, polymorphic create-select, Guardian
+views, resources, card views, custom form and action views, and the typeahead and datetimepicker widgets; the sweep
+before the demo's hand-over checked every page at 1280/1400 px and 390 px, light and dark, with no console errors.
+Still not covered:
+
+- The **accordion** object-detail pack (finding #15), the **manage** views (off in the demo, finding #25; their tables
+  are not responsive) and the **language selector**.
 - A Tabler-style cancel button.
-- Responsive check below the `md` breakpoint.
+- The datetimepicker's own look (finding #32).
 
 ## Questions for django-crud-views upstream
 

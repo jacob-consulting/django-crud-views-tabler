@@ -5,6 +5,15 @@ Status snapshot for the five points in
 paths and the options per point; this one says only where each point stands today and what is left to do. The
 questions document is not edited.
 
+## Update 2026-11-04: Acme Roasters demo, upstream main cf2bfc0f
+
+The roastery demo (`example/`) put the theme in front of nearly every crud_views feature. The 32 candidates it
+produced (theme CSS and override templates, workarounds in the demo, upstream bugs and awkward spots, each with
+`path:line`, what the theme does today and a severity) are in
+[crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md), not filed yet. The tooltip
+recipe below is finding #2 there. One new override (`crud_views_workflow/badge.html`, finding #4) and three CSS rules
+(#5, #21, #31) came with the demo; see [crud_views_tabler.md](crud_views_tabler.md#overridden-templates).
+
 ## Update 2026-11-04: pre-1.0 tidy-up against upstream eac0c21
 
 Checked against `feature/examples-pre-1.0-restructure` @ eac0c21: `main` up to Phase 06.7 (#303) plus Phase 06.8

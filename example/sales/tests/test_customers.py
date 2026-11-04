@@ -102,6 +102,27 @@ class CustomerViewTests(SalesTestCase):
         self.assertIn(reverse("order-list", kwargs={"customer_pk": customer.pk}), html)  # the Orders link
         self.assertIn(reverse("subscription-list", kwargs={"customer_pk": customer.pk}), html)  # the Subscriptions link
 
+    def test_detail_leaves_out_blank_optional_rows(self):
+        self.login()
+        customer = Customer.objects.filter(kind="consumer").first()
+        Customer.objects.filter(pk=customer.pk).update(phone="", notes="")
+        html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
+        self.assertNotRegex(html, r">\s*Phone\s*<")
+        self.assertNotRegex(html, r">\s*Notes\s*<")
+        Customer.objects.filter(pk=customer.pk).update(phone="+49 40 123", notes="Likes it light")
+        html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
+        self.assertRegex(html, r">\s*Phone\s*<")
+        self.assertIn("Likes it light", html)
+
+    def test_detail_header_shows_the_avatar_not_the_viewset_icon(self):
+        self.login()
+        customer = Customer.objects.first()
+        html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
+        heading = html[html.index('class="page-title"'):]
+        heading = heading[:heading.index("</h2>")]
+        self.assertIn(f">{customer.initials}<", heading)
+        self.assertNotIn("<svg", heading)
+
     def test_consumer_detail_has_no_wholesale_terms(self):
         self.login()
         consumer = Customer.objects.filter(kind="consumer").first()

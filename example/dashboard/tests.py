@@ -650,3 +650,12 @@ class FaviconTests(TestCase):
         self.assertContains(self.client.get(reverse("login")), 'href="/static/acme/favicon.svg"')
         self.assertIn("#a0522d", Path(finders.find("acme/favicon.svg")).read_text())
 
+
+class ManageViewsTests(TestCase):
+    def test_manage_pages_are_off_by_default(self):
+        # DEBUG defaults to on and the demo is served publicly; upstream's "debug_only" would let Sam read every
+        # view's permission holders. Opt in with the environment variable of the same name.
+        self.assertEqual(settings.CRUD_VIEWS_MANAGE_VIEWS_ENABLED, "no")
+        self.client.force_login(User.objects.create_superuser("root", password="x"))
+        self.assertIn(self.client.get("/customer/manage/").status_code, (403, 404))
+        self.assertNotContains(self.client.get(reverse("customer-list")), "/customer/manage/")

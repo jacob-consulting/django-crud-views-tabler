@@ -72,3 +72,12 @@
 .cv-typeahead-select .dropdown-item {
   display: block;
 }
+
+/* A bare <table class="table"> straight in the page content (crud_views_workflow's history table has no
+   .table-responsive wrapper and no class to hook) is wider than a phone. Let it scroll inside itself there. */
+@media (max-width: 767.98px) {
+  .page-body > .container-xl > table.table {
+    display: block;
+    overflow-x: auto;
+  }
+}

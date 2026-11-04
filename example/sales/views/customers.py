@@ -141,6 +141,8 @@ _WHOLESALE = [
 # One card, like the mockup; consumers have no wholesale terms to show
 WHOLESALE_DISPLAY = [{"title": _("Details"), "icon": "tabler:building-store", "properties": [*_DETAILS, *_WHOLESALE, "notes"]}]
 CONSUMER_DISPLAY = [{"title": _("Details"), "icon": "tabler:building-store", "properties": [*_DETAILS, "notes"]}]
+# Optional text fields: a blank one would render as a row with an empty value, so it is left out
+_LEFT_OUT_WHEN_BLANK = {"phone", "notes", "company", "vat_id"}
 
 
 class CustomerDetailView(GlobalPermsMixin, BreadcrumbMixin, ObjectDetailMixin, GuardianDetailViewPermissionRequired):
@@ -154,7 +156,13 @@ class CustomerDetailView(GlobalPermsMixin, BreadcrumbMixin, ObjectDetailMixin, G
 
     @property
     def property_display(self):
-        return WHOLESALE_DISPLAY if self.object.is_wholesale else CONSUMER_DISPLAY
+        groups = WHOLESALE_DISPLAY if self.object.is_wholesale else CONSUMER_DISPLAY
+        blank = {name for name in _LEFT_OUT_WHEN_BLANK if not getattr(self.object, name)}
+        return [{**group, "properties": [p for p in group["properties"] if not (isinstance(p, str) and p in blank)]}
+                for group in groups]
+
+    def cv_get_header_icon(self):
+        return None  # the header template draws the customer's avatar in its place
 
 
 # --------------------------------------------------------------------------- create / update / delete

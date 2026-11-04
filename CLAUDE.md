@@ -12,11 +12,18 @@ under `example/` that exercises them:
   pack `crispy_tabler` (`templates/crispy_tabler/` + `django_tabler.crispy`). Must not depend on django-crud-views;
   only the crispy pack needs the `crispy` extra.
 - `src/crud_views_tabler/`: Tabler theme for django-crud-views. Depends on `django_tabler`.
-- `example/`: the demo site (`config/` settings, apps `dashboard`, `showcase`).
+- `example/`: the Acme Roasters demo: `config/` (settings, the "Show code" collector `showcode.py`, tag libraries
+  `showcode` and `acme_nav` registered in `TEMPLATES['OPTIONS']['libraries']` because `config` is not an app, date
+  formats in `config/formats/`), apps `dashboard` (start page, demo accounts, `seed_demo`), `sales` (customers with
+  Guardian, addresses, orders with workflow and line formset, subscriptions), `catalog` (polymorphic products, ordered
+  categories), `roastery` (green lots, cupping sessions with score formsets, roast batches), `shipping` (a `Resource`
+  over a fake courier API) and `showcase` (the crispy pack coverage form). App code never imports `django_tabler` or
+  `crud_views_tabler`; icon names are strings (`"tabler:<name>"`).
 
-django-crud-views comes from the sibling checkout `../django-crud-views` as an editable path dependency
-(`[tool.uv.sources]`), because the theme tracks unreleased upstream features. Upstream changes there can break the
-theme's tests.
+django-crud-views and django-crud-views-extensions come from the sibling checkouts `../django-crud-views` and
+`../django-crud-views-extensions` as editable path dependencies (`[tool.uv.sources]`), because the theme tracks
+unreleased upstream features. Upstream changes there can break the theme's tests. Both checkouts are read-only for
+this repo: gaps are worked around here and logged in `docs/crud_views_upstream_findings_roastery.md`.
 
 ## Commands
 
@@ -24,12 +31,14 @@ theme's tests.
 task up      # Taskfile.yaml: uv sync, migrate, superuser admin/admin, seed, runserver
 task setup   # the same without runserver; idempotent
 task reset   # delete example/db.sqlite3 + example/media, then setup (asks first)
+task seed:reset   # seed_demo --reset: rebuild the demo data in place
 
 uv run python example/manage.py seed_demo [--reset] | seed_demo_showcase   # demo data by hand
 
 # Example apps' Django tests (the example's settings)
-uv run python example/manage.py test django_tabler dashboard showcase
+uv run python example/manage.py test django_tabler dashboard sales catalog roastery shipping showcase
 uv run python example/manage.py test dashboard.tests.SomeTestCase.test_name   # single test
+# sales keeps its tests in a tests/ package (sales.tests.test_orders, ...), the other apps in tests.py
 
 # crud_views_tabler theme tests (pytest, own settings and test app: tests/crud_views_tabler/)
 uv run --group test pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
@@ -58,12 +67,17 @@ with blocks `breadcrumb`, `page_heading` (wraps `page_title`), `subtitle`, `acti
 which is `CRUD_VIEWS_EXTENDS` and maps crud_views tags/blocks (`cv_header`, `cv_context_actions`, `cv_filter`,
 `cv_content`, `cv_css`/`cv_js`) onto those blocks. Projects customise branding by overriding
 `django_tabler/includes/{site_name,nav_menu,brand,head}.html` (the example does so in `example/templates/`).
+`nav_menu.html` is included by both navigations with `nav_layout` `"horizontal"` (top bar) or `"vertical"`
+(sidebar); the example renders its sections as dropdowns in the top bar and as headings in the sidebar, from the menu
+defined once in `example/config/templatetags/acme_nav.py`. The example's `CRUD_VIEWS_EXTENDS` is
+`project/crud_views.html`, which extends `crud_views_tabler/page.html` and adds the "Show code" panel (sources fetched
+from `/_code/<app_label>/` when it opens).
 
 **How the crud_views theme works** (details in `docs/crud_views_tabler.md`): django-crud-views has no theme setting.
 The theme is an app listed *before* `crud_views` in `INSTALLED_APPS`, so its `templates/crud_views/...` files shadow
 the stock Bootstrap 5 templates; anything not overridden falls through. No crud_views code is patched or subclassed.
 Overrides are deliberately limited to page *layout* (modal shell, form frame, table, card, alert, filter, card
-content) — none renders a button. Everything else is registered in `CrudViewsTablerConfig.ready()`:
+content, plus the workflow state badge) — none renders a button. Everything else is registered in `CrudViewsTablerConfig.ready()`:
 - button classes: `buttons.TABLER_BUTTON_CLASSES` via `register_button_classes()` (keys like `location:variant` and
   `location:variant:icon`; the `:icon` variant adds `btn-icon` for icon-only label mode),
 - label modes: `register_label_mode_defaults({"form": "both"})`, so form buttons show icon plus label,
@@ -92,9 +106,16 @@ user's layout choice in `localStorage` using Tabler's own `tabler-*` keys; nothi
 ## Conventions
 
 - All pages require login (`LoginRequiredMiddleware`); the login view is the exception.
-- Settings from env: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` (`1`/`0`), `DJANGO_ALLOWED_HOSTS`. The default allowed hosts
+- Settings from env: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` (`1`/`0`), `DJANGO_ALLOWED_HOSTS`,
+  `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` (default `no`: manage pages list permission holders, and upstream's
+  `debug_only` would open them to everyone under the default DEBUG). The default allowed hosts
   include `cv.jacob-consulting.org`, where the demo is served through a Cloudflare tunnel that terminates HTTPS;
   hence `CSRF_TRUSTED_ORIGINS = ['https://cv.jacob-consulting.org']` in `example/config/settings.py`.
+- Demo accounts: `alex` (Owner), `sam` (Account managers; Guardian grants on his customers), `kim` (Roasters);
+  password `demo`. Brand "Acme Roasters", primary colour sienna `#a0522d` (`example/static/acme/acme.css`).
+- Theme fix order: an upstream hook (class keys, settings, blocks), then CSS in `crud_views_tabler.css`, then a new
+  override template as a last resort. Every theme CSS rule or override, and every upstream bug or awkwardness, gets
+  an entry in `docs/crud_views_upstream_findings_roastery.md` in the same commit.
 - Design specs and implementation plans live in `docs/superpowers/{specs,plans}/`.
 
 ## Tabler reference material

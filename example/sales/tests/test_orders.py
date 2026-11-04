@@ -101,6 +101,25 @@ class OrderFormTests(OrderTestCase):
         self.assertEqual(order.notes, "Ring twice.")
         self.assertEqual(sorted(order.lines.values_list("quantity", flat=True)), [1, 5])
 
+    def test_confirmed_order_cannot_be_emptied(self):
+        self.login()
+        order = self.make_order(state=OrderState.CONFIRMED)
+        line = order.lines.get()
+        prefix = f"lines-{order.pk}-0"
+        url = reverse("order-update", kwargs=self.order_kwargs(order))
+        rows = [{"id": line.pk, "product": self.huila.pk, "quantity": "2", "DELETE": "on"}]
+        data = {**self.order_post(order.customer, []), **self.lines_post(prefix, rows, initial=1)}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "A confirmed order needs at least one line item.")
+        self.assertEqual(order.lines.count(), 1)
+        # a draft may be emptied
+        draft = self.make_order()
+        rows = [{"id": draft.lines.get().pk, "product": self.huila.pk, "quantity": "2", "DELETE": "on"}]
+        prefix = f"lines-{draft.pk}-0"
+        data = {**self.order_post(draft.customer, []), **self.lines_post(prefix, rows, initial=1)}
+        self.assertEqual(self.client.post(reverse("order-update", kwargs=self.order_kwargs(draft)), data).status_code, 302)
+
     def test_ship_to_is_limited_to_the_customers_addresses(self):
         # Sam holds view_address model-wide: the form must not offer (or accept) other customers' addresses
         self.login("sam")

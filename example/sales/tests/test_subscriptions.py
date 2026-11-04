@@ -147,3 +147,24 @@ class SeedSubscriptionTests(SalesTestCase):
         self.assertTrue(subs.filter(is_active=False).exists())
         self.assertGreater(len({s.next_delivery for s in subs}), 3)
         self.assertTrue(subs.filter(customer__in=self.granted).exists())
+
+
+class SubscriptionOrderEditTests(SubscriptionTestCase):
+    def test_order_from_run_subscriptions_can_be_saved_unchanged(self):
+        self.subscribe(self.mine, days=-1)
+        alex = self.world["users"]["alex"]
+        (order,) = run_subscriptions(TODAY, alex)
+        line = order.lines.get()
+        self.assertIsInstance(line.product, Subscription)
+        self.login()
+        url = reverse("order-update", kwargs={"customer_pk": order.customer_id, "pk": order.pk})
+        prefix = f"lines-{order.pk}-0"
+        data = {"ship_to": str(order.ship_to_id or order.customer.addresses.first().pk), "requested_roast_date": "",
+                "notes": "", f"{prefix}-TOTAL_FORMS": "1", f"{prefix}-INITIAL_FORMS": "1",
+                f"{prefix}-MIN_NUM_FORMS": "0", f"{prefix}-MAX_NUM_FORMS": "1000",
+                f"{prefix}-0-id": str(line.pk), f"{prefix}-0-product": str(line.product_id),
+                f"{prefix}-0-grind": line.grind, f"{prefix}-0-bag_size": line.bag_size,
+                f"{prefix}-0-quantity": str(line.quantity)}
+        self.assertEqual(self.client.post(url, data).status_code, 302)
+        self.assertEqual(order.lines.count(), 1)
+        self.assertEqual(order.lines.get().product_id, line.product_id)

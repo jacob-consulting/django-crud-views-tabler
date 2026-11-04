@@ -21,7 +21,7 @@ from django.utils import timezone
 
 from catalog.models import Beans, Equipment, Product, Subscription
 
-from .models import Address, Customer, CustomerSubscription, Order, OrderLine
+from .models import Address, Customer, CustomerSubscription, Order, OrderLine, OrderState
 from .permissions import can_on_customer
 
 WHOLESALE_FIELDS = ["company", "vat_id", "price_tier", "payment_terms"]
@@ -117,8 +117,11 @@ class OrderLineForm(CrispyModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # beans and equipment on sale, plus whatever this line already holds (a retired coffee stays selectable)
-        on_sale = Q(is_active=True) | Q(pk=self.instance.product_id) if self.instance.pk else Q(is_active=True)
-        self.fields["product"].queryset = Product.objects.instance_of(Beans, Equipment).filter(on_sale)
+        # (a union with the current product: a subscription line from "Run subscriptions" is neither beans nor equipment)
+        products = Product.objects.instance_of(Beans, Equipment).filter(is_active=True)
+        if self.instance.pk:
+            products = products | Product.objects.filter(pk=self.instance.product_id)
+        self.fields["product"].queryset = products.distinct()
         for name in ("grind", "bag_size"):
             field = self.fields[name]
             field.choices = [("", "—"), *field.choices[1:]]  # no "Select an option" in a narrow column
@@ -134,6 +137,14 @@ class OrderLineForm(CrispyModelForm):
 
 
 class OrderLineInlineFormSet(InlineFormSet):
+    def clean(self):
+        super().clean()
+        if self.instance.state != OrderState.CONFIRMED or any(self.errors):
+            return
+        kept = [f for f in self.forms if f.cleaned_data and not f.cleaned_data.get("DELETE")]
+        if not kept:
+            raise forms.ValidationError("A confirmed order needs at least one line item.")
+
     def get_helper_layout_fields(self):
         return [
             Row(Column4("product"), Column2("grind"), Column2("bag_size"), Column2("quantity"), self.form_control_col2)

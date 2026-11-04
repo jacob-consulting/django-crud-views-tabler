@@ -248,3 +248,81 @@ class AddressTests(SalesTestCase):
         self.assertEqual(self.client.post(reverse("address-update", kwargs=cross), data).status_code, 404)
         address.refresh_from_db()
         self.assertNotEqual(address.label, "Hijacked")
+
+
+class OwnerGrantTests(SalesTestCase):
+    def update_post(self, customer, owner):
+        data = {"name": customer.name, "country": customer.country or "DE", "city": customer.city,
+                "owner": str(owner.pk) if owner else ""}
+        if customer.is_wholesale:
+            data.update(is_wholesale="on", company=customer.company, price_tier=customer.price_tier,
+                        payment_terms=customer.payment_terms)
+        return self.client.post(reverse("customer-update", kwargs={"pk": customer.pk}), data)
+
+    def test_assigning_an_account_manager_grants_access(self):
+        customer = Customer.objects.exclude(owner=self.sam).filter(kind="consumer").first()
+        self.assertEqual(self.client.login(username="sam", password="demo"), True)
+        self.assertEqual(self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).status_code, 403)
+        self.login()
+        self.assertEqual(self.update_post(customer, self.sam).status_code, 302)
+        self.login("sam")
+        self.assertEqual(self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).status_code, 200)
+        self.assertIn(customer.pk, {c.pk for c in self.client.get(reverse("customer-list")).context["table"].data.data})
+
+    def test_new_owner_sees_the_orders(self):
+        customer = Customer.objects.exclude(owner=self.sam).filter(orders__isnull=False).first()
+        self.login()
+        self.assertEqual(self.update_post(customer, self.sam).status_code, 302)
+        self.login("sam")
+        self.assertEqual(
+            self.client.get(reverse("order-list", kwargs={"customer_pk": customer.pk})).status_code, 200
+        )
+        table = self.client.get(reverse("orders-list"), {"per_page": 100}).context["table"]
+        self.assertIn(customer.pk, {o.customer_id for o in table.data})
+
+    def test_reassigning_withdraws_the_previous_owners_access(self):
+        mine = self.granted.first()
+        self.login()
+        self.assertEqual(self.update_post(mine, self.world["users"]["alex"]).status_code, 302)
+        self.login("sam")
+        self.assertEqual(self.client.get(reverse("customer-detail", kwargs={"pk": mine.pk})).status_code, 403)
+        self.assertEqual(self.client.get(reverse("order-list", kwargs={"customer_pk": mine.pk})).status_code, 403)
+        # alex keeps working through his model-level permissions, other grants of Sam stay
+        self.login()
+        self.assertEqual(self.client.get(reverse("customer-detail", kwargs={"pk": mine.pk})).status_code, 200)
+        other_mine = self.granted.exclude(pk=mine.pk).first()
+        self.login("sam")
+        self.assertEqual(self.client.get(reverse("customer-detail", kwargs={"pk": other_mine.pk})).status_code, 200)
+
+    def test_unchanged_owner_keeps_the_grant_and_creator_grant_survives(self):
+        mine = self.granted.first()
+        self.login()
+        self.assertEqual(self.update_post(mine, self.sam).status_code, 302)
+        self.login("sam")
+        self.assertEqual(self.client.get(reverse("customer-detail", kwargs={"pk": mine.pk})).status_code, 200)
+
+    def test_alex_creating_for_sam_grants_sam(self):
+        self.login()
+        response = self.client.post(
+            reverse("customer-create"), {**CONSUMER_POST, "name": "For Sam", "owner": str(self.sam.pk)}
+        )
+        self.assertEqual(response.status_code, 302)
+        created = Customer.objects.get(name="For Sam")
+        self.login("sam")
+        self.assertEqual(self.client.get(reverse("customer-detail", kwargs={"pk": created.pk})).status_code, 200)
+
+
+class FilterScopeTests(SalesTestCase):
+    def test_filter_choices_are_limited_to_visible_customers(self):
+        foreign = Customer.objects.exclude(owner=self.sam).exclude(owner=None).first()
+        Customer.objects.filter(pk=foreign.pk).update(country="ZZ")
+        self.login("sam")
+        form = self.client.get(reverse("customer-list")).context["filter"].form
+        countries = [value for value, _ in form.fields["country"].choices]
+        self.assertNotIn("ZZ", countries)
+        self.assertEqual(set(countries) - {""}, set(self.granted.values_list("country", flat=True)) - {""})
+        owners = list(form.fields["owner"].queryset)
+        self.assertEqual(owners, [self.sam])
+        self.login()
+        form = self.client.get(reverse("customer-list")).context["filter"].form
+        self.assertIn("ZZ", [value for value, _ in form.fields["country"].choices])

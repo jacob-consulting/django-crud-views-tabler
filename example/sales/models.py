@@ -46,6 +46,7 @@ class Customer(models.Model):
         on_delete=models.SET_NULL,
         related_name="customers",
         verbose_name="Account manager",
+        help_text="Gets access to this customer (view and change); the previous account manager loses it.",
     )
     # wholesale only
     company = models.CharField(max_length=150, blank=True)

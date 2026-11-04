@@ -47,7 +47,7 @@ Open http://127.0.0.1:8000/ and sign in. Every page except the login page requir
 | Account | Role | Sees |
 |---|---|---|
 | `alex` | Owner (group `Owner`) | everything; the only one who may run subscriptions or manage users |
-| `sam` | Account manager (`Account managers`) | only the customers Guardian grants him, their orders and subscriptions; roastery and catalog read-only; actions he may not use show disabled |
+| `sam` | Account manager (`Account managers`) | only the customers Guardian grants him (setting a customer's account manager grants or withdraws that access), their orders and subscriptions; roastery and catalog read-only; actions he may not use show disabled |
 | `kim` | Head roaster (`Roasters`) | roastery in full; customers, orders and catalog read-only, except the confirmed → roasted step |
 | `admin` | superuser from the Taskfile | everything, plus `/admin/` |
 

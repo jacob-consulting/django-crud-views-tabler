@@ -29,7 +29,7 @@ from django.utils.translation import gettext_lazy as _
 
 from ..forms import CustomerForm
 from ..models import Customer
-from ..permissions import grant_customer
+from ..permissions import customers_for, grant_customer, sync_owner_grants
 
 cv_customer = GuardianViewSet(
     model=Customer,
@@ -59,7 +59,7 @@ class CustomerFilter(django_filters.FilterSet):
     kind = django_filters.ChoiceFilter(choices=Customer.Kind.choices, empty_label="Any kind")
     country = django_filters.ChoiceFilter(empty_label="Any country")
     owner = django_filters.ModelChoiceFilter(
-        queryset=lambda request: get_user_model().objects.filter(customers__isnull=False).distinct(),
+        queryset=lambda request: get_user_model().objects.filter(customers__in=customers_for(request.user)).distinct(),
         empty_label="Any account manager",
         label="Account manager",
     )
@@ -70,7 +70,8 @@ class CustomerFilter(django_filters.FilterSet):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        countries = Customer.objects.exclude(country="").order_by("country").values_list("country", flat=True)
+        visible = customers_for(self.request.user) if self.request is not None else Customer.objects.none()
+        countries = visible.exclude(country="").order_by("country").values_list("country", flat=True)
         self.filters["country"].extra["choices"] = [(c, c) for c in dict.fromkeys(countries)]
 
 
@@ -181,6 +182,7 @@ class CustomerCreateView(
             form.instance.owner = self.request.user  # the creator looks after the customer unless told otherwise
         super().cv_form_valid(context)
         grant_customer(self.request.user, self.object)  # the creator may open and edit what they created
+        sync_owner_grants(self.object)  # ... and so may the account manager they picked
 
 
 class CustomerUpdateView(
@@ -189,6 +191,11 @@ class CustomerUpdateView(
     cv_viewset = cv_customer
     form_class = CustomerForm
     cv_message_template_code = _("Updated customer “{{ object }}”")
+
+    def cv_form_valid(self, context: dict):
+        previous = Customer.objects.select_related("owner").get(pk=self.object.pk).owner
+        super().cv_form_valid(context)
+        sync_owner_grants(self.object, previous)  # a new account manager gets access, the old one loses it
 
 
 class CustomerDeleteView(

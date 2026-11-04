@@ -18,7 +18,7 @@ REFUSAL = "Demo data already present; use --reset to rebuild."
 
 
 def delete_demo_data() -> None:
-    """Delete every row the demo seeds (never ``admin`` or other users), children before the rows they protect."""
+    """Wipe the demo apps' tables whole, rows you added included (never ``admin`` or other users), children first."""
     from catalog.models import Category, FlavorNote, Origin, Product
     from crud_views_workflow.models import WorkflowInfo
     from guardian.models import GroupObjectPermission, UserObjectPermission
@@ -50,7 +50,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--seed", type=int, default=42, help="Random seed, for repeatable data.")
-        parser.add_argument("--reset", action="store_true", help="Delete the demo data first and rebuild it.")
+        parser.add_argument("--reset", action="store_true", help="Wipe the demo tables entirely first, including rows you added yourself (not admin), then rebuild.")
 
     def handle(self, *args, seed, reset, **options):
         User = get_user_model()

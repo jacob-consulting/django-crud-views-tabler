@@ -73,7 +73,7 @@ its icon spans with `hidden` instead of `d-none` (#232), and five new `message-*
 - **Theme:** this repository at **7799490** on `main` (clean apart from untracked `.run/`).
 - **Install:** editable — `crud_views.__file__` resolves to the upstream checkout, so the theme runs against main,
   not against a released wheel.
-- **Tests:** `uv run python manage.py test crud_views_tabler` → 47 tests, OK.
+- **Tests:** `uv run python manage.py test crud_views_tabler` → 47 tests, OK (before the theme tests moved to tests/crud_views_tabler).
 - **Upstream issue tracker:** six issues open: #191 (create view renders `form.media` twice), #89 (stability
   docs) and **#208**, **#209**, **#210**, **#211** — all four asks below, filed from this document on 2026-10-21.
   #202, raised by this theme, and #203, which came out of the #202 acceptance run upstream, are both closed.

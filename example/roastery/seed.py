@@ -48,12 +48,14 @@ def seed(rng: random.Random, world: dict) -> None:
     today = timezone.localdate()
 
     lots = []
+    on_hand_after = {}  # the stock each lot should show once the batches below have drawn theirs
     for code, o, producer, variety, process, year, bought, on_hand, price, days, base in LOTS:
         lots.append((GreenLot.objects.create(
             code=code, origin=origins[o], producer=producer, variety=variety, process=process, harvest_year=year,
-            kg_purchased=Decimal(bought), kg_on_hand=Decimal(on_hand), price_per_kg=Decimal(price),
+            kg_purchased=Decimal(bought), kg_on_hand=Decimal(bought), price_per_kg=Decimal(price),
             arrived_on=today - timedelta(days=days),
         ), base))
+        on_hand_after[code] = Decimal(on_hand)
 
     sessions = []
     for n, (lot, base) in enumerate(lots):
@@ -95,6 +97,13 @@ def seed(rng: random.Random, world: dict) -> None:
         if pool:
             batch.orders.set(rng.sample(pool, min(len(pool), rng.randint(0, 2))))
         batches.append(batch)
+
+    # batches draw from the lots (RoastBatch.save): lots start full and end at the stated stock, or at what the batches
+    # left of them when that is less
+    for lot, _ in lots:
+        lot.refresh_from_db()
+        lot.kg_on_hand = min(lot.kg_on_hand, on_hand_after[lot.code])
+        lot.save(update_fields=["kg_on_hand"])
 
     # Kim runs the roastery; Sam looks, and gives cupping scores (he may not edit anything here)
     perms = Permission.objects.filter(content_type__app_label="roastery")

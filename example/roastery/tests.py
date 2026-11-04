@@ -198,3 +198,69 @@ class BatchTests(RoasteryTestCase):
                 "roasted_kg": "11", "roaster": str(self.users["kim"].pk)}
         self.assertEqual(self.client.post(reverse("batch-create"), data).status_code, 200)
         self.assertFalse(RoastBatch.objects.exists() and RoastBatch.objects.filter(lot=self.lot).exists())
+
+
+class BatchStockTests(RoasteryTestCase):
+    """A roast batch draws its green weight from the lot's ``kg_on_hand``."""
+
+    def data(self, **extra):
+        return {"lot": str(self.lot.pk), "roasted_on": "2026-11-04", "profile": "light", "green_kg": "12.0",
+                "roasted_kg": "10.2", "roaster": str(self.users["kim"].pk), **extra}
+
+    def on_hand(self, lot=None):
+        return GreenLot.objects.get(pk=(lot or self.lot).pk).kg_on_hand
+
+    def make(self, green="12.0", lot=None):
+        lot = lot or self.lot
+        self.login("kim")
+        before = RoastBatch.objects.count()
+        response = self.client.post(reverse("batch-create"), self.data(lot=str(lot.pk), green_kg=green))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(RoastBatch.objects.count(), before + 1)
+        return RoastBatch.objects.latest("pk")
+
+    def test_create_decrements_the_lot(self):
+        self.make("12.0")
+        self.assertEqual(self.on_hand(), Decimal("588.0"))
+
+    def test_create_beyond_stock_is_refused(self):
+        self.login("kim")
+        response = self.client.post(reverse("batch-create"), self.data(green_kg="600.1", roasted_kg="500"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("green_kg", response.context["form"].errors)
+        self.assertEqual(self.on_hand(), Decimal("600"))
+        self.assertFalse(RoastBatch.objects.filter(lot=self.lot).exists())
+
+    def test_update_adjusts_by_the_difference(self):
+        batch = self.make("12.0")
+        url = reverse("batch-update", kwargs={"pk": batch.pk})
+        response = self.client.post(url, self.data(green_kg="20.0", roasted_kg="17"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.on_hand(), Decimal("580.0"))
+        response = self.client.post(url, self.data(green_kg="5.0", roasted_kg="4"))
+        self.assertEqual(self.on_hand(), Decimal("595.0"))
+        # the whole lot may be used by this batch: its own weight counts as available again
+        self.assertEqual(self.client.post(url, self.data(green_kg="600.0", roasted_kg="500")).status_code, 302)
+        self.assertEqual(self.on_hand(), Decimal("0.0"))
+
+    def test_update_moving_to_another_lot(self):
+        batch = self.make("12.0")
+        other = GreenLot.objects.exclude(pk=self.lot.pk).filter(kg_on_hand__gte=50).first()
+        before = self.on_hand(other)
+        response = self.client.post(
+            reverse("batch-update", kwargs={"pk": batch.pk}), self.data(lot=str(other.pk), green_kg="10.0", roasted_kg="8")
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.on_hand(), Decimal("600"))
+        self.assertEqual(self.on_hand(other), before - Decimal("10.0"))
+
+    def test_delete_restores_the_stock(self):
+        batch = self.make("12.0")
+        self.assertEqual(self.client.post(reverse("batch-delete", kwargs={"pk": batch.pk}), {"confirm": "on"}).status_code, 302)
+        self.assertFalse(RoastBatch.objects.filter(pk=batch.pk).exists())
+        self.assertEqual(self.on_hand(), Decimal("600.0"))
+
+    def test_seed_leaves_every_lot_with_sensible_stock(self):
+        for lot in GreenLot.objects.exclude(pk=self.lot.pk):
+            self.assertGreaterEqual(lot.kg_on_hand, 0, lot)
+            self.assertLessEqual(lot.kg_on_hand, lot.kg_purchased, lot)

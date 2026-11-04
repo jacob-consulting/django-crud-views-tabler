@@ -5,7 +5,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 
 from catalog.models import Beans, Origin
 
@@ -139,6 +139,36 @@ class RoastBatch(models.Model):
         super().clean()
         if self.green_kg is not None and self.roasted_kg is not None and self.roasted_kg > self.green_kg:
             raise ValidationError({"roasted_kg": "Roasting cannot add weight: this is more than the green weight."})
+        if self.lot_id and self.green_kg is not None:
+            available = self._available_kg()
+            if self.green_kg > available:
+                raise ValidationError({"green_kg": f"Lot {self.lot.code} has only {available} kg on hand."})
+
+    def _available_kg(self) -> Decimal:
+        """What this batch may draw from its lot: the stock, plus the weight it already holds there."""
+        available = GreenLot.objects.get(pk=self.lot_id).kg_on_hand
+        if self.pk:
+            previous = RoastBatch.objects.filter(pk=self.pk, lot_id=self.lot_id).values_list("green_kg", flat=True).first()
+            available += previous or 0
+        return available
+
+    # The green weight leaves the lot's ``kg_on_hand`` when a batch is saved and returns when it is deleted, in one
+    # transaction with the lot row locked. (``QuerySet.delete()`` and ``bulk_create`` bypass this.)
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk and (old := RoastBatch.objects.filter(pk=self.pk).first()):
+                GreenLot.objects.filter(pk=old.lot_id).update(kg_on_hand=models.F("kg_on_hand") + old.green_kg)
+            lot = GreenLot.objects.select_for_update().get(pk=self.lot_id)
+            if self.green_kg > lot.kg_on_hand:
+                raise ValidationError({"green_kg": f"Lot {lot.code} has only {lot.kg_on_hand} kg on hand."})
+            GreenLot.objects.filter(pk=lot.pk).update(kg_on_hand=models.F("kg_on_hand") - self.green_kg)
+            super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            GreenLot.objects.filter(pk=self.lot_id).update(kg_on_hand=models.F("kg_on_hand") + self.green_kg)
+            return super().delete(*args, **kwargs)
 
     @property
     def weight_loss_pct(self) -> Decimal | None:

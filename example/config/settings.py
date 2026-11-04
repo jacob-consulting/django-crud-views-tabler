@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'crud_views_widget_datetimepicker.apps.CrudViewsWidgetDatetimepickerConfig',
     'crud_views_widget_typeahead.apps.CrudViewsWidgetTypeaheadConfig',
     'dashboard',
+    'catalog',
     'showcase',
 ]
 
@@ -172,6 +173,10 @@ CRUD_VIEWS_EXTENDS = 'project/crud_views.html'
 CRUD_VIEWS_BREADCRUMB_PREFIX = [{'title': 'Home', 'url_name': 'dashboard:index'}]
 CRUD_VIEWS_DATETIMEPICKER = {'DEFAULTS': {'dayOfWeekStart': 1}}
 DJANGO_TABLES2_TEMPLATE = 'crud_views/table/bootstrap5.html'
+
+# crud_views_object_detail: the layout of the detail pages' property groups
+CRUD_VIEWS_OBJECT_DETAIL_TEMPLATE_PACK_LAYOUT = 'tabs-vertical'
+CRUD_VIEWS_OBJECT_DETAIL_TEMPLATE_PACK_TYPES = 'default'
 
 # django-guardian (per-object permissions)
 

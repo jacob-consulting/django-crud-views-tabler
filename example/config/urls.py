@@ -9,6 +9,7 @@ urlpatterns = [
     path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("admin/", admin.site.urls),
     path("_typeahead/", include("crud_views_widget_typeahead.urls")),
+    path("", include("catalog.urls")),
     path("", include("showcase.urls")),
     path("", include("dashboard.urls")),
 ]

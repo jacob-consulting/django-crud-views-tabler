@@ -9,7 +9,25 @@
           </a>
         </li>
         {# Sales: Customers, Orders, Subscriptions (sales app) #}
-        {# Catalog: Products, Categories (catalog app) #}
+        {% if perms.catalog.view_product or perms.catalog.view_category %}
+        <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Catalog</div></li>
+        {% if perms.catalog.view_product %}
+        <li class="nav-item{% if url_name|slice:':8' == 'product-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'product-list' %}"{% if url_name == 'product-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "package" %}</span>
+            <span class="nav-link-title">Products</span>
+          </a>
+        </li>
+        {% endif %}
+        {% if perms.catalog.view_category %}
+        <li class="nav-item{% if url_name|slice:':9' == 'category-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'category-list' %}"{% if url_name == 'category-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "category" %}</span>
+            <span class="nav-link-title">Categories</span>
+          </a>
+        </li>
+        {% endif %}
+        {% endif %}
         {# Roastery: Green lots, Roast batches, Shipments (roastery and shipping apps) #}
         {% if perms.showcase.view_showcaseitem %}
         <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Developer</div></li>

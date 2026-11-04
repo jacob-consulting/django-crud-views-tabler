@@ -1,0 +1,82 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+A Django 6.1 / Python 3.14 project ("Acme Admin") that grows two reusable packages under `src/` and a demo project
+under `example/` that exercises them:
+
+- `src/django_tabler/`: Tabler 1.6.1 page shell (loaded from the jsDelivr CDN), layouts, sign-in page, `{% load tabler %}`
+  icon tags, Tabler icon SVG paths (`icons.py`), the end-user layout switch, **and** the django-crispy-forms template
+  pack `crispy_tabler` (`templates/crispy_tabler/` + `django_tabler.crispy`). Must not depend on django-crud-views;
+  only the crispy pack needs the `crispy` extra.
+- `src/crud_views_tabler/`: Tabler theme for django-crud-views. Depends on `django_tabler`.
+- `example/`: the demo site (`config/` settings, apps `dashboard`, `customers`, `catalog`).
+
+django-crud-views comes from the sibling checkout `../django-crud-views` as an editable path dependency
+(`[tool.uv.sources]`), because the theme tracks unreleased upstream features. Upstream changes there can break the
+theme's tests.
+
+## Commands
+
+```shell
+uv sync
+uv run python example/manage.py migrate
+uv run python example/manage.py runserver
+uv run python example/manage.py seed_demo_users | seed_demo_customers | seed_demo_catalog   # demo data
+
+# Django test suites (run with the example's settings; crud_views_tabler's tests use the customers app)
+uv run python example/manage.py test django_tabler crud_views_tabler dashboard catalog customers
+uv run python example/manage.py test crud_views_tabler.tests.SomeTestCase.test_name   # single test
+
+# crispy_tabler template pack (pytest, own settings: tests/crispy_tabler/settings.py)
+uv run --group test pytest
+uv run --group test pytest tests/crispy_tabler/test_widgets.py -k some_name
+
+uv run python example/manage.py check --fail-level WARNING   # includes crud_views_tabler.W001
+```
+
+There is no configured linter/formatter.
+
+## Architecture
+
+**Template chain.** `django_tabler/base.html` ← `django_tabler/layouts/app.html` (navbar/sidebar, Tabler page header
+with blocks `breadcrumb`, `page_title`, `subtitle`, `actions`, `messages`, `content`) ← `crud_views_tabler/page.html`,
+which is `CRUD_VIEWS_EXTENDS` and maps crud_views tags/blocks (`cv_header`, `cv_context_actions`, `cv_filter`,
+`cv_content`, `cv_css`/`cv_js`) onto those blocks. Projects customise branding by overriding
+`django_tabler/includes/{site_name,nav_menu,brand}.html` (the example does so in `example/templates/`).
+
+**How the crud_views theme works** (details in `docs/crud_views_tabler.md`): django-crud-views has no theme setting.
+The theme is an app listed *before* `crud_views` in `INSTALLED_APPS`, so its `templates/crud_views/...` files shadow
+the stock Bootstrap 5 templates; anything not overridden falls through. No crud_views code is patched or subclassed.
+Overrides are deliberately limited to page *layout* (modal shell, form frame, table, card, alert, filter, card
+content) — none renders a button. Everything else is registered in `CrudViewsTablerConfig.ready()`:
+- button classes: `buttons.TABLER_BUTTON_CLASSES` via `register_button_classes()` (keys like `location:variant` and
+  `location:variant:icon`; the `:icon` variant adds `btn-icon` for icon-only label mode),
+- icons: `register_icon_library("tabler", ...)` + `register_icons(TABLER_ICONS)` mapping crud_views' semantic icon
+  names to `tabler:<name>`; SVG paths live in `django_tabler.icons.ICONS`, and the system check
+  `crud_views_tabler.W001` flags `tabler:` names with no path,
+- assets: `tabler-adapters.js` wires `cv.adapters` (modal/tooltip/collapse) to `window.tabler`'s Bootstrap
+  components. Only replace `cv.adapters.tooltip.init`, never the whole `tooltip` object (it would drop `hide`/`dispose`).
+
+Prefer solving theme problems through upstream hooks (class keys, blocks, settings) rather than new template
+overrides; copied templates drift from upstream silently. Upstream asks and their status are tracked in
+`docs/crud_views_upstream_*.md`.
+
+**crispy_tabler pack.** The templates are vendored from crispy-bootstrap5 by `scripts/vendor_templates.py` (rewrites
+`bootstrap5/` includes to `crispy_tabler/`, adds a provenance comment, otherwise byte-identical). Six templates are
+hand-edited (`HAND_EDITED` in the script) and the script refuses to overwrite them without `--force`; files under
+`widget/` are pack-owned. `django_tabler/crispy/vendored.py:CRISPY_BOOTSTRAP5_VERSION` must match the `test` group's
+crispy-bootstrap5 pin — `test_pack_parity.py` fails otherwise. `django_tabler.crispy.layout` subclasses
+crispy-bootstrap5's `FloatingField`/`Switch`, so that distribution stays installed (but not in `INSTALLED_APPS`).
+`docs/crispy_tabler_coverage.md` documents which template branches the `catalog` demo form exercises.
+
+**Layout switch.** The navbar gear (`layout_switch_menu.html` + `static/django_tabler/layout-switch.js`) stores the
+user's layout choice in `localStorage` using Tabler's own `tabler-*` keys; nothing is server-side.
+
+## Conventions
+
+- All pages require login (`LoginRequiredMiddleware`); the login view is the exception.
+- Settings from env: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` (`1`/`0`), `DJANGO_ALLOWED_HOSTS`.
+- Design specs and implementation plans live in `docs/superpowers/{specs,plans}/`.

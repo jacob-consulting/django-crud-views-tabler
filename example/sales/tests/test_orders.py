@@ -1,4 +1,5 @@
 import re
+from html import escape
 from decimal import Decimal
 
 from crud_views_widget_typeahead.lookups import get_lookup
@@ -255,6 +256,17 @@ class OrderPageTests(OrderTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("You may not place orders for this customer.", response.context["form"].errors["customer"])
         self.assertEqual(Order.objects.count(), before)
+
+    def test_product_delete_names_the_blocking_order_lines(self):
+        self.login()
+        order = self.make_order()
+        response = self.client.get(reverse("product-delete", kwargs={"pk": self.huila.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["has_protected_objects"])
+        labels = [str(o) for o in response.context["protected_objects"]]
+        self.assertTrue(labels)
+        self.assertIn(str(order.lines.get()), labels)
+        self.assertContains(response, escape(labels[0]))
 
     def test_customer_with_orders_is_protected(self):
         self.login()

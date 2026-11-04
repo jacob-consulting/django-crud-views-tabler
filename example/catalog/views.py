@@ -147,6 +147,7 @@ class ProductDeleteView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, Polymorp
     cv_viewset = cv_product
     model = Product
     form_class = CrispyDeleteForm
+    cv_show_related_objects = True  # names the order lines that protect a product
     cv_message_template_code = _("Deleted product “{{ object }}”")
 
 

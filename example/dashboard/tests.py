@@ -15,8 +15,6 @@ from django.utils import timezone
 
 import django_tabler
 
-from .views import _month_starts
-
 User = get_user_model()
 
 
@@ -49,26 +47,9 @@ class DashboardTests(TestCase):
         self.user = User.objects.create_user("ann", first_name="Ann", last_name="Lee", password="s3cret-pass")
         self.client.force_login(self.user)
 
-    def test_dashboard_shows_user_stats(self):
-        User.objects.create_user("bob", is_staff=True)
-        response = self.client.get(reverse("dashboard:index"))
-        self.assertEqual(response.context["totals"]["total"], 2)
-        self.assertEqual(response.context["roles"]["values"], [0, 1, 1])
-        self.assertEqual(len(response.context["signups"]["values"]), 12)
-        self.assertContains(response, 'id="signups-data"')
-
     def test_members_do_not_see_users_link(self):
         response = self.client.get(reverse("dashboard:index"))
         self.assertNotContains(response, reverse("dashboard:users"))
-
-    def test_seed_command_feeds_charts(self):
-        call_command("seed_demo", stdout=open("/dev/null", "w"))
-        response = self.client.get(reverse("dashboard:index"))
-        # ann plus alex, sam and kim
-        self.assertEqual(response.context["totals"]["total"], 4)
-        window_start = _month_starts(timezone.now(), 12)[0]
-        in_window = User.objects.filter(date_joined__gte=window_start).count()
-        self.assertEqual(sum(response.context["signups"]["values"]), in_window)
 
 
 class DemoAccountTests(TestCase):
@@ -310,3 +291,124 @@ class SeedWorldTests(TestCase):
             self.assertGreaterEqual(len(window), 10)
         self.assertGreaterEqual(CustomerSubscription.objects.filter(is_active=True).count(), 10)
         self.assertTrue(Order.objects.filter(roast_batches__isnull=False).exists())
+
+
+class RoasteryDashboardTests(TestCase):
+    """Known small world: exact numbers for the stat cards, scoped per user."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from datetime import timedelta
+        from decimal import Decimal
+
+        from catalog.models import Beans, Origin, Subscription
+        from roastery.models import CuppingScore, CuppingSession, GreenLot, RoastBatch
+        from sales.models import Customer, CustomerSubscription, Order, OrderLine
+        from sales.permissions import grant_customer
+
+        call_command("seed_demo", stdout=StringIO())  # accounts and groups only matter; wipe the rest
+        for model in (RoastBatch, Order, CustomerSubscription, Customer, CuppingScore, CuppingSession, GreenLot):
+            model.objects.all().delete()
+        cls.alex, cls.sam, cls.kim = (User.objects.get(username=n) for n in ("alex", "sam", "kim"))
+
+        origin = Origin.objects.first()
+        beans = Beans.objects.create(name="Dash beans", slug="dash-beans", sku="D-1", price=Decimal("10.00"), origin=origin)
+        sub = Subscription.objects.create(name="Dash sub", slug="dash-sub", sku="D-2", price=Decimal("30.00"))
+        cls.consumer = Customer.objects.create(name="Consumer One", kind="consumer")
+        cls.shop = Customer.objects.create(name="Shop Two", kind="wholesale", company="Shop", price_tier="B")  # 12%
+        grant_customer(cls.sam, cls.consumer)
+
+        today = timezone.localdate()
+        now = timezone.now()
+
+        def order(customer, state, qty, days_ago, roast_in=None):
+            o = Order.objects.create(
+                customer=customer, state=state, requested_roast_date=today + timedelta(days=roast_in) if roast_in is not None else None
+            )
+            OrderLine.objects.create(order=o, product=beans, quantity=qty)
+            Order.objects.filter(pk=o.pk).update(created_at=now - timedelta(days=days_ago))
+            return o
+
+        cls.to_roast = order(cls.consumer, "confirmed", 5, 5, roast_in=2)  # 50.00
+        order(cls.shop, "shipped", 10, 10)  # 100.00 - 12.00 = 88.00
+        order(cls.shop, "delivered", 10, 40)  # 88.00, previous 30 days
+        order(cls.consumer, "draft", 100, 0)  # excluded
+        order(cls.consumer, "cancelled", 100, 2)  # excluded
+        order(cls.shop, "roasted", 1, 3)  # 10.00 - 1.20 = 8.80
+        order(cls.shop, "confirmed", 2, 1, roast_in=20)  # 17.60, not due this week
+
+        CustomerSubscription.objects.create(customer=cls.consumer, product=sub, next_delivery=today + timedelta(days=3))
+        CustomerSubscription.objects.create(customer=cls.shop, product=sub, next_delivery=today + timedelta(days=1))
+        CustomerSubscription.objects.create(customer=cls.shop, product=sub, next_delivery=today, is_active=False)
+
+        cls.lot = GreenLot.objects.create(
+            code="XX-24-001", origin=origin, producer="P", variety="V", harvest_year=2024,
+            kg_purchased=Decimal("100"), kg_on_hand=Decimal("40.5"), price_per_kg=Decimal("8"), arrived_on=today,
+        )
+        GreenLot.objects.create(
+            code="XX-24-002", origin=origin, producer="P", variety="V", harvest_year=2024,
+            kg_purchased=Decimal("10"), kg_on_hand=Decimal("10"), price_per_kg=Decimal("8"), arrived_on=today,
+        )
+        cls.session = CuppingSession.objects.create(lot=cls.lot, held_on=today)
+        for taster, value in ((cls.kim, "8"), (cls.alex, "7")):
+            CuppingScore.objects.create(
+                session=cls.session, taster=taster, **{a: Decimal(value) for a in CuppingScore.ATTRIBUTES}
+            )
+
+    def get(self, user):
+        self.client.force_login(user)
+        return self.client.get(reverse("dashboard:index"))
+
+    def test_stats_match_data(self):
+        from decimal import Decimal
+
+        ctx = self.get(self.alex).context
+        self.assertEqual(ctx["revenue_30d"], Decimal("164.40"))  # confirmed, roasted, shipped, delivered by created_at
+        self.assertEqual(ctx["revenue_trend_pct"], Decimal("86.8"))  # vs 88.00 in the 30 days before
+        self.assertEqual(ctx["open_orders"], 3)  # two confirmed, one roasted
+        self.assertEqual(ctx["orders_waiting_to_roast"], 2)
+        self.assertEqual(list(ctx["orders_to_roast"]), [self.to_roast])
+        self.assertEqual(ctx["active_subscriptions"], 2)
+        self.assertEqual(ctx["next_subscription_run"], timezone.localdate() + timezone.timedelta(days=1))
+        self.assertEqual(ctx["green_stock_kg"], Decimal("50.5"))
+        self.assertEqual([s.pk for s in ctx["recent_cuppings"]], [self.session.pk])
+        self.assertEqual(ctx["recent_cuppings"][0].average, Decimal("82.5"))  # totals 30 + 7 * 8 and 30 + 7 * 7
+
+    def test_revenue_by_week_has_12_points(self):
+        from decimal import Decimal
+
+        weeks = self.get(self.alex).context["revenue_by_week"]
+        self.assertEqual(len(weeks), 12)
+        self.assertTrue(all(label.startswith("W") for label, _ in weeks))
+        self.assertEqual(sum(v for _, v in weeks), Decimal("252.40"))  # the delivered order of 40 days ago counts too
+
+    def test_sam_dashboard_counts_only_granted_customers(self):
+        from decimal import Decimal
+
+        ctx = self.get(self.sam).context
+        self.assertEqual(ctx["revenue_30d"], Decimal("50.00"))
+        self.assertIsNone(ctx["revenue_trend_pct"])  # nothing in the previous period
+        self.assertEqual(ctx["open_orders"], 1)
+        self.assertEqual(ctx["active_subscriptions"], 1)
+        self.assertEqual(ctx["next_subscription_run"], timezone.localdate() + timezone.timedelta(days=3))
+        self.assertEqual(sum(v for _, v in ctx["revenue_by_week"]), Decimal("50.00"))
+        self.assertEqual(list(ctx["orders_to_roast"]), [self.to_roast])
+        self.assertNotContains(self.get(self.sam), "Shop Two")
+
+    def test_kim_sees_all_sales_numbers_and_the_roastery(self):
+        from decimal import Decimal
+
+        ctx = self.get(self.kim).context
+        self.assertEqual(ctx["revenue_30d"], Decimal("164.40"))
+        self.assertEqual(ctx["green_stock_kg"], Decimal("50.5"))
+
+    def test_rows_link_to_crud_pages(self):
+        response = self.get(self.alex)
+        self.assertContains(response, reverse("order-detail", kwargs={"customer_pk": self.consumer.pk, "pk": self.to_roast.pk}))
+        self.assertContains(response, reverse("cupping-detail", kwargs={"lot_pk": self.lot.pk, "pk": self.session.pk}))
+
+    def test_chart_assets_are_pinned_with_sri(self):
+        html = self.get(self.alex).content.decode()
+        self.assertRegex(html, r'@tabler/core@[\d.]+/dist/libs/apexcharts/[^"]*"[^>]*integrity="sha384-[^"]+"[^>]*crossorigin="anonymous"')
+        self.assertIn('id="revenue-data"', html)
+        self.assertIsNotNone(finders.find("dashboard/revenue-chart.js"))

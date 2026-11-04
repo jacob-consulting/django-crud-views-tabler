@@ -34,5 +34,5 @@ test = ["pytest", "pytest-django", "crispy-bootstrap5==2026.9"]
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "tests.crispy_tabler.settings"
 pythonpath = ["."]
-testpaths = ["tests"]
+testpaths = ["tests/crispy_tabler"]
 addopts = "--strict-markers"

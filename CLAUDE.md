@@ -27,14 +27,18 @@ task reset   # delete example/db.sqlite3 + example/media, then setup (asks first
 
 uv run python example/manage.py seed_demo_users | seed_demo_customers | seed_demo_catalog   # demo data by hand
 
-# Django test suites (run with the example's settings; crud_views_tabler's tests use the customers app)
-uv run python example/manage.py test django_tabler crud_views_tabler dashboard catalog customers
-uv run python example/manage.py test crud_views_tabler.tests.SomeTestCase.test_name   # single test
+# Example apps' Django tests (the example's settings)
+uv run python example/manage.py test django_tabler dashboard catalog customers
+uv run python example/manage.py test dashboard.tests.SomeTestCase.test_name   # single test
+
+# crud_views_tabler theme tests (pytest, own settings and test app: tests/crud_views_tabler/)
+uv run --group test pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
 
 # crispy_tabler template pack (pytest, own settings: tests/crispy_tabler/settings.py)
 uv run --group test pytest
 uv run --group test pytest tests/crispy_tabler/test_widgets.py -k some_name
 
+task test    # all of the above plus the check
 uv run python example/manage.py check --fail-level WARNING   # includes crud_views_tabler.W001
 ```
 

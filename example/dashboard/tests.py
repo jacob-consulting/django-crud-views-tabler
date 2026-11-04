@@ -68,6 +68,14 @@ class DashboardTests(TestCase):
         self.assertEqual(sum(response.context["signups"]["values"]), in_window)
 
 
+class DashboardIconTests(TestCase):
+    def test_dashboard_icons_still_render(self):
+        self.client.force_login(User.objects.create_user("ann"))
+        html = self.client.get(reverse("dashboard:index")).content.decode()
+        self.assertIn("<svg", html)
+        self.assertNotIn("<i class=", html)
+
+
 class UserListTests(TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser("root", "root@example.com", "s3cret-pass")
@@ -201,9 +209,9 @@ class LayoutBoundaryTests(SimpleTestCase):
 
     def test_src_does_not_import_the_example(self):
         src = Path(django_tabler.__file__).parents[1]
-        allowed = src / "crud_views_tabler" / "tests.py"
-        pattern = re.compile(r"^\s*(from|import)\s+(catalog|customers|dashboard|config)\b", re.MULTILINE)
+        pattern = re.compile(
+            r"^\s*(from|import)\s+(catalog|customers|dashboard|config|sales|roastery|shipping|showcase)\b", re.MULTILINE
+        )
         for path in src.rglob("*.py"):
-            if path != allowed:
-                with self.subTest(path=path):
-                    self.assertIsNone(pattern.search(path.read_text()))
+            with self.subTest(path=path):
+                self.assertIsNone(pattern.search(path.read_text()))

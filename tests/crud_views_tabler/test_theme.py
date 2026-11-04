@@ -23,9 +23,9 @@ from crud_views.lib.view.variant import VARIANTS
 import crud_views_tabler
 from crud_views_tabler.buttons import TABLER_BUTTON_CLASSES
 from crud_views_tabler.icons import TABLER_ICONS, render
-from customers.models import Customer
-from customers.views import CustomerDeleteView, CustomerListView
 from django_tabler.icons import ICONS, svg
+from tests.crud_views_tabler.testapp.models import Customer
+from tests.crud_views_tabler.testapp.views import CustomerDeleteView, CustomerListView
 
 
 class ProbeWidget(forms.TextInput):
@@ -148,7 +148,7 @@ class ButtonClassTests(SimpleTestCase):
 
 
 class ThemeRenderingTests(TestCase):
-    """Renders the demo customers ViewSet through the theme's templates."""
+    """Renders the test app's customers ViewSet through the theme's templates."""
 
     @classmethod
     def setUpTestData(cls):
@@ -198,7 +198,7 @@ class ThemeRenderingTests(TestCase):
 
     def test_disabled_action_renders_a_tabler_icon(self):
         viewer = get_user_model().objects.create_user("viewer", password="viewer-pass")
-        viewer.user_permissions.add(Permission.objects.get(codename="view_customer", content_type__app_label="customers"))
+        viewer.user_permissions.add(Permission.objects.get(codename="view_customer", content_type__app_label="testapp"))
         self.client.force_login(viewer)
         with mock.patch.object(CustomerDeleteView, "cv_inaccessible_actions", "disable"):
             html = self.client.get(reverse("customer-list")).content.decode()
@@ -207,11 +207,6 @@ class ThemeRenderingTests(TestCase):
         self.assertIn('class="btn btn-sm btn-icon btn-ghost-danger"', button.group(0))
         self.assertIn("<svg", button.group(0))
         self.assertNotIn("<i class=", button.group(0))
-
-    def test_dashboard_icons_still_render(self):
-        html = self.client.get("/").content.decode()
-        self.assertIn("<svg", html)
-        self.assertNotIn("<i class=", html)
 
     def test_sorted_column_is_marked(self):
         html = self.client.get(reverse("customer-list"), {"sort": "-revenue"}).content.decode()

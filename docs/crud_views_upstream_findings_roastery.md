@@ -127,10 +127,15 @@ here in the same commit that introduces it.
 ## The datetimepicker assets load on every page and need jQuery
 
 - **What happened:** with `crud_views_widget_datetimepicker` installed, `jquery.datetimepicker.full.min.js` and
-  `init.js` load on every crud_views page, including ones with no date field. The theme loads no jQuery, so each page
-  logs `jQuery is not defined` and `$ is not defined` in the console. Harmless to the page, noisy for a demo.
-- **Where:** `../django-crud-views-extensions/src/crud_views_widget_datetimepicker/` (asset registration).
-- **What we did:** nothing yet; the demo has no date pickers on these pages.
-- **Suggested upstream change:** register the assets only for views whose form has a picker widget, or load jQuery
-  as a declared dependency of the asset.
+  `init.js` load at the end of `<body>` on every crud_views page, including pages with no date field. The package
+  expects the project to load jQuery first ("jQuery precedes both, loaded by the project"), but nothing checks or
+  documents it where a project would look. With no jQuery, every page logged `jQuery is not defined` and
+  `$ is not defined` in the console.
+- **Where:** `../django-crud-views-extensions/src/crud_views_widget_datetimepicker/assets.py` (`source_files`
+  docstring is the only mention of the requirement).
+- **What we did:** `example/templates/django_tabler/includes/head.html` loads jQuery 3.7.1 (pinned, with SRI and
+  `crossorigin`) from code.jquery.com, so it precedes the plugin. Verified in Playwright: no console errors on the
+  product card list, table list, product detail or a showcase page.
+- **Suggested upstream change:** emit the picker assets only through the widget's `Media` on pages whose form uses a
+  picker, and/or add a system check or a docs section stating the jQuery requirement.
 - **Severity:** annoyance.

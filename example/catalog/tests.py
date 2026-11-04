@@ -96,12 +96,19 @@ class ProductViewTests(CatalogTestCase):
 
 
     def test_detail_of_each_type(self):
+        """Each kind shows its own property labels and none of another kind's."""
         self.login()
-        for model, title in ((Equipment, "Equipment"), (Subscription, "Subscription")):
-            obj = model.objects.first()
-            html = self.client.get(reverse("product-detail", kwargs={"pk": obj.pk})).content.decode()
-            self.assertIn(title, html)
+        cases = (
+            (Equipment, "Warranty months", ("Altitude", "Bags per delivery")),
+            (Subscription, "Bags per delivery", ("Altitude", "Warranty months")),
+            (Beans, "Altitude", ("Warranty months", "Bags per delivery")),
+        )
+        for model, present, absent in cases:
+            html = self.client.get(reverse("product-detail", kwargs={"pk": model.objects.first().pk})).content.decode()
+            self.assertIn(present, html, model)
             self.assertIn("Commerce", html)
+            for label in absent:
+                self.assertNotIn(label, html, model)
 
     def test_update_and_delete_pages_render(self):
         self.login()

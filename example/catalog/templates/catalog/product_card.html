@@ -22,7 +22,7 @@ because that template has no block above the heading or at the card root (see th
   </div>
   <div class="card-footer d-flex">
     <span class="fw-bold">€ {{ object.price|floatformat:2 }}{% if object.price_suffix %} {{ object.price_suffix }}{% endif %}</span>
-    {% if object.stock_label and object.card_icon != "tabler:repeat" %}<span class="ms-auto text-{{ object.stock_color }} small">{{ object.stock_label }}</span>{% endif %}
+    {% if object.show_stock %}<span class="ms-auto text-{{ object.stock_color }} small">{{ object.stock_label }}</span>{% endif %}
   </div>
   <div class="card-footer">
     {% for ctx in group.menu %}{% cv_render_list_action_form ctx %}{% endfor %}

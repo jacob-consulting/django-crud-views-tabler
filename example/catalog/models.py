@@ -56,6 +56,7 @@ class Product(PolymorphicModel):
 
     card_color = "secondary"
     card_icon = "tabler:package"
+    show_stock = True  # subscriptions are not stocked
 
     class Meta:
         ordering = ["name"]
@@ -177,6 +178,7 @@ class Subscription(Product):
 
     card_color = "purple"
     card_icon = "tabler:repeat"
+    show_stock = False
 
     class Meta:
         verbose_name = "subscription"

@@ -73,7 +73,7 @@ def seed(rng: random.Random, world: dict) -> None:
         ))
     for n, (name, interval, bags, size, price) in enumerate(SUBSCRIPTIONS, 1):
         products.append(Subscription.objects.create(
-            name=name, slug=slugify(name), sku=f"SU-{n:03d}", price=Decimal(price), stock=999,
+            name=name, slug=slugify(name), sku=f"SU-{n:03d}", price=Decimal(price),
             category=categories["Subscriptions"], interval=interval, bags_per_delivery=bags, bag_size=size,
             description="Fresh coffee on a schedule; pause or cancel any time.",
         ))

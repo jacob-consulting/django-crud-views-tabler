@@ -54,7 +54,27 @@
         </li>
         {% endif %}
         {% endif %}
-        {# Roastery: Green lots, Roast batches, Shipments (roastery and shipping apps) #}
+        {# Roastery: Green lots, Roast batches (roastery app); Shipments comes with the shipping app #}
+        {% if perms.roastery.view_greenlot or perms.roastery.view_roastbatch %}
+        <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Roastery</div></li>
+        {% if perms.roastery.view_greenlot %}
+        <li class="nav-item{% if url_name|slice:':4' == 'lot-' or url_name|slice:':8' == 'cupping-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'lot-list' %}"{% if url_name == 'lot-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "package-import" %}</span>
+            <span class="nav-link-title">Green lots</span>
+          </a>
+        </li>
+        {% endif %}
+        {% if perms.roastery.view_roastbatch %}
+        <li class="nav-item{% if url_name|slice:':6' == 'batch-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'batch-list' %}"{% if url_name == 'batch-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "flame" %}</span>
+            <span class="nav-link-title">Roast batches</span>
+          </a>
+        </li>
+        {% endif %}
+        {# Shipments is added by the shipping app #}
+        {% endif %}
         {% if perms.showcase.view_showcaseitem %}
         <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Developer</div></li>
         <li class="nav-item{% if url_name|slice:':13' == 'showcaseitem-' %} active{% endif %}">

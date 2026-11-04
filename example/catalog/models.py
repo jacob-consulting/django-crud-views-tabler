@@ -112,7 +112,10 @@ class Beans(Product):
     altitude_m = models.PositiveIntegerField("altitude (m)", null=True, blank=True)
     roast_level = models.CharField(max_length=10, choices=RoastLevel, default=RoastLevel.MEDIUM)
     flavor_notes = models.ManyToManyField(FlavorNote, blank=True, related_name="beans")
-    # Task 8 adds ``green_lot``, a nullable FK to roastery.GreenLot, with the roastery app.
+    green_lot = models.ForeignKey(
+        "roastery.GreenLot", null=True, blank=True, on_delete=models.SET_NULL, related_name="beans",
+        verbose_name="green lot", help_text="The lot this coffee is roasted from.",
+    )
 
     card_color = "orange"
     card_icon = "tabler:plant-2"

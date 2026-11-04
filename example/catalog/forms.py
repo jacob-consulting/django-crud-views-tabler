@@ -41,14 +41,15 @@ class ProductFormBase(CrispyModelForm):
 class BeansForm(ProductFormBase):
     class Meta:
         model = Beans
-        fields = [*COMMON, "origin", "process", "altitude_m", "roast_level", "flavor_notes"]
+        fields = [*COMMON, "origin", "green_lot", "process", "altitude_m", "roast_level", "flavor_notes"]
         widgets = {"flavor_notes": forms.CheckboxSelectMultiple}
 
     def get_layout_fields(self):
         base = super().get_layout_fields()
         return [
             base[0],
-            Row(Column4("origin"), Column3("process"), Column3("roast_level"), Column2("altitude_m")),
+            Row(Column4("origin"), Column4("green_lot"), Column2("process"), Column2("roast_level")),
+            Row(Column2("altitude_m")),
             Row(Column12(InlineCheckboxes("flavor_notes"))),
             *base[1:],
         ]

@@ -11,6 +11,7 @@ urlpatterns = [
     path("_typeahead/", include("crud_views_widget_typeahead.urls")),
     path("", include("catalog.urls")),
     path("", include("sales.urls")),
+    path("", include("roastery.urls")),
     path("", include("showcase.urls")),
     path("", include("dashboard.urls")),
 ]

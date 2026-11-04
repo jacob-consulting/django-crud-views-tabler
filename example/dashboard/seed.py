@@ -10,7 +10,7 @@ from django.utils import timezone
 GROUPS = ("Owner", "Account managers", "Roasters")
 
 # The Owner group gets every permission of these apps. Later apps append theirs (roles are refined per app).
-OWNER_APPS = ["auth", "catalog", "sales", "showcase"]
+OWNER_APPS = ["auth", "catalog", "sales", "roastery", "showcase"]
 
 # username -> (first name, last name, group, days since sign-up)
 ACCOUNTS = {

@@ -340,3 +340,36 @@ here in the same commit that introduces it.
 - **What we did:** `cv_header_template_code = "Subscriptions"` on the two lists; the breadcrumb keeps the model name.
 - **Suggested upstream change:** a `ViewSet(verbose_name=...)` override, so every default label follows it.
 - **Severity:** cosmetic.
+
+## The accordion detail pack opens every panel closed
+
+- **What happened:** with `cv_object_detail_layout = "accordion"` a detail page shows only the group titles and a
+  "N properties" badge until each panel is clicked; the docs say "Accordions remain initially collapsed; the tab
+  `selected` flag does not open them". For a lot page whose whole point is its facts that reads as an empty page.
+- **Where:** `src/crud_views_object_detail/templates/crud_views_object_detail/layouts/accordion/group.html:5`
+  (`accordion-button collapsed`, `aria-expanded="false"`), `docs/reference/object_detail_layout_packs.md:130`.
+- **What we did:** the green lot detail uses `card-rows` instead (the catalog uses tabs, customers `split-card`); the
+  accordion pack is not shown anywhere in the demo.
+- **Suggested upstream change:** open the group flagged `selected` (or the first one), like the tab packs.
+- **Severity:** annoyance.
+
+## A compact, table-like formset repeats its labels on every row
+
+- **What happened:** the cupping scores are one row per taster with seven narrow number columns. `FormSet(
+  form_show_labels=...)` is all or nothing, so either every row carries its labels (what the demo does, about twice
+  the height of a table) or none does and the columns have no header.
+- **Where:** `src/crud_views/lib/formsets/formsets.py:64` (`form_show_labels`),
+  `src/crud_views/lib/formsets/inline_formset.py:get_helper` (one helper for every form).
+- **What we did:** `form_show_labels=True`, and `CuppingScoreForm` gives the number inputs `form-control-sm`.
+- **Suggested upstream change:** labels on the first row only (or a header row above the formset) as an option.
+- **Severity:** cosmetic.
+
+## `ObjectDetailMixin` plus `ObjectDetailViewPermissionRequired` is an MRO error
+
+- **What happened:** a detail view declared `(BreadcrumbMixin, ObjectDetailMixin, ObjectDetailViewPermissionRequired)`
+  raises "Cannot create a consistent method resolution order"; the permission-required class already includes the
+  mixin, while the plain `DetailViewPermissionRequired` needs it added (the catalog's product detail does).
+- **Where:** `src/crud_views_object_detail/lib/` (`ObjectDetailViewPermissionRequired` bases).
+- **What we did:** use the permission-required class alone.
+- **Suggested upstream change:** state this in the object detail docs next to the mixin recipe.
+- **Severity:** cosmetic.

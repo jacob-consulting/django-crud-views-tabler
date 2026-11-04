@@ -170,6 +170,7 @@ PROPERTY_DISPLAY = {
             "icon": "tabler:plant-2",
             "properties": [
                 "origin",
+                x("green_lot", title=_("Green lot")),
                 x("get_process_display", title=_("Process")),
                 x("altitude_m", title=_("Altitude (m)")),
                 x("get_roast_level_display", title=_("Roast level")),

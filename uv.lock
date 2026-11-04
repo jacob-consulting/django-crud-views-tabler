@@ -83,6 +83,21 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 
+[package.optional-dependencies]
+guardian = [
+    { name = "django-guardian" },
+]
+ordered = [
+    { name = "django-ordered-model" },
+]
+polymorphic = [
+    { name = "django-polymorphic" },
+]
+workflow = [
+    { name = "django-fsm-2" },
+    { name = "django-fsm-2-admin" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "bump-my-version", marker = "extra == 'dev'" },
@@ -123,6 +138,28 @@ requires-dist = [
 provides-extras = ["workflow", "polymorphic", "ordered", "guardian", "all", "dev", "test", "examples"]
 
 [[package]]
+name = "django-crud-views-extensions"
+version = "0.3.2"
+source = { editable = "../django-crud-views-extensions" }
+dependencies = [
+    { name = "django-crud-views" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bump-my-version", marker = "extra == 'dev'" },
+    { name = "django-crud-views", specifier = ">=0.29.0" },
+    { name = "django-pipeline", marker = "extra == 'dev'" },
+    { name = "pygments", marker = "extra == 'dev'" },
+    { name = "pytest", marker = "extra == 'dev'" },
+    { name = "pytest-cov", marker = "extra == 'dev'" },
+    { name = "pytest-django", marker = "extra == 'dev'" },
+    { name = "pytest-mock", marker = "extra == 'dev'" },
+    { name = "ruff", marker = "extra == 'dev'" },
+]
+provides-extras = ["dev"]
+
+[[package]]
 name = "django-filter"
 version = "26.2"
 source = { registry = "https://pypi.org/simple" }
@@ -132,6 +169,79 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/07/ee/c0f950fe24f3e0b69d054ad957f9229632b50bdc78e968f966d8b4efe16a/django_filter-26.2.tar.gz", hash = "sha256:fd5cc83995fbe9f5f07fb5dcda16fde0f04de1ecf8ef82628b6c0ec921b751af", size = 144828, upload-time = "2026-10-03T12:01:01.007Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4a/92/6b098caa5b980a9d13a8db4825b7670410fa572e9195e39648f7700f2a37/django_filter-26.2-py3-none-any.whl", hash = "sha256:df8f737841d6359df00b84dda9b5ab59067fe60292091f1bdae1e3e6281cedb0", size = 94077, upload-time = "2026-10-03T12:00:59.162Z" },
+]
+
+[[package]]
+name = "django-fsm-2"
+version = "4.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "django-stubs-ext" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/77/ad/00148dce898f9d79c1c97687dc2800e9db737234c3fd269676b10f29ba3a/django_fsm_2-4.3.0.tar.gz", hash = "sha256:1e47a4b29904c201df16a68208f8e337db826df1488670447d5d0ade87ae7d7f", size = 24681, upload-time = "2026-10-28T09:56:32.073Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ea/64/724c7402174f928e3d797809c90c0f2daf2d92436c107d84845c36d16366/django_fsm_2-4.3.0-py3-none-any.whl", hash = "sha256:6f578e5dda9738418bef12b94d20bcbde4751f12fbf41f7c4bdf10bff5e616a7", size = 28685, upload-time = "2026-10-28T09:56:30.785Z" },
+]
+
+[[package]]
+name = "django-fsm-2-admin"
+version = "2.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "django-fsm-2" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2e/5b/eadda5a2715b7facb8b045b966441c44b63fe371e3e2d05733ae556e8d08/django_fsm_2_admin-2.0.1.tar.gz", hash = "sha256:da7abef3721e2d79b0a4fb27a94706d2bfcddf6c343d1481646e4a9c5fa43c62", size = 10574, upload-time = "2024-07-11T06:42:28.245Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/54/b0/9f00005a97ba91c80e160be742ebe93454cae9cd52a6fa85102f52d8732c/django_fsm_2_admin-2.0.1-py2.py3-none-any.whl", hash = "sha256:7649b7b4f4e7d88cab7d608c5e35a732014c9bd1efc2a0598a24813e444b3dae", size = 14509, upload-time = "2024-07-11T06:42:26.16Z" },
+]
+
+[[package]]
+name = "django-guardian"
+version = "3.5.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/84/ed/d31c3befa315d8cf52efea39078ab4871b866f03dddfa01f2ab630a8182d/django_guardian-3.5.2.tar.gz", hash = "sha256:ca14b7c9cc37bc852f3749f8a998a76cfd0ebbd66ac85726ef331289a712d389", size = 124548, upload-time = "2026-10-20T10:51:23.355Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1b/5c/be6e4a9391fb0a87770ad210df9fa1e3ac523ef2e70cb906376c28200aad/django_guardian-3.5.2-py3-none-any.whl", hash = "sha256:545ea01d528830d936c129a125dc2f1aba581da4c3f3daa5d4d1e31654e276a8", size = 159192, upload-time = "2026-10-20T10:51:21.771Z" },
+]
+
+[[package]]
+name = "django-ordered-model"
+version = "3.7.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/15/79/c320791f4f811045a77404d5a73e08e1d94767661dafd25324779e4f95d7/django-ordered-model-3.7.4.tar.gz", hash = "sha256:f258b9762525c00a53009e82f8b8bf2a3aa315e8b453e281e8fdbbfe2b8cb3ba", size = 203491, upload-time = "2023-03-17T15:53:40.529Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/cb/109ea0483080c0bec559c64c28959f9ff4d85b4ebc53b2726dbb6bc3fc59/django_ordered_model-3.7.4-py3-none-any.whl", hash = "sha256:dfcd3183fe0749dad1c9971cba1d6240ce7328742a30ddc92feca41107bb241d", size = 20532, upload-time = "2023-03-17T15:53:38.689Z" },
+]
+
+[[package]]
+name = "django-polymorphic"
+version = "4.11.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/13/d2/2760062d571e534153e5e842ee56660b0ea87c0da93c2dd87a4c44becbf0/django_polymorphic-4.11.7.tar.gz", hash = "sha256:9d616e9e2870efd62a5ee387294830c80935a31786e50da137bd76668dd5437d", size = 62105, upload-time = "2026-08-01T06:40:26.796Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9e/db/544272a8852d47fe5a6e7b29b4dd8050e89fb674dec447c93c5284c5a427/django_polymorphic-4.11.7-py3-none-any.whl", hash = "sha256:23ee903f79b9c4ebd36fee952f955d80c3d51f3eee9fa23639c4bafe3be616a2", size = 79239, upload-time = "2026-08-01T06:40:25.431Z" },
+]
+
+[[package]]
+name = "django-stubs-ext"
+version = "6.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d9/62/de532d58736d671b9ac0c0467909a9429758ae579d636e868ce74519566b/django_stubs_ext-6.1.2.tar.gz", hash = "sha256:2142da7fffbbe897ccecf9b4c97e09ea1a2e9291760b0a824b4c402b375ce6f9", size = 7221, upload-time = "2026-10-05T06:46:43.717Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/21/bb/393c3c1e24aaf37d62918ea50f3ea22e30d5f3162fc62f4c3bf3275e5ed3/django_stubs_ext-6.1.2-py3-none-any.whl", hash = "sha256:7334e687ab6dc78a6c3da90ab1ccb0e412efd827ea11de8d3f85adbad948abb1", size = 10850, upload-time = "2026-10-05T06:46:42.647Z" },
 ]
 
 [[package]]
@@ -323,7 +433,9 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "django" },
-    { name = "django-crud-views" },
+    { name = "django-crud-views", extra = ["guardian", "ordered", "polymorphic", "workflow"] },
+    { name = "django-crud-views-extensions" },
+    { name = "pygments" },
 ]
 
 [package.optional-dependencies]
@@ -347,7 +459,9 @@ requires-dist = [
     { name = "crispy-bootstrap5", marker = "extra == 'crispy'", specifier = ">=2026.9" },
     { name = "django", specifier = ">=6.1,<6.2" },
     { name = "django-crispy-forms", marker = "extra == 'crispy'", specifier = ">=2.4" },
-    { name = "django-crud-views", editable = "../django-crud-views" },
+    { name = "django-crud-views", extras = ["workflow", "polymorphic", "guardian", "ordered"], editable = "../django-crud-views" },
+    { name = "django-crud-views-extensions", editable = "../django-crud-views-extensions" },
+    { name = "pygments" },
 ]
 provides-extras = ["crispy"]
 

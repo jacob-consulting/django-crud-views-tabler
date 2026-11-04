@@ -1,7 +1,10 @@
 import re
 from pathlib import Path
 
-from django.contrib.auth import get_user_model
+from io import StringIO
+
+from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.staticfiles import finders
 from django.core.management import call_command
@@ -59,13 +62,38 @@ class DashboardTests(TestCase):
         self.assertNotContains(response, reverse("dashboard:users"))
 
     def test_seed_command_feeds_charts(self):
-        call_command("seed_demo_users", count=10, stdout=open("/dev/null", "w"))
+        call_command("seed_demo", stdout=open("/dev/null", "w"))
         response = self.client.get(reverse("dashboard:index"))
-        self.assertEqual(response.context["totals"]["total"], 11)
-        # The chart covers 12 calendar months; seeded sign-ups reach back up to a year.
+        # ann plus alex, sam and kim
+        self.assertEqual(response.context["totals"]["total"], 4)
         window_start = _month_starts(timezone.now(), 12)[0]
         in_window = User.objects.filter(date_joined__gte=window_start).count()
         self.assertEqual(sum(response.context["signups"]["values"]), in_window)
+
+
+class DemoAccountTests(TestCase):
+    def test_seed_creates_demo_accounts(self):
+        call_command("seed_demo", stdout=open("/dev/null", "w"))
+        for name in ("alex", "sam", "kim"):
+            self.assertTrue(User.objects.filter(username=name).exists())
+        self.assertIsNotNone(authenticate(username="sam", password="demo"))
+        self.assertTrue(User.objects.get(username="sam").groups.filter(name="Account managers").exists())
+
+    def test_seed_demo_refuses_when_accounts_exist(self):
+        call_command("seed_demo", stdout=open("/dev/null", "w"))
+        out = StringIO()
+        call_command("seed_demo", stdout=out)
+        self.assertIn("already", out.getvalue())
+        self.assertEqual(User.objects.filter(username__in=("alex", "sam", "kim")).count(), 3)
+
+    def test_login_page_lists_demo_accounts(self):
+        html = self.client.get("/accounts/login/").content.decode()
+        for name in ("Alex", "Sam", "Kim"):
+            self.assertIn(name, html)
+        self.assertIn('data-demo-user="sam"', html)
+
+    def test_crud_views_extends_project_template(self):
+        self.assertEqual(settings.CRUD_VIEWS_EXTENDS, "project/crud_views.html")
 
 
 class DashboardIconTests(TestCase):
@@ -205,7 +233,7 @@ class LayoutSwitchTests(TestCase):
 
 class LayoutBoundaryTests(SimpleTestCase):
     def test_example_overrides_the_site_name(self):
-        self.assertEqual(render_to_string("django_tabler/includes/site_name.html"), "Acme Admin")
+        self.assertEqual(render_to_string("django_tabler/includes/site_name.html"), "Acme Roasters")
 
     def test_src_does_not_import_the_example(self):
         src = Path(django_tabler.__file__).parents[1]

@@ -12,7 +12,7 @@ under `example/` that exercises them:
   pack `crispy_tabler` (`templates/crispy_tabler/` + `django_tabler.crispy`). Must not depend on django-crud-views;
   only the crispy pack needs the `crispy` extra.
 - `src/crud_views_tabler/`: Tabler theme for django-crud-views. Depends on `django_tabler`.
-- `example/`: the demo site (`config/` settings, apps `dashboard`, `customers`, `showcase`).
+- `example/`: the demo site (`config/` settings, apps `dashboard`, `showcase`).
 
 django-crud-views comes from the sibling checkout `../django-crud-views` as an editable path dependency
 (`[tool.uv.sources]`), because the theme tracks unreleased upstream features. Upstream changes there can break the
@@ -25,10 +25,10 @@ task up      # Taskfile.yaml: uv sync, migrate, superuser admin/admin, seed, run
 task setup   # the same without runserver; idempotent
 task reset   # delete example/db.sqlite3 + example/media, then setup (asks first)
 
-uv run python example/manage.py seed_demo_users | seed_demo_customers | seed_demo_showcase   # demo data by hand
+uv run python example/manage.py seed_demo | seed_demo_showcase   # demo data by hand
 
 # Example apps' Django tests (the example's settings)
-uv run python example/manage.py test django_tabler dashboard customers showcase
+uv run python example/manage.py test django_tabler dashboard showcase
 uv run python example/manage.py test dashboard.tests.SomeTestCase.test_name   # single test
 
 # crud_views_tabler theme tests (pytest, own settings and test app: tests/crud_views_tabler/)
@@ -44,8 +44,9 @@ uv run python example/manage.py check --fail-level WARNING   # includes crud_vie
 
 There is no configured linter/formatter.
 
-The seed commands are not idempotent (a re-run adds rows: `seed_demo_users`/`seed_demo_showcase` skip a clashing row
-before drawing its remaining random values, so later names change; `seed_demo_customers` never checks). The
+`seed_demo` (demo accounts alex/sam/kim, password `demo`; apps listed in `SEED_APPS`) refuses to run when those users
+exist. `seed_demo_showcase` is not idempotent (a re-run adds rows: it skips a clashing row
+before drawing its remaining random values, so later names change). The
 Taskfile's `seed:*` tasks guard against that with `status:` checks that skip a step when its table has data.
 
 ## Architecture

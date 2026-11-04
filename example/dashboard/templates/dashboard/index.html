@@ -2,6 +2,7 @@
 {% load humanize static tabler %}
 {% block title %}Dashboard{% endblock %}
 {% block extra_head %}
+{% include "project/acme_head.html" %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler-vendors.min.css" integrity="sha384-A9qqdz+yuPDtQDLvEg/gORLFMPNRUhy8gL/YSBsx7qtSdosheeFYwfbuRPswPnjg" crossorigin="anonymous" />
 <link rel="stylesheet" href="{% static 'dashboard/app.css' %}" />
 {% endblock %}

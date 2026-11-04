@@ -1,0 +1,14 @@
+/* Acme Roasters brand: sienna primary. Tabler's own `data-bs-theme-primary` choice (set from the layout switch or
+   localStorage) sets the same variables through an attribute selector, so the brand only applies while the user
+   has not picked a colour. */
+:root:not([data-bs-theme-primary]) {
+  --tblr-primary: #a0522d;
+  --tblr-primary-rgb: 160, 82, 45;
+  --tblr-primary-darken: #8f4929;
+  --tblr-primary-fg: #fff;
+  --tblr-link-color-rgb: 160, 82, 45;
+  --tblr-link-hover-color-rgb: 128, 66, 36;
+}
+
+/* Sidebar section headings (nav_menu.html); the horizontal top bar has no room for them. */
+header.navbar .nav-section { display: none; }

@@ -1,27 +1,28 @@
 {% load tabler %}
+        {# Sidebar sections, in the order of the mockup: Sales, Catalog, Roastery, Developer, Users. #}
+        {# Pattern: a `nav-item` subheader, then one `nav-item` per page, gated by the model's view permission. #}
+        {# Each app's task adds its own entries under its section; a section with no entries stays out. #}
         <li class="nav-item{% if url_name == 'index' %} active{% endif %}">
           <a class="nav-link" href="{% url 'dashboard:index' %}"{% if url_name == 'index' %} aria-current="page"{% endif %}>
             <span class="nav-link-icon">{% icon "dashboard" %}</span>
             <span class="nav-link-title">Dashboard</span>
           </a>
         </li>
-        {% if perms.customers.view_customer %}
-        <li class="nav-item{% if url_name|slice:':9' == 'customer-' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'customer-list' %}"{% if url_name == 'customer-list' %} aria-current="page"{% endif %}>
-            <span class="nav-link-icon">{% icon "building-store" %}</span>
-            <span class="nav-link-title">Customers</span>
-          </a>
-        </li>
-        {% endif %}
+        {# Sales: Customers, Orders, Subscriptions (sales app) #}
+        {# Catalog: Products, Categories (catalog app) #}
+        {# Roastery: Green lots, Roast batches, Shipments (roastery and shipping apps) #}
         {% if perms.showcase.view_showcaseitem %}
+        <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Developer</div></li>
         <li class="nav-item{% if url_name|slice:':13' == 'showcaseitem-' %} active{% endif %}">
           <a class="nav-link" href="{% url 'showcaseitem-list' %}"{% if url_name == 'showcaseitem-list' %} aria-current="page"{% endif %}>
             <span class="nav-link-icon">{% icon "layout-grid" %}</span>
             <span class="nav-link-title">Form showcase</span>
           </a>
         </li>
+        {# "How this is themed" is added in the developer-section task #}
         {% endif %}
         {% if perms.auth.view_user %}
+        <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Users</div></li>
         <li class="nav-item{% if url_name == 'users' or url_name == 'user_create' %} active{% endif %}">
           <a class="nav-link" href="{% url 'dashboard:users' %}"{% if url_name == 'users' %} aria-current="page"{% endif %}>
             <span class="nav-link-icon">{% icon "users" %}</span>

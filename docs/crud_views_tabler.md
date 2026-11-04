@@ -1,7 +1,7 @@
 # crud_views_tabler: a Tabler theme for django-crud-views (draft)
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by two
-demo apps: `customers` (`/customer/` table list, `/customer/card/` card view) and `showcase` (`/showcase/`), whose
+demo app `showcase` (`/showcase/`), whose
 create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Last checked against django-crud-views `feature/examples-pre-1.0-restructure` @ eac0c21 (2026-11-04: main up to Phase 06.7 plus 06.8, short action tooltips); originally built against main @ 32a3533 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239, the translated card empty state #246, accessible card pagination #241, card blocks and class keys #243 and the alert frame #250, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach

@@ -4,7 +4,9 @@ version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
     "django>=6.1,<6.2",
-    "django-crud-views>=0.30.0",
+    "django-crud-views[workflow,polymorphic,guardian,ordered]>=0.30.0",
+    "django-crud-views-extensions>=0.3.2",
+    "pygments",
 ]
 
 [project.optional-dependencies]
@@ -16,6 +18,7 @@ crispy = [
 
 [tool.uv.sources]
 django-crud-views = { path = "../django-crud-views", editable = true }
+django-crud-views-extensions = { path = "../django-crud-views-extensions", editable = true }
 
 [build-system]
 requires = ["setuptools>=77"]

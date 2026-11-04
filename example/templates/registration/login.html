@@ -1,0 +1,39 @@
+{% extends "registration/login.html" %}
+{% load tabler %}
+{% block extra_head %}{% include "project/acme_head.html" %}{% endblock %}
+{% block login_after %}
+<div class="card card-md mt-3" id="demo-accounts">
+  <div class="card-body">
+    <h3 class="card-title">Demo accounts</h3>
+    <p class="text-secondary">Pick an account to fill in the form, then press Sign in. The password is <code>demo</code> for all of them.</p>
+    <div class="list-group list-group-flush">
+      <div class="list-group-item d-flex align-items-center gap-3 px-0">
+        <span class="avatar avatar-sm bg-orange-lt">AL</span>
+        <div class="flex-fill"><strong>Alex</strong><div class="text-secondary small">Owner: sees everything</div></div>
+        <button type="button" class="btn btn-sm" data-demo-user="alex">Use this account</button>
+      </div>
+      <div class="list-group-item d-flex align-items-center gap-3 px-0">
+        <span class="avatar avatar-sm bg-blue-lt">SA</span>
+        <div class="flex-fill"><strong>Sam</strong><div class="text-secondary small">Account manager: own customers and orders only</div></div>
+        <button type="button" class="btn btn-sm" data-demo-user="sam">Use this account</button>
+      </div>
+      <div class="list-group-item d-flex align-items-center gap-3 px-0">
+        <span class="avatar avatar-sm bg-green-lt">KI</span>
+        <div class="flex-fill"><strong>Kim</strong><div class="text-secondary small">Head roaster: lots, roasts and shipments</div></div>
+        <button type="button" class="btn btn-sm" data-demo-user="kim">Use this account</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+{{ block.super }}
+<script>
+  document.querySelectorAll("[data-demo-user]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      document.getElementById("{{ form.username.auto_id }}").value = button.dataset.demoUser;
+      document.getElementById("{{ form.password.auto_id }}").value = "demo";
+    });
+  });
+</script>
+{% endblock %}

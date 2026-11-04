@@ -1,6 +1,7 @@
 {% extends "django_tabler/layouts/app.html" %}
 {% load humanize tabler %}
 {% block title %}Users{% endblock %}
+{% block extra_head %}{% include "project/acme_head.html" %}{% endblock %}
 {% block pretitle %}Management{% endblock %}
 {% block page_title %}Users{% endblock %}
 {% block actions %}

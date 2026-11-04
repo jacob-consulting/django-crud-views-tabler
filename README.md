@@ -22,8 +22,7 @@ Or by hand:
 uv sync
 uv run python example/manage.py migrate
 uv run python example/manage.py createsuperuser
-uv run python example/manage.py seed_demo_users       # optional: 40 sample accounts so the charts have data
-uv run python example/manage.py seed_demo_customers   # optional: 60 sample customers for the crud_views demo
+uv run python example/manage.py seed_demo             # optional: demo accounts alex, sam, kim (password demo)
 uv run python example/manage.py seed_demo_showcase    # optional: 40 sample items for the crispy forms demo
 uv run python example/manage.py runserver
 ```
@@ -43,11 +42,11 @@ Open http://127.0.0.1:8000/ and sign in. Every page except the login page requir
 | `/` | Dashboard: account stats, sign-ups per month, roles, recent sign-ins | signed-in users |
 | `/users/` | Searchable, paginated user list | `auth.view_user` permission |
 | `/users/new/` | Create a user (the form opens as a modal on the list) | `auth.add_user` permission |
-| `/customer/` | Customers: django-crud-views list (sort, filter), detail, create, update, delete (modal) | `customers.*_customer` permissions |
 | `/showcase/` | Form showcase: a django-crud-views ViewSet whose form renders every branch of the crispy pack | `showcase.*_showcaseitem` permissions |
 | `/admin/` | Django admin | staff |
 
-Seeded demo users have no usable password and cannot sign in.
+`seed_demo` creates the demo accounts `alex` (owner), `sam` (account manager) and `kim` (head roaster); the password
+is `demo` for all three, and the sign-in page has a button per account that fills the form.
 
 ## Layout
 
@@ -61,7 +60,7 @@ Seeded demo users have no usable password and cannot sign in.
 - `src/crud_views_tabler/`: Tabler theme for django-crud-views (template overrides, Tabler icon library, JS adapter),
   including `crud_views_tabler/page.html`, the page every crud_views view extends (`CRUD_VIEWS_EXTENDS`); design notes in
   [`docs/crud_views_tabler.md`](docs/crud_views_tabler.md)
-- `example/`: the demo project: `manage.py`, `config/`, the `dashboard`, `customers` and `showcase` apps, and
+- `example/`: the demo project: `manage.py`, `config/`, the `dashboard` and `showcase` apps, and
   `templates/django_tabler/includes/`, whose `site_name.html`, `nav_menu.html` and `brand.html` override the package
   defaults with the Acme content
 - `tests/crispy_tabler/`: the template pack's test suite; `scripts/vendor_templates.py` re-vendors its templates
@@ -74,8 +73,9 @@ The built-in secret key is for local development only.
 ## Tests
 
 ```shell
-uv run python example/manage.py test django_tabler crud_views_tabler dashboard customers showcase
+uv run python example/manage.py test django_tabler dashboard showcase
 uv run --group test pytest                                                  # the crispy template pack
 ```
 
-`crud_views_tabler`'s tests use the demo's `customers` app, so they run with the example's settings.
+The theme's own tests live in `tests/crud_views_tabler` and run with their own settings:
+`uv run --group test pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings`.

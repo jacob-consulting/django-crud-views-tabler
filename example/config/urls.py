@@ -11,6 +11,8 @@ urlpatterns = [
     path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("admin/", admin.site.urls),
     path("theming/", views.theming, name="theming"),
+    path("_code/pygments.css", views.pygments_stylesheet, name="pygments-css"),
+    path("_code/<slug:app_label>/", views.code_panel, name="code-panel"),
     path("_typeahead/", include("crud_views_widget_typeahead.urls")),
     path("", include("catalog.urls")),
     path("", include("sales.urls")),

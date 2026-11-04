@@ -1,0 +1,9 @@
+{# The "Show code" panel on a crud_views page: an empty, collapsed card. static/acme/code-panel.js fills it from #}
+{# data-code-url the first time the page header's "Show code" button opens it. #}
+{% if code_url %}
+<div class="collapse" id="code-panel" data-code-url="{{ code_url }}" data-code-active="{{ active_file }}">
+  <div class="card mt-3" data-code-target>
+    <div class="card-body text-secondary">Loading the code…</div>
+  </div>
+</div>
+{% endif %}

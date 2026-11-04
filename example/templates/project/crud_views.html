@@ -1,12 +1,14 @@
 {% extends "crud_views_tabler/page.html" %}
-{% load showcode tabler %}
+{% load showcode static tabler %}
 {# CRUD_VIEWS_EXTENDS: the project's own layer on top of the theme's page: the demo's "Show code" panel. #}
+{% block extra_head %}{{ block.super }}<link rel="stylesheet" href="{% url 'pygments-css' %}" />{% endblock %}
 {% block actions %}
 {{ block.super }}
-{% has_code_panel as show_code %}
-{% if show_code %}<a class="btn" data-bs-toggle="collapse" href="#code-panel" role="button" aria-expanded="false" aria-controls="code-panel">{% icon "code" %}Show code</a>{% endif %}
+{% code_panel_url as code_url %}
+{% if code_url %}<a class="btn" data-bs-toggle="collapse" href="#code-panel" role="button" aria-expanded="false" aria-controls="code-panel">{% icon "code" %}Show code</a>{% endif %}
 {% endblock %}
 {% block content %}
 {{ block.super }}
 {% block code_panel %}{% code_panel %}{% endblock %}
 {% endblock %}
+{% block extra_js %}{{ block.super }}<script src="{% static 'acme/code-panel.js' %}" defer></script>{% endblock %}

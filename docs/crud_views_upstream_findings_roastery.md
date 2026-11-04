@@ -25,10 +25,12 @@ here in the same commit that introduces it.
 - **What we did:** wrote our own in the example project: `example/config/showcode.py` (collector; a fixed file set
   per app, the app must live in `example/`, settings.py only as a whitelist of assignments) and the `showcode` tag
   library in `example/config/templatetags/` (registered through `TEMPLATES['OPTIONS']['libraries']`, since `config`
-  is not an app). Side effect worth knowing for an upstream version: the inline source mentions every label the app
-  can render, so `assertNotContains` tests on a page see it; the demo's tests strip it with `without_code_panel()`.
-  Lazy loading the sources (a fetch when the panel opens) would avoid that and the page weight (~390 KB of
-  highlighted HTML on a `sales` page).
+  is not an app). The crud page carries only a collapsed shell; `example/static/acme/code-panel.js` fetches the
+  highlighted sources from `/_code/<app_label>/` (login required, label checked against the app registry) the first
+  time the panel opens. Inlining them, as upstream's tag does, put every label the app can render into the page:
+  `assertContains`/`assertNotContains` tests then pass or fail on the source rather than the rendered page, and a
+  `sales` page grew by ~390 KB. Pygments uses CSS classes; `/_code/pygments.css` scopes a light and a dark style by
+  `data-bs-theme`.
 - **Suggested upstream change:** ship the tag (or a documented recipe) in the library.
 - **Severity:** annoyance.
 

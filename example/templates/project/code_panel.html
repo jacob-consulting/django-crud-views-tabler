@@ -1,41 +1,34 @@
 {% load tabler %}
-{# The "Show code" panel (config/templatetags/showcode.py): collapsed; the page header's "Show code" button opens it. #}
-{% if files %}
-<!-- code-panel -->
-<div class="collapse" id="code-panel">
-  <div class="card mt-3">
-    <div class="card-header">
-      <div>
-        <h3 class="card-title">{% icon "code" "me-1" %}This page’s code</h3>
-        <p class="card-subtitle mb-0">
-          The <code>{{ app_label }}</code> app: {{ files|length }} file{{ files|length|pluralize }}, {{ total_lines }} lines.
-          {% if imports_theme %}It imports layout objects from <code>django_tabler</code>’s crispy pack, which this form showcase exists to exercise.{% else %}Plain django-crud-views: not one line refers to Tabler or the theme.{% endif %}
-        </p>
-      </div>
-      <div class="card-actions">
-        <a href="{% url 'theming' %}" class="btn btn-sm">{% icon "palette" "icon-sm" %}How this is themed</a>
-      </div>
-    </div>
-    <div class="card-body border-bottom py-2">
-      <ul class="nav nav-pills code-files flex-wrap gap-1" role="tablist">
-        {% for file in files %}
-        <li class="nav-item" role="presentation">
-          <a class="nav-link{% if forloop.first %} active{% endif %}" href="#code-file-{{ forloop.counter }}" data-bs-toggle="pill" role="tab" aria-controls="code-file-{{ forloop.counter }}" aria-selected="{{ forloop.first|yesno:'true,false' }}">{{ file.short }}</a>
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
-    <div class="card-body tab-content">
-      {% for file in files %}
-      <div class="tab-pane fade{% if forloop.first %} show active{% endif %}" id="code-file-{{ forloop.counter }}" role="tabpanel">
-        <div class="d-flex justify-content-between small text-secondary mb-2">
-          <code class="text-secondary">{{ file.source.path }}</code><span>{{ file.source.lines }} lines</span>
-        </div>
-        <div class="code-block">{{ file.source.html }}</div>
-      </div>
-      {% endfor %}
-    </div>
+{# The "Show code" panel's content, fetched from /_code/<app_label>/ (config/views.py:code_panel) into the shell #}
+{# (code_panel_shell.html) when the panel first opens. static/acme/code-panel.js selects the page's own module. #}
+<div class="card-header">
+  <div>
+    <h3 class="card-title">{% icon "code" "me-1" %}This page’s code</h3>
+    <p class="card-subtitle mb-0">
+      The <code>{{ app_label }}</code> app: {{ files|length }} file{{ files|length|pluralize }}, {{ total_lines }} lines.
+      {% if imports_theme %}It imports layout objects from <code>django_tabler</code>’s crispy pack, which this form showcase exists to exercise.{% else %}Plain django-crud-views: not one line refers to Tabler or the theme.{% endif %}
+    </p>
+  </div>
+  <div class="card-actions">
+    <a href="{% url 'theming' %}" class="btn btn-sm">{% icon "palette" "icon-sm" %}How this is themed</a>
   </div>
 </div>
-<!-- /code-panel -->
-{% endif %}
+<div class="card-body border-bottom py-2">
+  <ul class="nav nav-pills code-files flex-wrap gap-1" role="tablist">
+    {% for file in files %}
+    <li class="nav-item" role="presentation">
+      <a class="nav-link{% if forloop.first %} active{% endif %}" href="#code-file-{{ forloop.counter }}" data-bs-toggle="pill" data-code-file="{{ file.source.label }}" role="tab" aria-controls="code-file-{{ forloop.counter }}" aria-selected="{{ forloop.first|yesno:'true,false' }}">{{ file.short }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+<div class="card-body tab-content">
+  {% for file in files %}
+  <div class="tab-pane fade{% if forloop.first %} show active{% endif %}" id="code-file-{{ forloop.counter }}" role="tabpanel">
+    <div class="d-flex justify-content-between small text-secondary mb-2">
+      <code class="text-secondary">{{ file.source.path }}</code><span>{{ file.source.lines }} lines</span>
+    </div>
+    <div class="code-block">{{ file.source.html }}</div>
+  </div>
+  {% endfor %}
+</div>

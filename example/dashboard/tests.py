@@ -429,10 +429,62 @@ class ShowCodeTests(TestCase):
         self.client.force_login(self.admin)
 
     def test_code_panel_on_crud_pages(self):
+        """The page carries the empty shell; the sources come from the fragment endpoint."""
         html = self.client.get(reverse("customer-list")).content.decode()
+        url = reverse("code-panel", kwargs={"app_label": "sales"})
+        self.assertEqual(url, "/_code/sales/")
         self.assertIn('id="code-panel"', html)
-        self.assertIn("cv_customer = GuardianViewSet", _text(html))
+        self.assertIn(f'data-code-url="{url}"', html)
+        self.assertIn('data-code-active="sales/views/customers.py"', html)
         self.assertIn('href="#code-panel"', html)  # the "Show code" toggle in the page header
+        self.assertIn("acme/code-panel.js", html)
+        self.assertNotIn("GuardianViewSet", html)  # no source on the page itself
+        fragment = self.client.get(url)
+        self.assertEqual(fragment.status_code, 200)
+        self.assertIn("cv_customer = GuardianViewSet", _text(fragment.content.decode()))
+        self.assertIn('data-code-file="sales/views/customers.py"', fragment.content.decode())
+
+    def test_code_panel_endpoint_rejects_other_labels(self):
+        for label in ("auth", "nonexistent", "dashboard", "crud_views_tabler", "django_tabler"):
+            self.assertEqual(self.client.get(f"/_code/{label}/").status_code, 404, label)
+        for path in ("/_code/../config/", "/_code/..%2Fconfig/", "/_code/config/settings.py/"):
+            self.assertEqual(self.client.get(path).status_code, 404, path)
+
+    def test_code_panel_endpoint_requires_login(self):
+        self.client.logout()
+        url = reverse("code-panel", kwargs={"app_label": "sales"})
+        self.assertRedirects(self.client.get(url), f"{reverse('login')}?next={url}")
+
+    def test_pygments_stylesheet_has_light_and_dark_colours(self):
+        css = self.client.get(reverse("pygments-css"))
+        self.assertEqual(css["Content-Type"], "text/css")
+        text = css.content.decode()
+        self.assertIn(":root:not([data-bs-theme=dark]) .code-block .k {", text)
+        self.assertIn("[data-bs-theme=dark] .code-block .k {", text)
+        self.assertNotIn("\npre {", "\n" + text)  # nothing unscoped
+        self.assertIn(reverse("pygments-css"), self.client.get(reverse("theming")).content.decode())
+
+    def test_settings_excerpt_handles_every_assignment_form(self):
+        from config.showcode import settings_excerpt
+
+        text = "SECRET_KEY = 'x'\nINSTALLED_APPS = ['a']\nINSTALLED_APPS += ['b']\nCRUD_VIEWS_EXTENDS: str = 'p.html'\nDEBUG = True\n"
+        self.assertEqual(
+            settings_excerpt(text), ["INSTALLED_APPS = ['a']", "INSTALLED_APPS += ['b']", "CRUD_VIEWS_EXTENDS: str = 'p.html'"]
+        )
+
+    def test_package_files_skip_binaries(self):
+        import tempfile
+
+        from config.showcode import _highlighted, _package_files
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "apps.py").write_text("x = 1\n")
+            (root / "logo.png").write_bytes(b"\x89PNG\r\n\x1a\n\xff\xfe")
+            (root / "bad.css").write_bytes(b"\xff\xfe\x00")
+            self.assertEqual([p.name for p in _package_files(root)], ["apps.py", "bad.css"])  # png: no lexer
+            bad = root / "bad.css"
+            self.assertIsNone(_highlighted(bad, bad.stat().st_mtime_ns))  # not UTF-8: skipped, not a 500
 
     def test_code_panel_never_shows_theme_imports(self):
         from config.showcode import collect_sources_for_app

@@ -13,12 +13,10 @@
 /* Sidebar section headings (nav_menu.html); the horizontal top bar has no room for them. */
 header.navbar .nav-section { display: none; }
 
-/* "Show code" panel and "How this is themed" (config/showcode.py). Pygments writes inline colours for a dark
-   style (github-dark), so the code sits on a fixed dark background in Tabler's light and dark mode alike. */
+/* "Show code" panel and "How this is themed" (config/showcode.py). The token colours and the background come from
+   /_code/pygments.css: Pygments' default style in light mode, github-dark under [data-bs-theme=dark]. */
 .code-block {
-  background: #0d1117;
   border: 1px solid var(--tblr-border-color);
-  color: #e6edf3;
   border-radius: var(--tblr-border-radius);
   max-height: 36rem;
   overflow: auto;

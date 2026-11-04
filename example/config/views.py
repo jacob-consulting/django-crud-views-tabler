@@ -1,6 +1,13 @@
-from django.shortcuts import render
+from functools import cache
 
-from .showcode import collect_shell_files, collect_theme_sources
+from django.http import Http404, HttpResponse
+from django.shortcuts import render
+from django.utils.html import strip_tags
+from django.views.decorators.cache import cache_control
+
+from .showcode import collect_shell_files, collect_sources_for_app, collect_theme_sources, pygments_css
+
+THEME_PACKAGES = ("django_tabler", "crud_views_tabler")
 
 THEME_GUIDE_URL = "https://django-crud-views.readthedocs.io/en/latest/reference/theme/"
 THEME_DOC_URL = "https://github.com/alexander-jacob/tabler-test/blob/main/docs/crud_views_tabler.md"
@@ -63,3 +70,36 @@ def theming(request):
             "theme_doc_url": THEME_DOC_URL,
         },
     )
+
+
+def _app_short(label: str, app_label: str) -> str:
+    """``sales/templates/sales/x.html`` -> ``sales/x.html``, ``sales/views/orders.py`` -> ``views/orders.py``."""
+    return label.removeprefix(f"{app_label}/").removeprefix("templates/")
+
+
+def code_panel(request, app_label):
+    """The "Show code" panel's content for one example app; the label is checked against the app registry."""
+    sources = collect_sources_for_app(app_label)
+    if not sources:
+        raise Http404("No code panel for this app.")
+    return render(
+        request,
+        "project/code_panel.html",
+        {
+            "files": [{"source": s, "short": _app_short(s.label, app_label)} for s in sources],
+            "app_label": app_label,
+            "total_lines": sum(s.lines for s in sources),
+            "imports_theme": any(name in strip_tags(s.html) for s in sources for name in THEME_PACKAGES),
+        },
+    )
+
+
+@cache
+def _pygments_css() -> str:
+    return pygments_css()
+
+
+@cache_control(max_age=3600)
+def pygments_stylesheet(request):
+    """Token colours for the highlighted code, light and dark (config/showcode.py:pygments_css)."""
+    return HttpResponse(_pygments_css(), content_type="text/css")

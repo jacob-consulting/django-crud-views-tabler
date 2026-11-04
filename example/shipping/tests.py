@@ -4,7 +4,6 @@ from django.test import TestCase
 from django.urls import reverse
 
 from catalog.seed import seed as seed_catalog
-from config.showcode import without_code_panel
 from dashboard.seed import seed as seed_dashboard
 from sales.models import Order, OrderState
 from sales.seed import seed as seed_sales
@@ -98,4 +97,4 @@ class ShipmentViewTests(ShippingTestCase):
         self.assertContains(self.client.get(url), reverse("shipment-detail", kwargs={"pk": tracking_number(order.number)}))
         open_order = Order.objects.exclude(state__in=[OrderState.SHIPPED, OrderState.DELIVERED]).first()
         url = reverse("order-detail", kwargs={"customer_pk": open_order.customer_id, "pk": open_order.pk})
-        self.assertNotIn("Track shipment", without_code_panel(self.client.get(url).content.decode()))
+        self.assertNotContains(self.client.get(url), "Track shipment")

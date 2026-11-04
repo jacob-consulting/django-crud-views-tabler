@@ -2,6 +2,7 @@
 {% load tabler %}
 {# "How this is themed" (config/views.py:theming): every number on this page is counted from the files at render time. #}
 {% block title %}How this is themed{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% url 'pygments-css' %}" />{% endblock %}
 {% block pretitle %}Developer{% endblock %}
 {% block page_title %}How this is themed{% endblock %}
 {% block actions %}

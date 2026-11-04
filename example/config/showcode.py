@@ -3,11 +3,13 @@
 Reads files from disk and highlights them with Pygments. The set of files is fixed here, never taken from a request:
 an example app's own code (``collect_app_sources``), the theme app ``src/crud_views_tabler`` plus a whitelist of
 ``settings.py`` assignments (``collect_theme_sources``), and a line count of ``src/django_tabler``
-(``collect_shell_files``).
+(``collect_shell_files``). Only text files with a known suffix (``LEXERS``) are read.
+
+The crud pages only carry an empty panel shell (``code_app_label``); its content is fetched from
+``/_code/<app_label>/`` when the panel opens (config/views.py:code_panel).
 """
 
 import ast
-import re
 from functools import lru_cache
 from pathlib import Path
 from typing import NamedTuple
@@ -37,8 +39,10 @@ THEME_SETTINGS = (
     "DJANGO_TABLES2_TEMPLATE",
 )
 
-#: dark code on a fixed dark background, so it reads the same in Tabler's light and dark mode
-FORMATTER = HtmlFormatter(noclasses=True, style="github-dark", nobackground=True)
+#: CSS classes; the colours come from ``pygments_css()``, one light and one dark style scoped by data-bs-theme
+FORMATTER = HtmlFormatter()
+LIGHT_STYLE = "default"
+DARK_STYLE = "github-dark"
 
 LEXERS = {".py": PythonLexer, ".html": HtmlDjangoLexer, ".js": JavascriptLexer, ".css": CssLexer}
 
@@ -51,22 +55,48 @@ class Source(NamedTuple):
 
 
 def _lexer(suffix: str):
-    return LEXERS.get(suffix, PythonLexer)()
+    return LEXERS[suffix]()
+
+
+def pygments_css() -> str:
+    """The token colours for ``.code-block``: the light style by default, the dark one under Tabler's dark mode."""
+    light = ":root:not([data-bs-theme=dark]) .code-block"
+    dark = "[data-bs-theme=dark] .code-block"
+    parts = []
+    for selector, style in ((light, LIGHT_STYLE), (dark, DARK_STYLE)):
+        formatter = HtmlFormatter(style=style)
+        parts += [formatter.get_background_style_defs(selector), formatter.get_token_style_defs(selector)]
+    return "\n".join("\n".join(p) for p in parts) + "\n"
 
 
 def _count(text: str) -> int:
     return len(text.splitlines())
 
 
+def _read(path: Path) -> str | None:
+    """A file's text, or None for a file that is not UTF-8 text."""
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return None
+
+
 @lru_cache(maxsize=256)
-def _highlighted(path: Path, mtime_ns: int) -> tuple[str, int]:
-    text = path.read_text(encoding="utf-8")
+def _highlighted(path: Path, mtime_ns: int) -> tuple[str, int] | None:
+    text = _read(path)
+    if text is None:
+        return None
     return highlight(text, _lexer(path.suffix), FORMATTER), _count(text)
 
 
-def _source(path: Path, label: str) -> Source:
-    html, lines = _highlighted(path, path.stat().st_mtime_ns)
-    return Source(label, path.relative_to(EXAMPLE_DIR.parent).as_posix(), mark_safe(html), lines)
+def _sources(paths, label_for) -> list[Source]:
+    sources = []
+    for path in paths:
+        result = _highlighted(path, path.stat().st_mtime_ns)
+        if result is not None:
+            html, lines = result
+            sources.append(Source(label_for(path), path.relative_to(EXAMPLE_DIR.parent).as_posix(), mark_safe(html), lines))
+    return sources
 
 
 def _example_app_dir(label: str) -> Path | None:
@@ -79,13 +109,30 @@ def _example_app_dir(label: str) -> Path | None:
     return app_dir if app_dir.parent == EXAMPLE_DIR else None
 
 
+def _code_app_dir(label: str) -> Path | None:
+    """An example app that gets a code panel: lives in ``example/``, and is not the dashboard."""
+    app_dir = _example_app_dir(label)
+    return app_dir if app_dir is not None and app_dir.name != "dashboard" else None
+
+
+def code_app_label(view) -> str | None:
+    """The app label of a view's code panel, or None; reads no files."""
+    label = type(view).__module__.split(".")[0]
+    return label if _code_app_dir(label) is not None else None
+
+
+def own_module_label(view) -> str:
+    """``sales/views/customers.py`` for a view in ``sales.views.customers``: the file the panel opens on."""
+    return f"{type(view).__module__.replace('.', '/')}.py"
+
+
 def collect_sources_for_app(label: str) -> list[Source]:
     """``models.py``, ``forms.py``, ``views.py`` (or ``views/*.py``) and templates of an example app.
 
     Seed data, tests, admin and the dashboard (not a crud_views app) stay out.
     """
-    app_dir = _example_app_dir(label)
-    if app_dir is None or app_dir.name == "dashboard":
+    app_dir = _code_app_dir(label)
+    if app_dir is None:
         return []
     paths = []
     for name in APP_FILES:
@@ -94,33 +141,39 @@ def collect_sources_for_app(label: str) -> list[Source]:
         elif name == "views.py" and (app_dir / "views").is_dir():
             paths += sorted(p for p in (app_dir / "views").glob("*.py") if p.name != "__init__.py")
     paths += sorted((app_dir / "templates").rglob("*.html"))
-    return [_source(p, f"{label}/{p.relative_to(app_dir).as_posix()}") for p in paths]
+    return _sources(paths, lambda p: f"{label}/{p.relative_to(app_dir).as_posix()}")
 
 
 def collect_app_sources(view) -> list[Source]:
     """The app code behind a crud_views page; the view's own module comes first."""
-    module = type(view).__module__
-    sources = collect_sources_for_app(module.split(".")[0])
-    own = f"{module.replace('.', '/')}.py"
-    return sorted(sources, key=lambda s: s.label != own)
+    own = own_module_label(view)
+    label = code_app_label(view)
+    return sorted(collect_sources_for_app(label), key=lambda s: s.label != own) if label else []
 
 
-def without_code_panel(html: str) -> str:
-    """A page without its "Show code" panel, for tests that assert some text is *not* on the page: the panel
-    shows the app's source, which mentions every label the app can render."""
-    return re.sub(r"<!-- code-panel -->.*?<!-- /code-panel -->", "", html, flags=re.S)
+def _assigned_names(node) -> list[str]:
+    """The plain names a top-level ``x = ...``, ``x: T = ...`` or ``x += ...`` statement assigns."""
+    if isinstance(node, ast.Assign):
+        targets = node.targets
+    elif isinstance(node, (ast.AnnAssign, ast.AugAssign)):
+        targets = [node.target]
+    else:
+        return []
+    return [t.id for t in targets if isinstance(t, ast.Name)]
+
+
+def settings_excerpt(text: str) -> list[str]:
+    """The THEME_SETTINGS statements of a settings module (found with ``ast``), in file order, one string each."""
+    lines = text.splitlines()
+    return [
+        "\n".join(lines[node.lineno - 1 : node.end_lineno])
+        for node in ast.parse(text).body
+        if any(name in THEME_SETTINGS for name in _assigned_names(node))
+    ]
 
 
 def _settings_excerpt() -> Source:
-    """Only the THEME_SETTINGS assignments of settings.py (found with ``ast``), in file order."""
-    text = SETTINGS_FILE.read_text(encoding="utf-8")
-    lines = text.splitlines()
-    blocks = []
-    for node in ast.parse(text).body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(t, ast.Name) and t.id in THEME_SETTINGS for t in node.targets
-        ):
-            blocks.append("\n".join(lines[node.lineno - 1 : node.end_lineno]))
+    blocks = settings_excerpt(SETTINGS_FILE.read_text(encoding="utf-8"))
     excerpt = "\n\n".join(blocks) + "\n"
     return Source(
         "example/config/settings.py (excerpt)",
@@ -131,7 +184,7 @@ def _settings_excerpt() -> Source:
 
 
 def _package_files(root: Path) -> list[Path]:
-    """Every non-empty file of a package, without tests and caches."""
+    """Every non-empty text file (a ``LEXERS`` suffix) of a package, without tests and caches."""
     return sorted(
         p
         for p in root.rglob("*")
@@ -139,14 +192,14 @@ def _package_files(root: Path) -> list[Path]:
         and "__pycache__" not in p.parts
         and "tests" not in p.parts
         and not p.name.startswith("test")
+        and p.suffix in LEXERS
         and p.stat().st_size > 0
     )
 
 
 def collect_theme_sources() -> list[Source]:
     """The whole crud_views theme: every file of ``src/crud_views_tabler`` plus the settings that switch it on."""
-    sources = [_source(p, p.relative_to(SRC_DIR).as_posix()) for p in _package_files(THEME_DIR)]
-    return sources + [_settings_excerpt()]
+    return _sources(_package_files(THEME_DIR), lambda p: p.relative_to(SRC_DIR).as_posix()) + [_settings_excerpt()]
 
 
 class FileInfo(NamedTuple):
@@ -156,7 +209,5 @@ class FileInfo(NamedTuple):
 
 def collect_shell_files() -> list[FileInfo]:
     """``src/django_tabler`` (page shell, icons, crispy pack) as a file list with line counts, not highlighted."""
-    return [
-        FileInfo(p.relative_to(SRC_DIR).as_posix(), _count(p.read_text(encoding="utf-8", errors="replace")))
-        for p in _package_files(SHELL_DIR)
-    ]
+    files = ((p, _read(p)) for p in _package_files(SHELL_DIR))
+    return [FileInfo(p.relative_to(SRC_DIR).as_posix(), _count(text)) for p, text in files if text is not None]

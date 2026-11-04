@@ -146,6 +146,8 @@ class OrderDetailView(CustomerGrantMixin, BreadcrumbMixin, DetailViewPermissionR
             {"name": t.name, "label": t.custom.get("label", t.name), **t.custom}
             for t in order.get_available_user_state_transitions(self.request.user)
         ]
+        if order.state in (OrderState.SHIPPED, OrderState.DELIVERED):  # the courier's tracking page (shipping app)
+            context["shipment_url"] = reverse("shipment-detail", kwargs={"pk": f"ACME{order.number:08d}"})
         context["workflow_url"] = reverse("order-workflow", kwargs={"customer_pk": order.customer_id, "pk": order.pk})
         return context
 

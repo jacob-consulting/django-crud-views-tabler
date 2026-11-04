@@ -1,0 +1,46 @@
+{% extends cv_extends %}
+{% load crud_views %}
+{# Shipment page: a datagrid with the parcel's facts and the courier's event timeline (Tabler `timeline`). #}
+
+{% block page_title %}{{ block.super }} {{ status_badge }}{% endblock %}
+
+{% block cv_content %}
+<div class="row row-cards">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Parcel</h3></div>
+      <div class="card-body">
+        <div class="datagrid">
+          <div class="datagrid-item"><div class="datagrid-title">Tracking number</div><div class="datagrid-content">{{ object.tracking_number }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Carrier</div><div class="datagrid-content">{{ object.carrier }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Status</div><div class="datagrid-content">{{ status_badge }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Shipped</div><div class="datagrid-content">{{ object.shipped_at|date:"d M Y H:i" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">{% if object.is_delivered %}Estimated delivery was{% else %}Estimated delivery{% endif %}</div><div class="datagrid-content">{{ object.eta|date:"d M Y" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Order</div><div class="datagrid-content"><a href="{{ order_url }}">#{{ object.order_number }}</a> · {{ object.customer_name }}</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Tracking events</h3></div>
+      <div class="card-body">
+        <ul class="timeline">
+          {% for event in events %}
+          <li class="timeline-event">
+            <div class="timeline-event-icon{% if forloop.first and object.is_delivered %} bg-green-lt text-green{% endif %}">{% cv_icon event.icon %}</div>
+            <div class="card timeline-event-card">
+              <div class="card-body">
+                <div class="text-secondary float-end">{{ event.at|date:"d M Y H:i" }}</div>
+                <h4>{{ event.description }}</h4>
+                <p class="text-secondary mb-0">{{ event.location }}</p>
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

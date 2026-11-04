@@ -54,7 +54,7 @@
         </li>
         {% endif %}
         {% endif %}
-        {# Roastery: Green lots, Roast batches (roastery app); Shipments comes with the shipping app #}
+        {# Roastery: Green lots, Roast batches (roastery app); Shipments (shipping app) follows below #}
         {% if perms.roastery.view_greenlot or perms.roastery.view_roastbatch %}
         <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Roastery</div></li>
         {% if perms.roastery.view_greenlot %}
@@ -73,7 +73,18 @@
           </a>
         </li>
         {% endif %}
-        {# Shipments is added by the shipping app #}
+        {% endif %}
+        {# Shipments (shipping app): same permission as the list view, `sales.view_order`; the list scopes the rows #}
+        {% if perms.sales.view_order %}
+        {% if not perms.roastery.view_greenlot and not perms.roastery.view_roastbatch %}
+        <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Roastery</div></li>
+        {% endif %}
+        <li class="nav-item{% if url_name|slice:':9' == 'shipment-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'shipment-list' %}"{% if url_name == 'shipment-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "truck-delivery" %}</span>
+            <span class="nav-link-title">Shipments</span>
+          </a>
+        </li>
         {% endif %}
         {% if perms.showcase.view_showcaseitem %}
         <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Developer</div></li>

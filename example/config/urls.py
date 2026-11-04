@@ -12,6 +12,7 @@ urlpatterns = [
     path("", include("catalog.urls")),
     path("", include("sales.urls")),
     path("", include("roastery.urls")),
+    path("", include("shipping.urls")),
     path("", include("showcase.urls")),
     path("", include("dashboard.urls")),
 ]

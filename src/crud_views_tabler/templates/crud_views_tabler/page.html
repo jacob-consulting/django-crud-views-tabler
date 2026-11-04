@@ -4,7 +4,8 @@
 {% block title %}{% cv_header %}{% endblock %}
 {% block extra_head %}{% cv_css %}{% endblock %}
 {% block breadcrumb %}{% cv_breadcrumb %}{% endblock %}
-{% block page_title %}<span class="d-inline-flex align-items-center gap-2">{% cv_header_icon %}{% cv_header %}</span>{% endblock %}
+{# The page title follows CRUD_VIEWS_HEADER_LEVEL (h2 while it is unset), like the stock header. #}
+{% block page_heading %}{% cv_heading "header" level=2 class="page-title" %}{% block page_title %}<span class="d-inline-flex align-items-center gap-2">{% cv_header_icon %}{% cv_header %}</span>{% endblock %}{% endcv_heading %}{% endblock %}
 {% block subtitle %}{% block cv_paragraph %}<div class="page-subtitle mt-1">{% cv_paragraph %}</div>{% endblock cv_paragraph %}{% endblock %}
 {% block actions %}{% block cv_context %}{% cv_context_actions object %}{% endblock cv_context %}{% endblock %}
 {% block messages %}{% cv_messages %}{% endblock %}

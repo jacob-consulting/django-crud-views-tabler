@@ -5,6 +5,34 @@ Status snapshot for the five points in
 paths and the options per point; this one says only where each point stands today and what is left to do. The
 questions document is not edited.
 
+## Update 2026-11-04: pre-1.0 tidy-up against upstream eac0c21
+
+Checked against `feature/examples-pre-1.0-restructure` @ eac0c21: `main` up to Phase 06.7 (#303) plus Phase 06.8
+(#305, short action tooltips), which is not on `main` yet. The theme last synced at Phase 06.6 (#299, theme commit
+3315eef). Before this tidy-up the Django suite ran 114 tests with three failures, the same three the 06.6 handoff
+recorded; all three were stale expectations, the rendered pages were right.
+
+- **Tooltip guard (06.8).** Upstream's `cv.adapters.tooltip.init` now guards Bootstrap 5.3 tooltip transitions that
+  outlive `dispose()`. The theme *replaced* `init` (to put toolbar tooltips below the buttons) and so dropped the
+  guard. It now wraps upstream's `init` and passes the placement as `data-bs-placement`. Upstream's own recipe in
+  `docs/reference/javascript.md#tooltips` still tells themes to replace `init`, so other themes hit the same gap;
+  worth an upstream issue.
+- **Stale tests.** Form buttons are `<button type="submit">` since the form-button leaf (Phase 06), not `<input>`
+  (`test_delete_form_is_the_stock_crispy_delete_form`, catalog `test_form_actions_and_group_labels`); the
+  protected-objects alert needs `has_protected_objects` since Phase 06.3
+  (`test_related_objects_alerts_get_the_tabler_layout`).
+- **Table pagination parity (Phase 05).** The table override gained upstream's `<nav aria-label="pagination">`, the
+  current page as a `span`, `aria-disabled` on the ellipsis and the `pagination:hidden-label` class key.
+- **Heading levels (#251).** `tags/card.html`, `tags/list_filter.inner.html` and the page title hard-coded `<h3>` /
+  `<h2>` and ignored `CRUD_VIEWS_HEADER_LEVEL`. All three use `{% cv_heading %}` now; `django_tabler`'s layout got a
+  `page_heading` block for the page title.
+- **06.7 (Cancel keeps the origin query).** Nothing to do: the theme overrides no form or button template.
+- **Tests:** 117, OK; pytest 34, OK; `manage.py check --fail-level WARNING` clean. In Chromium: toolbar tooltips open
+  below, row tooltips above, three delete-modal open/close cycles with no console errors.
+- **Overrides:** still the eight listed in [crud_views_tabler.md](crud_views_tabler.md#overridden-templates). #240
+  (modal shell classes) and #242 (filter card) were closed as not planned, so `modal/shell.html` and the two filter
+  templates stay. Open upstream: #210 (jQuery-free `formset.js`) and #211 (stale-override detection).
+
 ## Update 2026-10-22: caught up with upstream e212dc3
 
 Upstream moved 20 commits between 2026-10-21 and e212dc3 (branch `fix/form-enctype-multipart`, one ahead of `main`
@@ -125,7 +153,7 @@ Point by point, with the evidence behind "none":
 | Issue | Hook | Tabler override it removes |
 |---|---|---|
 | [#239](https://github.com/jacob-consulting/django-crud-views/issues/239) **done (8fcb7f2)** | one frame template around the form; delete's protection alert as a snippet | `view_create`, `view_update`, `view_delete` `.content.html` → replaced by `snippets/form_frame.html` + `snippets/delete/protection_errors.html` |
-| [#240](https://github.com/jacob-consulting/django-crud-views/issues/240) | `modal:root` / `modal:dialog` class keys | `modal/shell.html` |
+| [#240](https://github.com/jacob-consulting/django-crud-views/issues/240) **closed, not planned** | `modal:root` / `modal:dialog` class keys | — `modal/shell.html` stays |
 | [#241](https://github.com/jacob-consulting/django-crud-views/issues/241) **done (3d2ee82)** | accessible pagination, `page-previous` / `page-next` icons | `snippets/pagination.html` deleted; the theme maps the two icons, and its table footer pagination uses them too |
 | [#242](https://github.com/jacob-consulting/django-crud-views/issues/242) **closed, not planned** | filter card class instead of `<br>`, heading with class key | — the two filter overrides stay |
 | [#243](https://github.com/jacob-consulting/django-crud-views/issues/243) **done (73b5037)** | card blocks (title, content, actions) and class keys | `tags/card.html` stays (the footer is structure, as upstream decided), but now uses upstream's block names (`card_footer` → `card_actions`) and `card:root` / `card:body` / `card:title`; the theme registers `card:root` = `card` |
@@ -139,7 +167,7 @@ Not filed: `table/bootstrap5.html` (the whole django-tables2 template in Tabler 
 
 - **Re-diff the 8 overrides whenever an upstream release touches `src/crud_views/templates`.** Two commits up to
   10d81ad do: 3fc4be6 (#213/#218) touched `tags/button/action.html` and 10d81ad (#217) deleted `crud_views/detail/`.
-  Neither path is among the 10 overrides, so they are still current. The drift surface is small but not empty: `tags/list_filter.html` and
+  Neither path is among the overrides, so they are still current. The drift surface is small but not empty: `tags/list_filter.html` and
   `tags/list_filter.inner.html` carry the pinned-filter contract, and `snippets/form_frame.html` must keep the
   `cv_form_body` block and leave the modal bare. (Until #239 the theme copied the create, update and delete
   `<form>`s here, and those copies missed #236 and #191; since 2026-10-22 the form is upstream's.) The others

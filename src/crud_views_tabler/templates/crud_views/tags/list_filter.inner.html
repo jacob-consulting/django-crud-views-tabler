@@ -1,9 +1,9 @@
 {% load crispy_forms_tags crud_views %}
 <div class="card-header">
-  <h3 class="card-title d-flex align-items-center gap-2">
+  {% cv_heading level=3 class="card-title d-flex align-items-center gap-2" %}
     {% block cv_filter_header_icon %}{% cv_icon "filter" %}{% endblock cv_filter_header_icon %}
     {% block cv_filter_header %}{% cv_filter_header %}{% endblock cv_filter_header %}
-  </h3>
+  {% endcv_heading %}
 </div>
 <div class="card-body">
   {% block cv_content_filter %}

@@ -47,7 +47,7 @@ Taskfile's `seed:*` tasks guard against that with `status:` checks that skip a s
 ## Architecture
 
 **Template chain.** `django_tabler/base.html` ← `django_tabler/layouts/app.html` (navbar/sidebar, Tabler page header
-with blocks `breadcrumb`, `page_title`, `subtitle`, `actions`, `messages`, `content`) ← `crud_views_tabler/page.html`,
+with blocks `breadcrumb`, `page_heading` (wraps `page_title`), `subtitle`, `actions`, `messages`, `content`) ← `crud_views_tabler/page.html`,
 which is `CRUD_VIEWS_EXTENDS` and maps crud_views tags/blocks (`cv_header`, `cv_context_actions`, `cv_filter`,
 `cv_content`, `cv_css`/`cv_js`) onto those blocks. Projects customise branding by overriding
 `django_tabler/includes/{site_name,nav_menu,brand}.html` (the example does so in `example/templates/`).
@@ -64,7 +64,8 @@ content) — none renders a button. Everything else is registered in `CrudViewsT
   names to `tabler:<name>`; SVG paths live in `django_tabler.icons.ICONS`, and the system check
   `crud_views_tabler.W001` flags `tabler:` names with no path,
 - assets: `tabler-adapters.js` wires `cv.adapters` (modal/tooltip/collapse) to `window.tabler`'s Bootstrap
-  components. Only replace `cv.adapters.tooltip.init`, never the whole `tooltip` object (it would drop `hide`/`dispose`).
+  components. Wrap `cv.adapters.tooltip.init` (call the original), never replace it or the whole `tooltip` object:
+  upstream's `init` carries a Bootstrap transition guard, and the object carries `hide`/`dispose`.
 
 Prefer solving theme problems through upstream hooks (class keys, blocks, settings) rather than new template
 overrides; copied templates drift from upstream silently. Upstream asks and their status are tracked in

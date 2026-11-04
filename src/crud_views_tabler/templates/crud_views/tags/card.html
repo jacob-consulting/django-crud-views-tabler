@@ -5,12 +5,13 @@ cv_card_template that extends crud_views/tags/card.html works under either theme
   card_title    - the heading text (default: str(object))
   card_content  - anything below the heading, inside .card-body
   card_actions  - the footer with the actions (crud_views' container leaf); empty it to drop actions and footer
-Classes come from the class table: card:root, card:body, card:title (card:container for the actions).
+Classes come from the class table: card:root, card:body, card:title (card:container for the actions). The title is
+a {% cv_heading %}, so it follows CRUD_VIEWS_HEADER_LEVEL (h3 while the setting is unset).
 {% endcomment %}
 {% cv_card_action_group object as group %}
 <div class="{% cv_button_class "card" "root" %}">
   <div class="{% cv_button_class "card" "body" %}">
-    <h3 class="{% cv_button_class "card" "title" %}">{% block card_title %}{{ object }}{% endblock card_title %}</h3>
+    {% cv_button_class "card" "title" as cv_card_title_class %}{% cv_heading level=3 class=cv_card_title_class %}{% block card_title %}{{ object }}{% endblock card_title %}{% endcv_heading %}
     {% block card_content %}{% endblock card_content %}
   </div>
   {% block card_actions %}

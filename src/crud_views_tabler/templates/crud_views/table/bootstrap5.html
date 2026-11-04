@@ -62,29 +62,35 @@
       {% blocktranslate with start=table.page.start_index end=table.page.end_index total=table.paginator.count %}Showing {{ start }}–{{ end }} of {{ total }}{% endblocktranslate %}
     </p>
     {% if table.paginator.num_pages > 1 %}
-    <ul class="pagination m-0 ms-auto">
+    <nav class="ms-auto" aria-label="{% translate 'pagination' %}">
+    <ul class="pagination m-0">
       {% block pagination.previous %}
       <li class="page-item{% if not table.page.has_previous %} disabled{% endif %}">
         <a class="page-link" {% if table.page.has_previous %}href="{% cv_querystring table.prefixed_page_field=table.page.previous_page_number %}"{% else %}aria-disabled="true"{% endif %}>
-          {% cv_icon "page-previous" %}<span class="visually-hidden">{% translate "previous" %}</span>
+          {% cv_icon "page-previous" %}<span class="{% cv_button_class 'pagination' 'hidden-label' %}">{% translate "previous" %}</span>
         </a>
       </li>
       {% endblock pagination.previous %}
       {% block pagination.range %}
       {% for p in table.page|table_page_range:table.paginator %}
-      <li class="page-item{% if table.page.number == p %} active{% endif %}{% if p == '...' %} disabled{% endif %}"{% if table.page.number == p %} aria-current="page"{% endif %}>
-        <a class="page-link" {% if p != '...' %}href="{% cv_querystring table.prefixed_page_field=p %}"{% endif %}>{{ p }}</a>
-      </li>
+      {% if table.page.number == p %}
+      <li class="page-item active" aria-current="page"><span class="page-link">{{ p }}</span></li>
+      {% elif p == '...' %}
+      <li class="page-item disabled"><a class="page-link" aria-disabled="true">{{ p }}</a></li>
+      {% else %}
+      <li class="page-item"><a class="page-link" href="{% cv_querystring table.prefixed_page_field=p %}">{{ p }}</a></li>
+      {% endif %}
       {% endfor %}
       {% endblock pagination.range %}
       {% block pagination.next %}
       <li class="page-item{% if not table.page.has_next %} disabled{% endif %}">
         <a class="page-link" {% if table.page.has_next %}href="{% cv_querystring table.prefixed_page_field=table.page.next_page_number %}"{% else %}aria-disabled="true"{% endif %}>
-          <span class="visually-hidden">{% translate "next" %}</span>{% cv_icon "page-next" %}
+          <span class="{% cv_button_class 'pagination' 'hidden-label' %}">{% translate "next" %}</span>{% cv_icon "page-next" %}
         </a>
       </li>
       {% endblock pagination.next %}
     </ul>
+    </nav>
     {% endif %}
   </div>
   {% endif %}

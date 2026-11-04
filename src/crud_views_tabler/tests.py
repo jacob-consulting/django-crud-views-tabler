@@ -187,6 +187,15 @@ class ThemeRenderingTests(TestCase):
             html = self.client.get(reverse("customer-list")).content.decode()
         self.assertIn(str(svg("arrow-left")), html[html.index('class="pagination'):][:2000])
 
+    def test_table_pagination_matches_upstream_accessibility(self):
+        # upstream Phase 05 (pagination parity): a labelled <nav> landmark, the current page as a non-link, the
+        # ellipsis disabled; the hidden labels use the pagination:hidden-label class key
+        page = self.client.get(reverse("customer-list")).content.decode()
+        nav = re.search(r'<nav class="ms-auto" aria-label="pagination">.*?</nav>', page, re.S).group(0)
+        self.assertRegex(nav, r'<li class="page-item active" aria-current="page"><span class="page-link">1</span>')
+        self.assertIn('<span class="visually-hidden">next</span>', nav)
+        self.assertNotRegex(nav, r'<a class="page-link"\s*>')  # every link-less item says it is disabled
+
     def test_disabled_action_renders_a_tabler_icon(self):
         viewer = get_user_model().objects.create_user("viewer", password="viewer-pass")
         viewer.user_permissions.add(Permission.objects.get(codename="view_customer", content_type__app_label="customers"))
@@ -226,8 +235,17 @@ class ThemeRenderingTests(TestCase):
         self.assertIn("cv.bootstrapAdapters(() => globalThis.tabler)", source)
         self.assertIn("cv.adapters.tooltip.init", source)
         self.assertIn('location === "context"', source)
-        self.assertIn('"bottom"', source)
-        self.assertIn("globalThis.tabler?.Tooltip", source)
+        self.assertIn('setAttribute("data-bs-placement", "bottom")', source)
+
+    def test_tooltip_adapter_wraps_upstream_init(self):
+        # crud_views' init guards Bootstrap 5.3 tooltip transitions that outlive dispose() (06.8); the theme must
+        # delegate to it rather than call Tooltip.getOrCreateInstance itself, or it silently drops that guard.
+        from django.contrib.staticfiles import finders
+        with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
+            source = f.read()
+        self.assertIn("const init = cv.adapters.tooltip.init;", source)
+        self.assertIn("init(el, options);", source)
+        self.assertNotIn("getOrCreateInstance", source)
 
     def test_tooltip_adapter_keeps_upstream_lifecycle(self):
         # Only init is replaced, so crud_views' hide(el) / dispose(el) (#205) keep resolving tabler.Tooltip.
@@ -279,7 +297,8 @@ class ThemeRenderingTests(TestCase):
     def test_related_objects_alerts_get_the_tabler_layout(self):
         html = render_to_string(
             "crud_views/snippets/delete/related_objects.html",
-            {"protected_objects": ["Order 7"], "related_summary": {"order": 2}, "related_summary_items": ["order: 2"],
+            {"has_protected_objects": True, "protected_objects": ["Order 7"], "related_summary": {"order": 2},
+             "related_summary_items": ["order: 2"],
              "related_objects": []},
         )
         self.assertEqual(html.count('<div class="alert-icon">'), 3)
@@ -324,7 +343,7 @@ class ThemeRenderingTests(TestCase):
     def test_delete_form_is_the_stock_crispy_delete_form(self):
         self.assertIs(CustomerDeleteView.form_class, CrispyDeleteForm)
         html = self.client.get(reverse("customer-delete", args=[self.customer.pk])).content.decode()
-        self.assertRegex(html, r'<input type="submit"[^>]*class="btn btn-danger"')
+        self.assertRegex(html, r'<button type="submit" name="delete"[^>]*class="btn btn-danger"')
         self.assertNotIn("btn-primary btn-danger", html)
 
     def test_delete(self):
@@ -522,6 +541,22 @@ class CardThemeTests(TestCase):
         url = reverse("customer-delete", args=[customer.pk]) + "?cv_from=card"
         response = self.client.post(url, {"confirm": "on", "delete": "Delete"})
         self.assertRedirects(response, reverse("customer-card"), fetch_redirect_response=False)
+
+    def test_headings_follow_crud_views_header_level(self):
+        # page title, card titles and the filter heading go through {% cv_heading %} (#251), like the stock templates
+        html = self.get(cv_filter="1")
+        self.assertRegex(html, r'<h2 class="page-title">')
+        self.assertRegex(html, r'<h3 class="card-title">')
+        self.assertRegex(html, r'<h3 class="card-title d-flex align-items-center gap-2">')
+        from unittest import mock
+
+        from crud_views.lib.settings import crud_views_settings
+        # crud_views reads the setting once into crud_views_settings; its own tests patch that object the same way
+        with mock.patch.object(crud_views_settings, "header_level", 1):
+            html = self.get(cv_filter="1")
+        self.assertRegex(html, r'<h1 class="h2 page-title">')
+        self.assertRegex(html, r'<h2 class="h3 card-title">')
+        self.assertRegex(html, r'<h2 class="h3 card-title d-flex align-items-center gap-2">')
 
     def test_icon_only_card_action_has_a_crud_views_tooltip(self):
         html = self.get()

@@ -111,7 +111,7 @@ class ProductFormCoverageTests(TestCase):
 
     def test_form_actions_and_group_labels(self):
         html = self.create_page()
-        footer = self.find(r"<div[^>]*>\s*<div class=\"\">\s*<input type=\"submit\"", html)  # formactions.html
+        footer = self.find(r"<div[^>]*>\s*<div class=\"\">\s*<button type=\"submit\"", html)  # formactions.html
         self.assertIn("form-footer", footer)
         # group legends are plain form-label: Size/Channels (field.html), Shipping (radioselect_inline.html)
         for name in ("Size", "Channels", "Shipping"):

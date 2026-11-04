@@ -2,7 +2,7 @@
 
 Status: **prototype**, living in this project as the `crud_views_tabler` app and exercised by two
 demo apps: `customers` (`/customer/` table list, `/customer/card/` card view) and `catalog` (`/product/`), whose
-create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Built against django-crud-views main @ 32a3533 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239, the translated card empty state #246, accessible card pagination #241, card blocks and class keys #243 and the alert frame #250, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+create form renders every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Last checked against django-crud-views `feature/examples-pre-1.0-restructure` @ eac0c21 (2026-11-04: main up to Phase 06.7 plus 06.8, short action tooltips); originally built against main @ 32a3533 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239, the translated card empty state #246, accessible card pagination #241, card blocks and class keys #243 and the alert frame #250, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
 
 ## Approach
 
@@ -115,7 +115,10 @@ Sorting stays server-side django-tables2 ordering; only the header changes (`tab
 ## Pagination
 
 The table renders as a whole card: `.card > .table-responsive > table.table.table-vcenter.card-table`, and a
-`.card-footer` with "Showing x–y of n" and a Tabler `.pagination`. Card views use crud_views' own
+`.card-footer` with "Showing x–y of n" and a Tabler `.pagination` in a `<nav aria-label="pagination">`, with the
+same accessibility markup as crud_views' table (Phase 05 parity: the current page a non-link `span` with
+`aria-current`, the ellipsis and the missing neighbour `aria-disabled`, hidden labels from the
+`pagination:hidden-label` class key). Card views use crud_views' own
 `snippets/pagination.html` (#241: `aria-current`, `aria-disabled`, translated hidden labels), which is Tabler's own
 pagination markup, so the theme no longer overrides it. Both paginations take their arrows from the semantic icon
 names `page-previous` / `page-next`, which the theme maps to Tabler's chevrons at the standard icon size, as in
@@ -133,7 +136,8 @@ own):
   theme still overrides `tags/card.html`: crud_views' card keeps its actions inside the body, and where they sit is
   structure, not classes (#243). The override uses crud_views' block names and its `card:root` / `card:body` /
   `card:title` class keys; the theme registers `card:root` = `card` (crud_views' default adds `mb-3`, which the
-  `row-deck` grid does not need),
+  `row-deck` grid does not need). The card title is a `{% cv_heading level=3 %}`, so it follows
+  `CRUD_VIEWS_HEADER_LEVEL` like crud_views' own card,
 - variants map to Tabler buttons through the class table: `primary` → `btn btn-sm btn-primary`, `secondary` → the
   default `btn btn-sm`, `tertiary` → `btn btn-sm btn-ghost-secondary`, `danger` → `btn btn-sm btn-ghost-danger`;
   `flex` → `flex-grow-1`. Labelled buttons show icon and label (crud_views' card default, label mode `both`),
@@ -226,11 +230,15 @@ Core scripts on django-crud-views main run without jQuery and call Bootstrap onl
 asset, `crud_views_tabler/tabler-adapters.js`:
 
     Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler));
-    cv.adapters.tooltip.init = (el, {location} = {}) => { /* Tabler Tooltip, "bottom" for location "context" */ };
+    { const init = cv.adapters.tooltip.init;
+      cv.adapters.tooltip.init = (el, options = {}) => { /* data-bs-placement="bottom" for "context" */ init(el, options); }; }
 
-The second statement is crud_views' per-location recipe (`docs/reference/javascript.md#tooltips`): toolbar tooltips
-open below the buttons, so they do not cover the page header; it does nothing while `window.tabler` has no
-`Tooltip`. Only `init` is replaced, so the adapter keeps crud_views' optional `hide(el)` and `dispose(el)` (#205),
+The second statement places toolbar tooltips below the buttons, so they do not cover the page header. It **wraps**
+crud_views' `init` instead of replacing it: since 06.8 that `init` guards Bootstrap 5.3 tooltip transitions that
+outlive `dispose()`, and a theme calling `Tooltip.getOrCreateInstance` itself (crud_views' own recipe in
+`docs/reference/javascript.md#tooltips` still shows that) would silently drop the guard. The placement travels as the
+`data-bs-placement` attribute, which Bootstrap reads when it creates the tooltip; a button that already has one keeps
+it. Only `init` is touched, so the adapter keeps crud_views' optional `hide(el)` and `dispose(el)` (#205),
 which resolve `tabler.Tooltip` through the same namespace: `tooltip.js` hides a trigger's tooltip on click and disposes
 the tooltips under `#cv-modal` on `cv:modal:unload`, so Tabler's per-tooltip `hide.bs.modal` handlers do not pile up
 over repeated modal opens. Do not reassign `cv.adapters.tooltip` as a whole in the theme; that would drop both.
@@ -245,6 +253,15 @@ and a centered dialog (the ids `cv-modal`, `cv-modal-dialog`, `cv-modal-content`
 the filter toggle carries `aria-expanded`, `aria-controls="filter-collapse"` and both filter icons. crud_views' own
 buttons carry `data-cv-tooltip`, so core's `tooltip.js` initialises their tooltips through the adapter, including
 inside modal content, which Tabler's own page-load initialisation never sees.
+
+## Heading levels
+
+The page title, card titles and the filter heading render through crud_views' `{% cv_heading %}`, so
+`CRUD_VIEWS_HEADER_LEVEL` (#251) applies under the theme too. While the setting is unset nothing changes: the page
+title is an `h2.page-title` (Tabler's default), card and filter titles are `h3.card-title`. With it set, the page title
+renders at that level and the card and filter titles one below, each keeping its look through the `heading:size-N`
+class (`h2`, `h3`). `django_tabler/layouts/app.html` has a `page_heading` block around its `<h2>` for this, so
+`django_tabler` itself still knows nothing about crud_views.
 
 ## Overridden templates
 

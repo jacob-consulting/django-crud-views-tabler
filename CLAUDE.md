@@ -54,6 +54,7 @@ Overrides are deliberately limited to page *layout* (modal shell, form frame, ta
 content) — none renders a button. Everything else is registered in `CrudViewsTablerConfig.ready()`:
 - button classes: `buttons.TABLER_BUTTON_CLASSES` via `register_button_classes()` (keys like `location:variant` and
   `location:variant:icon`; the `:icon` variant adds `btn-icon` for icon-only label mode),
+- label modes: `register_label_mode_defaults({"form": "both"})`, so form buttons show icon plus label,
 - icons: `register_icon_library("tabler", ...)` + `register_icons(TABLER_ICONS)` mapping crud_views' semantic icon
   names to `tabler:<name>`; SVG paths live in `django_tabler.icons.ICONS`, and the system check
   `crud_views_tabler.W001` flags `tabler:` names with no path,
@@ -78,5 +79,7 @@ user's layout choice in `localStorage` using Tabler's own `tabler-*` keys; nothi
 ## Conventions
 
 - All pages require login (`LoginRequiredMiddleware`); the login view is the exception.
-- Settings from env: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` (`1`/`0`), `DJANGO_ALLOWED_HOSTS`.
+- Settings from env: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` (`1`/`0`), `DJANGO_ALLOWED_HOSTS`. The default allowed hosts
+  include `cv.jacob-consulting.org`, where the demo is served through a Cloudflare tunnel that terminates HTTPS;
+  hence `CSRF_TRUSTED_ORIGINS = ['https://cv.jacob-consulting.org']` in `example/config/settings.py`.
 - Design specs and implementation plans live in `docs/superpowers/{specs,plans}/`.

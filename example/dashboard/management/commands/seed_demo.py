@@ -3,6 +3,7 @@ from importlib import import_module
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
+from django.db import transaction
 
 # Each app listed here has a ``seed.py`` with ``seed(rng, world)``. Later apps append themselves, in dependency order.
 SEED_APPS = ["dashboard"]
@@ -23,6 +24,7 @@ class Command(BaseCommand):
             return
         rng = random.Random(seed)
         world: dict = {}
-        for app in SEED_APPS:
-            import_module(f"{app}.seed").seed(rng, world)
+        with transaction.atomic():
+            for app in SEED_APPS:
+                import_module(f"{app}.seed").seed(rng, world)
         self.stdout.write(self.style.SUCCESS(f"Seeded the demo data for: {', '.join(SEED_APPS)}."))

@@ -92,7 +92,7 @@ pages with no `crispy_bootstrap5` in `INSTALLED_APPS`, so a stray `bootstrap5/` 
 `TemplateDoesNotExist`, and asserts no such name appears in the rendered template list. It runs unskipped and green
 (71 tests, 0 skipped, against upstream 10d81ad). It is a guard against regression, not proof that the old file was
 harmless — the demo never rendered it, for two independent reasons: `crud_views_object_detail` is not installed, and
-`ShowcaseItemDetailView` / `CustomerDetailView` set their own `template_name` and never go through crispy.
+`ShowcaseItemDetailView` (and the former demo's customer detail view) set their own `template_name` and never go through crispy.
 
 Two things are **not** deltas, although the earlier guess was that they would be:
 

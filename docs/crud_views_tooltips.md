@@ -110,7 +110,7 @@ open below the buttons as they did with the old overrides. Everything else is up
 #205 (5e36477, closing #203) adds the lifecycle: optional `cv.adapters.tooltip.hide(el)` and `dispose(el)`, a click
 on a trigger hides its tooltip, and the new `cv:modal:unload` event disposes the markers under `#cv-modal` before the
 content is replaced. Because the theme replaces only `init`, it gets both Bootstrap defaults on `tabler.Tooltip`
-without a change. Checked in the demo (`/customer/`): the filter toggle's tooltip goes away on a mouse click and on
+without a change. Checked in the demo (the customers page of the earlier demo, since replaced by the roastery apps): the filter toggle's tooltip goes away on a mouse click and on
 Enter while the toggle keeps focus, and five open/close cycles of the delete modal (with a marked button injected
 through `cv.initTooltips`, since the stock delete form has no marker) keep one `hide.bs.modal` handler on
 `#cv-modal`; with `dispose` removed the count grows 1, 2, 3.

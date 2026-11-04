@@ -83,3 +83,14 @@ user's layout choice in `localStorage` using Tabler's own `tabler-*` keys; nothi
   include `cv.jacob-consulting.org`, where the demo is served through a Cloudflare tunnel that terminates HTTPS;
   hence `CSRF_TRUSTED_ORIGINS = ['https://cv.jacob-consulting.org']` in `example/config/settings.py`.
 - Design specs and implementation plans live in `docs/superpowers/{specs,plans}/`.
+
+## Tabler reference material
+
+`~/projects/tabler/` holds the extracted paid Tabler archives (each next to its `.zip`, outside this repo):
+
+- `tabler-1.6.1/dashboard/`: the Tabler 1.6.1 dashboard pages (one `.html` per page, e.g. `alerts.html`,
+  `all-elements.html`), the reference markup for how components should look
+- `tabler-icons-3.49.0/` (`svg/`, `png/`, `webfont/`, …): source for new paths in `django_tabler.icons.ICONS`
+- `tabler-illustrations-1.18.0/`, `tabler-avatars-1.1.0/`, `tabler-emails-3.0/`
+
+These are licensed assets: use them as reference, and don't commit them wholesale into this repo.

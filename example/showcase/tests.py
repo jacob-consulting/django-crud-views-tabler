@@ -10,6 +10,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from config.showcode import without_code_panel
+
 from .models import ShowcaseCategory, ShowcaseChannel, ShowcaseItem, ShowcaseTag
 
 
@@ -78,7 +80,7 @@ class ShowcaseItemFormCoverageTests(TestCase):
         self.assertIn('type="radio"', html)  # radio_checkbox_select.html
         self.assertIn("form-check-inline", html)  # radioselect_inline.html
         # InlineRadios over a Select widget renders <input type="select">; it needs RadioSelect
-        self.assertNotIn('type="select"', html)
+        self.assertNotIn('type="select"', without_code_panel(html))
 
     def test_input_group_floating_and_uneditable_paths(self):
         html = self.create_page()

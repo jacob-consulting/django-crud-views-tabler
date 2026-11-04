@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from django.urls import reverse
 
+from config.showcode import without_code_panel
 from dashboard.seed import seed as seed_dashboard
 
 from .models import Beans, Category, Equipment, Product, Subscription
@@ -110,7 +111,7 @@ class ProductViewTests(CatalogTestCase):
             self.assertIn(present, html, model)
             self.assertIn("Commerce", html)
             for label in absent:
-                self.assertNotIn(label, html, model)
+                self.assertNotIn(label, without_code_panel(html), model)
 
     def test_update_and_delete_pages_render(self):
         self.login()

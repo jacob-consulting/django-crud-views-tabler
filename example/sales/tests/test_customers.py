@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from catalog.seed import seed as seed_catalog
+from config.showcode import without_code_panel
 from dashboard.seed import seed as seed_dashboard
 from sales.models import Address, Customer
 from sales.permissions import grant_customer
@@ -106,7 +107,7 @@ class CustomerViewTests(SalesTestCase):
         self.login()
         consumer = Customer.objects.filter(kind="consumer").first()
         html = self.client.get(reverse("customer-detail", kwargs={"pk": consumer.pk})).content.decode()
-        self.assertNotIn("Price tier", html)
+        self.assertNotIn("Price tier", without_code_panel(html))
 
     def test_list_filters(self):
         self.login()

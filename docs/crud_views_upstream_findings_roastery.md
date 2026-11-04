@@ -14,10 +14,21 @@ here in the same commit that introduces it.
   example project, not in the library. Every theme or demo that wants the panel has to copy it (the extensions repo
   already did). The roastery demo does the same for the "How this is themed" page (Task 12) and keeps an empty
   `{% block code_panel %}` in `example/templates/project/crud_views.html`.
+- **Hooking it in needed no new block:** with `CRUD_VIEWS_EXTENDS` pointing at the project's own template, the panel
+  goes below the theme page's `content` block and the "Show code" toggle into its `actions` block
+  (`{{ block.super }}` keeps `cv_context_actions`). Modal partials render `cv_content_template` without the extends
+  chain, so the panel never shows inside a modal. The view is in the context as `view`, which is all the collector
+  needs (`type(view).__module__` names the app).
 - **Where:** `examples/bootstrap5/project/templatetags/example_tags.py:52` (`snippet_panels`), used by
   `examples/bootstrap5/project/templates/project/crud_views.html`; copied in
   `../django-crud-views-extensions/examples/bootstrap5/project/templatetags/example_tags.py`.
-- **What we did:** vendored our own version in the example project.
+- **What we did:** wrote our own in the example project: `example/config/showcode.py` (collector; a fixed file set
+  per app, the app must live in `example/`, settings.py only as a whitelist of assignments) and the `showcode` tag
+  library in `example/config/templatetags/` (registered through `TEMPLATES['OPTIONS']['libraries']`, since `config`
+  is not an app). Side effect worth knowing for an upstream version: the inline source mentions every label the app
+  can render, so `assertNotContains` tests on a page see it; the demo's tests strip it with `without_code_panel()`.
+  Lazy loading the sources (a fetch when the panel opens) would avoid that and the page weight (~390 KB of
+  highlighted HTML on a `sales` page).
 - **Suggested upstream change:** ship the tag (or a documented recipe) in the library.
 - **Severity:** annoyance.
 

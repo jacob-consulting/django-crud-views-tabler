@@ -1,6 +1,12 @@
 {% extends "crud_views_tabler/page.html" %}
-{# CRUD_VIEWS_EXTENDS: the project's own layer on top of the theme's page. #}
+{% load showcode tabler %}
+{# CRUD_VIEWS_EXTENDS: the project's own layer on top of the theme's page: the demo's "Show code" panel. #}
+{% block actions %}
+{{ block.super }}
+{% has_code_panel as show_code %}
+{% if show_code %}<a class="btn" data-bs-toggle="collapse" href="#code-panel" role="button" aria-expanded="false" aria-controls="code-panel">{% icon "code" %}Show code</a>{% endif %}
+{% endblock %}
 {% block content %}
 {{ block.super }}
-{% block code_panel %}{% endblock %}
+{% block code_panel %}{% code_panel %}{% endblock %}
 {% endblock %}

@@ -1,0 +1,100 @@
+{% extends "django_tabler/layouts/app.html" %}
+{% load tabler %}
+{# "How this is themed" (config/views.py:theming): every number on this page is counted from the files at render time. #}
+{% block title %}How this is themed{% endblock %}
+{% block pretitle %}Developer{% endblock %}
+{% block page_title %}How this is themed{% endblock %}
+{% block actions %}
+<a href="{{ theme_guide_url }}" class="btn" target="_blank" rel="noopener">{% icon "book" %}Theme guide (django-crud-views)</a>
+<a href="{{ theme_doc_url }}" class="btn" target="_blank" rel="noopener">{% icon "brand-github" %}crud_views_tabler.md</a>
+{% endblock %}
+{% block content %}
+<div class="card card-lg mb-3">
+  <div class="card-body">
+    <h2 class="h1 mb-3">The whole theme is {{ total_files }} files, {{ total_lines }} lines. <span class="text-primary">Your app code is unchanged.</span></h2>
+    <p class="text-secondary fs-3 mb-4" style="max-width: 60rem">
+      The theme is one app, <code>crud_views_tabler</code>, listed before <code>crud_views</code> in
+      <code>INSTALLED_APPS</code>. Its templates shadow django-crud-views’ stock Bootstrap&nbsp;5 templates of the same
+      name, and whatever it does not override falls through. Button classes, icons and the JavaScript adapters are
+      registered through upstream hooks in <code>apps.py</code>; no crud_views code is patched or subclassed. The
+      <code>sales</code>, <code>catalog</code>, <code>roastery</code> and <code>shipping</code> apps never import it:
+      open <span class="text-nowrap">{% icon "code" "icon-sm me-1" %}Show code</span> on any of their pages to check.
+    </p>
+    <div class="row g-3">
+      {% for group in groups %}
+      <div class="col-sm-6 col-lg-3">
+        <a href="#group-{{ group.key }}" class="card card-sm card-link h-100">
+          <div class="card-body">
+            <div class="subheader">{{ group.title }}</div>
+            <div class="h2 mb-1">{{ group.sources|length }} file{{ group.sources|length|pluralize }} <span class="text-secondary fw-normal fs-4">· {{ group.lines }} lines</span></div>
+            <div class="text-secondary small">{{ group.text }}</div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row row-cards">
+  <div class="col-lg-4">
+    <div class="card sticky-lg-top" style="top: 1rem; z-index: 1">
+      <div class="card-header"><h3 class="card-title">{% icon "file-text" "me-1" %}Files</h3><div class="card-actions text-secondary small">{{ total_files }} files · {{ total_lines }} lines</div></div>
+      <div class="list-group list-group-flush">
+        {% for group in groups %}
+        <div class="list-group-header">{{ group.title }}</div>
+        {% for source, short in group.short %}
+        <a href="#src-{{ source.label|slugify }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2" title="{{ source.label }}">
+          <code class="text-body bg-transparent p-0 text-truncate me-2">{{ short }}</code>
+          <span class="badge bg-secondary-lt">{{ source.lines }}</span>
+        </a>
+        {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    {% for group in groups %}
+    <div id="group-{{ group.key }}" class="{% if not forloop.first %}mt-4 {% endif %}mb-2">
+      <h3 class="mb-1">{{ group.title }}</h3>
+      <div class="text-secondary">{{ group.text }}</div>
+    </div>
+    {% for source in group.sources %}
+    <div class="card mb-3" id="src-{{ source.label|slugify }}">
+      <div class="card-header py-2">
+        <h4 class="card-title font-monospace fs-4">{{ source.label }}</h4>
+        <div class="card-actions text-secondary small">{{ source.lines }} lines</div>
+      </div>
+      <div class="card-body p-2"><div class="code-block code-block-full">{{ source.html }}</div></div>
+    </div>
+    {% endfor %}
+    {% endfor %}
+
+    <div class="card mt-4">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Not counted above: <code>django_tabler</code>, {{ shell_files|length }} files, {{ shell_lines }} lines</h3>
+          <p class="card-subtitle mb-0">
+            The theme builds on this repo’s second package, the Tabler page shell, icon paths and the crispy-forms
+            template pack; it knows nothing about django-crud-views and themes any Django project, so it plays the part
+            that Bootstrap and crispy-bootstrap5 play for the stock theme and is listed here on its own.
+          </p>
+        </div>
+        <div class="card-actions">
+          <a class="btn btn-sm" data-bs-toggle="collapse" href="#shell-files" role="button" aria-expanded="false" aria-controls="shell-files">Show files</a>
+        </div>
+      </div>
+      <div class="collapse" id="shell-files">
+        <div class="list-group list-group-flush">
+          {% for file in shell_files %}
+          <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+            <code class="text-body bg-transparent p-0">{{ file.label }}</code>
+            <span class="badge bg-secondary-lt">{{ file.lines }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

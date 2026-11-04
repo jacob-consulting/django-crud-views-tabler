@@ -86,16 +86,22 @@
           </a>
         </li>
         {% endif %}
-        {% if perms.showcase.view_showcaseitem %}
+        {# Developer: the form showcase (gated by its view permission) and "How this is themed" (every user). #}
         <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Developer</div></li>
+        {% if perms.showcase.view_showcaseitem %}
         <li class="nav-item{% if url_name|slice:':13' == 'showcaseitem-' %} active{% endif %}">
           <a class="nav-link" href="{% url 'showcaseitem-list' %}"{% if url_name == 'showcaseitem-list' %} aria-current="page"{% endif %}>
             <span class="nav-link-icon">{% icon "layout-grid" %}</span>
             <span class="nav-link-title">Form showcase</span>
           </a>
         </li>
-        {# "How this is themed" is added in the developer-section task #}
         {% endif %}
+        <li class="nav-item{% if url_name == 'theming' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'theming' %}"{% if url_name == 'theming' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "palette" %}</span>
+            <span class="nav-link-title">How this is themed</span>
+          </a>
+        </li>
         {% if perms.auth.view_user %}
         <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Users</div></li>
         <li class="nav-item{% if url_name == 'users' or url_name == 'user_create' %} active{% endif %}">

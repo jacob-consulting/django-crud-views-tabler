@@ -412,3 +412,114 @@ class RoasteryDashboardTests(TestCase):
         self.assertRegex(html, r'@tabler/core@[\d.]+/dist/libs/apexcharts/[^"]*"[^>]*integrity="sha384-[^"]+"[^>]*crossorigin="anonymous"')
         self.assertIn('id="revenue-data"', html)
         self.assertIsNotNone(finders.find("dashboard/revenue-chart.js"))
+
+
+def _text(html):
+    """The visible text of highlighted code: tags stripped, entities unescaped."""
+    import html as html_lib
+
+    return html_lib.unescape(re.sub(r"<[^>]+>", "", html))
+
+
+class ShowCodeTests(TestCase):
+    """The "Show code" panel on crud_views pages and the "How this is themed" page (config/showcode.py)."""
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser("root", password="s3cret-pass")
+        self.client.force_login(self.admin)
+
+    def test_code_panel_on_crud_pages(self):
+        html = self.client.get(reverse("customer-list")).content.decode()
+        self.assertIn('id="code-panel"', html)
+        self.assertIn("cv_customer = GuardianViewSet", _text(html))
+        self.assertIn('href="#code-panel"', html)  # the "Show code" toggle in the page header
+
+    def test_code_panel_never_shows_theme_imports(self):
+        from config.showcode import collect_sources_for_app
+
+        for app in ("sales", "catalog", "roastery", "shipping"):
+            sources = collect_sources_for_app(app)
+            self.assertTrue(sources, app)
+            for source in sources:
+                for name in ("django_tabler", "crud_views_tabler"):
+                    self.assertNotIn(name, _text(source.html), source.label)
+
+    def test_code_panel_lists_models_views_and_templates_but_not_seed(self):
+        from config.showcode import collect_sources_for_app
+
+        labels = [s.label for s in collect_sources_for_app("sales")]
+        self.assertIn("sales/models.py", labels)
+        self.assertIn("sales/views/customers.py", labels)
+        self.assertIn("sales/templates/sales/order_detail.html", labels)
+        self.assertNotIn("sales/seed.py", labels)
+        self.assertFalse([label for label in labels if "/tests" in label])
+
+    def test_code_panel_only_for_example_apps(self):
+        from config.showcode import collect_app_sources, collect_sources_for_app
+
+        class NotAnExampleView:
+            pass
+
+        NotAnExampleView.__module__ = "crud_views.lib.views"
+        self.assertEqual(collect_app_sources(NotAnExampleView()), [])
+        self.assertEqual(collect_sources_for_app("../config"), [])
+        self.assertEqual(collect_sources_for_app("dashboard"), [])
+
+    def test_panel_is_collapsed_by_default(self):
+        html = self.client.get(reverse("customer-list")).content.decode()
+        match = re.search(r'<div class="([^"]*)" id="code-panel"', html)
+        self.assertIsNotNone(match)
+        self.assertIn("collapse", match.group(1).split())
+        self.assertNotIn("show", match.group(1).split())
+
+    def test_theming_page_counts(self):
+        from config.showcode import collect_theme_sources
+
+        sources = collect_theme_sources()
+        html = self.client.get(reverse("theming")).content.decode()
+        lines = sum(s.lines for s in sources)
+        self.assertIn(f"The whole theme is {len(sources)} files, {lines} lines.", html)
+        self.assertIn("Your app code is unchanged.", html)
+        for source in sources:
+            self.assertIn(source.label, html)
+
+    def test_theme_sources_cover_the_theme_app(self):
+        from config.showcode import collect_theme_sources
+
+        labels = [s.label for s in collect_theme_sources()]
+        for label in (
+            "crud_views_tabler/apps.py",
+            "crud_views_tabler/buttons.py",
+            "crud_views_tabler/static/crud_views_tabler/tabler-adapters.js",
+            "crud_views_tabler/templates/crud_views_tabler/page.html",
+            "example/config/settings.py (excerpt)",
+        ):
+            self.assertIn(label, labels)
+        self.assertFalse([label for label in labels if "__pycache__" in label or "/tests" in label])
+
+    def test_theming_page_shows_the_settings_but_not_the_secret_key(self):
+        html = self.client.get(reverse("theming")).content.decode()
+        text = _text(html)
+        for name in ("INSTALLED_APPS", "CRUD_VIEWS_EXTENDS", "CRISPY_TEMPLATE_PACK", "DJANGO_TABLES2_TEMPLATE"):
+            self.assertIn(name, text)
+        self.assertNotIn("SECRET_KEY", html)
+        self.assertNotIn(settings.SECRET_KEY, html)
+        self.assertNotIn("django-insecure", html)
+
+    def test_theming_page_links_to_the_docs(self):
+        html = self.client.get(reverse("theming")).content.decode()
+        self.assertIn("https://django-crud-views.readthedocs.io/en/latest/reference/theme/", html)
+        self.assertIn("https://github.com/alexander-jacob/tabler-test/blob/main/docs/crud_views_tabler.md", html)
+
+    def test_theming_is_in_the_nav_for_every_user(self):
+        User.objects.create_user("plain", password="s3cret-pass")
+        self.client.force_login(User.objects.get(username="plain"))
+        response = self.client.get(reverse("dashboard:index"))
+        self.assertContains(response, reverse("theming"))
+        self.assertContains(response, "How this is themed")
+        self.assertEqual(self.client.get(reverse("theming")).status_code, 200)
+
+    def test_theming_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("theming"))
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('theming')}")

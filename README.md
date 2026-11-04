@@ -5,6 +5,19 @@ prototype Tabler theme for django-crud-views.
 
 ## Run it
 
+With [Task](https://taskfile.dev):
+
+```shell
+task up      # uv sync, migrate, superuser admin/admin, seed the demo data, runserver
+task         # list all tasks (setup, run, seed, reset, …)
+```
+
+`task setup` is safe to re-run: the superuser and each seed step are skipped when their data already exists.
+`task reset` deletes the SQLite database and uploaded media and sets everything up again. Change the login with
+`task up ADMIN_USER=… ADMIN_PASSWORD=…` (local development only).
+
+Or by hand:
+
 ```shell
 uv sync
 uv run python example/manage.py migrate

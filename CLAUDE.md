@@ -21,10 +21,11 @@ theme's tests.
 ## Commands
 
 ```shell
-uv sync
-uv run python example/manage.py migrate
-uv run python example/manage.py runserver
-uv run python example/manage.py seed_demo_users | seed_demo_customers | seed_demo_catalog   # demo data
+task up      # Taskfile.yaml: uv sync, migrate, superuser admin/admin, seed, runserver
+task setup   # the same without runserver; idempotent
+task reset   # delete example/db.sqlite3 + example/media, then setup (asks first)
+
+uv run python example/manage.py seed_demo_users | seed_demo_customers | seed_demo_catalog   # demo data by hand
 
 # Django test suites (run with the example's settings; crud_views_tabler's tests use the customers app)
 uv run python example/manage.py test django_tabler crud_views_tabler dashboard catalog customers
@@ -38,6 +39,10 @@ uv run python example/manage.py check --fail-level WARNING   # includes crud_vie
 ```
 
 There is no configured linter/formatter.
+
+The seed commands are not idempotent (a re-run adds rows: `seed_demo_users`/`seed_demo_catalog` skip a clashing row
+before drawing its remaining random values, so later names change; `seed_demo_customers` never checks). The
+Taskfile's `seed:*` tasks guard against that with `status:` checks that skip a step when its table has data.
 
 ## Architecture
 

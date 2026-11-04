@@ -1,6 +1,6 @@
-"""CRUD views for ``Product``.
+"""CRUD views for ``ShowcaseItem``.
 
-``ProductForm`` is the reason this app exists: its layout uses one crispy layout object
+``ShowcaseItemForm`` is the reason this app exists: its layout uses one crispy layout object
 per render path, so a single create page shows every branch of the crispy template pack
 side by side. Keep that coverage when editing — the table in
 ``docs/crispy_tabler_coverage.md`` says which field covers which template.
@@ -29,16 +29,16 @@ from crud_views.lib.views.list import ListViewFilterFormHelper
 from crud_views.lib.viewset import ViewSet
 from django import forms
 
-from .models import Category, Product, Tag
+from .models import ShowcaseCategory, ShowcaseItem, ShowcaseTag
 
-cv_product = ViewSet(model=Product, name="product", icon_header="tabler:package")
+cv_showcaseitem = ViewSet(model=ShowcaseItem, name="showcaseitem", prefix="showcase", icon_header="tabler:package")
 
 
 class BreadcrumbMixin(CrudViewBreadcrumbMixin):
     pass
 
 
-class ProductTable(Table):
+class ShowcaseItemTable(Table):
     id = LinkDetailColumn(verbose_name="#")
     name = tables.Column()
     sku = tables.Column()
@@ -52,24 +52,24 @@ class ProductTable(Table):
     created_at = NaturalTimeColumn(verbose_name="Created")
 
 
-class ProductFilter(django_filters.FilterSet):
+class ShowcaseItemFilter(django_filters.FilterSet):
     """Covers the widgets the model form cannot reach: a null-boolean select and a number pair."""
 
     name = django_filters.CharFilter(lookup_expr="icontains")
-    category = django_filters.ModelChoiceFilter(queryset=Category.objects.all())
+    category = django_filters.ModelChoiceFilter(queryset=ShowcaseCategory.objects.all())
     tags = django_filters.ModelMultipleChoiceFilter(
-        queryset=Tag.objects.all(), widget=forms.CheckboxSelectMultiple
+        queryset=ShowcaseTag.objects.all(), widget=forms.CheckboxSelectMultiple
     )
     is_featured = django_filters.BooleanFilter(label="Featured")
     price_min = django_filters.NumberFilter(field_name="price", lookup_expr="gte", label="Price from")
     price_max = django_filters.NumberFilter(field_name="price", lookup_expr="lte", label="Price to")
 
     class Meta:
-        model = Product
+        model = ShowcaseItem
         fields = ["name", "category", "tags", "is_featured", "price_min", "price_max"]
 
 
-class ProductFilterFormHelper(ListViewFilterFormHelper):
+class ShowcaseItemFilterFormHelper(ListViewFilterFormHelper):
     layout = Layout(
         Row(Column4("name"), Column4("category"), Column4("is_featured")),
         Row(Column3("price_min"), Column3("price_max")),
@@ -77,11 +77,11 @@ class ProductFilterFormHelper(ListViewFilterFormHelper):
     )
 
 
-class ProductForm(CrispyModelForm):
+class ShowcaseItemForm(CrispyModelForm):
     submit_label = "Save"
 
     class Meta:
-        model = Product
+        model = ShowcaseItem
         fields = [
             "name", "slug", "sku", "description",
             "category", "tags", "channels", "size", "shipping",
@@ -128,36 +128,36 @@ class ProductForm(CrispyModelForm):
         ]
 
 
-class ProductListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired):
-    cv_viewset = cv_product
-    table_class = ProductTable
-    filterset_class = ProductFilter
-    formhelper_class = ProductFilterFormHelper
+class ShowcaseItemListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired):
+    cv_viewset = cv_showcaseitem
+    table_class = ShowcaseItemTable
+    filterset_class = ShowcaseItemFilter
+    formhelper_class = ShowcaseItemFilterFormHelper
     cv_list_actions = ["detail", "update", "delete"]
     cv_context_actions = ["list", "filter", "create"]
 
 
-class ProductDetailView(BreadcrumbMixin, DetailViewPermissionRequired):
-    cv_viewset = cv_product
-    template_name = "catalog/product_detail.html"
+class ShowcaseItemDetailView(BreadcrumbMixin, DetailViewPermissionRequired):
+    cv_viewset = cv_showcaseitem
+    template_name = "showcase/showcaseitem_detail.html"
 
 
-class ProductCreateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewPermissionRequired):
-    cv_viewset = cv_product
-    form_class = ProductForm
+class ShowcaseItemCreateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewPermissionRequired):
+    cv_viewset = cv_showcaseitem
+    form_class = ShowcaseItemForm
     cv_message_template_code = "Created »{{ object }}«"
 
 
-class ProductUpdateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
-    cv_viewset = cv_product
-    form_class = ProductForm
+class ShowcaseItemUpdateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
+    cv_viewset = cv_showcaseitem
+    form_class = ShowcaseItemForm
     cv_cancel_keys = ["list", "detail"]
     cv_success_keys = ["list", "detail"]
     cv_message_template_code = "Updated »{{ object }}«"
 
 
-class ProductDeleteView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
-    cv_viewset = cv_product
+class ShowcaseItemDeleteView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
+    cv_viewset = cv_showcaseitem
     form_class = CrispyDeleteForm
     cv_modal = True
     cv_cancel_keys = ["list", "detail"]

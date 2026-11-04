@@ -1,6 +1,6 @@
-# Crispy render-path coverage: the `catalog` demo app
+# Crispy render-path coverage: the `showcase` demo app
 
-The `catalog` app exists to make one page — `/product/create/` — render **every branch of the crispy
+The `showcase` app exists to make one page — `/showcase/create/` — render **every branch of the crispy
 template pack at once**, so the Tabler theme can be judged field by field instead of guessing. It is the
 groundwork for the `crispy_tabler` template pack, which now lives in `src/django_tabler`
 and which the demo renders through (`CRISPY_TEMPLATE_PACK = "crispy_tabler"`).
@@ -10,12 +10,12 @@ are now fixed by `crispy_tabler`; the third column of the table shows the state 
 Tabler 1.6.1 and django-crud-views main.
 
 ```
-uv run python example/manage.py seed_demo_catalog     # 40 products, 5 categories, 6 tags, 4 channels
-uv run python example/manage.py test catalog          # pins the coverage below
+uv run python example/manage.py seed_demo_showcase     # 40 items, 5 categories, 6 tags, 4 channels
+uv run python example/manage.py test showcase          # pins the coverage below
 ```
 
-`catalog/tests.py` asserts one marker per render path, now against the fixed markup. If a field is removed from
-`ProductForm.get_layout_fields` the matching test fails, so the coverage cannot rot silently.
+`showcase/tests.py` asserts one marker per render path, now against the fixed markup. If a field is removed from
+`ShowcaseItemForm.get_layout_fields` the matching test fails, so the coverage cannot rot silently.
 
 ## What each field is for
 
@@ -44,14 +44,14 @@ uv run python example/manage.py test catalog          # pins the coverage below
 | `internal_notes` | inside `Fieldset` | `layout/fieldset.html` | **plain `<fieldset>`**, now fixed (below) |
 | Save / Cancel | `FormActions` | `layout/formactions.html` → `mb-3` | **no `form-footer`**, now fixed (below) |
 
-The **filter form** (`ProductFilter`) covers what a ModelForm cannot reach: `BooleanFilter` renders a
+The **filter form** (`ShowcaseItemFilter`) covers what a ModelForm cannot reach: `BooleanFilter` renders a
 `NullBooleanSelect` ("Unknown / Yes / No"), two `NumberFilter`s make the price pair, and
 `InlineCheckboxes("tags")` renders `layout/checkboxselectmultiple_inline.html`.
 
 ## What was wrong under Tabler, and what `crispy_tabler` emits now
 
-Six findings, all seen in the browser on `/product/create/`. **All six are fixed** by the pack and pinned in
-`catalog/tests.py`.
+Six findings, all seen in the browser on `/showcase/create/`. **All six are fixed** by the pack and pinned in
+`showcase/tests.py`.
 
 1. **`UneditableField` had no Tabler equivalent.** Bootstrap's template emitted `class="uneditable-input textinput"`
    (a Bootstrap 2 class) and no `form-control`. **Fixed:** now `form-control-plaintext`, and `uneditable-input` is
@@ -69,7 +69,7 @@ Six findings, all seen in the browser on `/product/create/`. **All six are fixed
    spans **three** templates in `crispy_tabler`: `field.html` ("Size", "Channels") plus
    `layout/radioselect_inline.html` ("Shipping") and `layout/checkboxselectmultiple_inline.html` (the filter's
    "Tags"). The two inline ones were missed at first and caught by this demo; `fs-6` now appears nowhere on
-   `/product/create/`.
+   `/showcase/create/`.
 
 ## Resolved: the latent `bootstrap5/` dependency in django-crud-views
 
@@ -92,7 +92,7 @@ pages with no `crispy_bootstrap5` in `INSTALLED_APPS`, so a stray `bootstrap5/` 
 `TemplateDoesNotExist`, and asserts no such name appears in the rendered template list. It runs unskipped and green
 (71 tests, 0 skipped, against upstream 10d81ad). It is a guard against regression, not proof that the old file was
 harmless — the demo never rendered it, for two independent reasons: `crud_views_object_detail` is not installed, and
-`ProductDetailView` / `CustomerDetailView` set their own `template_name` and never go through crispy.
+`ShowcaseItemDetailView` / `CustomerDetailView` set their own `template_name` and never go through crispy.
 
 Two things are **not** deltas, although the earlier guess was that they would be:
 
@@ -112,7 +112,7 @@ Two things are **not** deltas, although the earlier guess was that they would be
 
 `InlineRadios("shipping")` only swaps the *template*. Without `widget=forms.RadioSelect` on the field, the
 widget stays a `Select` and `radioselect_inline.html` renders `<input type="select">` — invalid HTML that the
-browser paints as small boxes showing the raw choice values. `catalog/tests.py` asserts `type="select"` never
+browser paints as small boxes showing the raw choice values. `showcase/tests.py` asserts `type="select"` never
 appears.
 
 The pack was copied from `jacob-consulting/crispy-tabler` at `2f86558` and then folded into `django_tabler`. It keeps the

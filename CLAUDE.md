@@ -12,7 +12,7 @@ under `example/` that exercises them:
   pack `crispy_tabler` (`templates/crispy_tabler/` + `django_tabler.crispy`). Must not depend on django-crud-views;
   only the crispy pack needs the `crispy` extra.
 - `src/crud_views_tabler/`: Tabler theme for django-crud-views. Depends on `django_tabler`.
-- `example/`: the demo site (`config/` settings, apps `dashboard`, `customers`, `catalog`).
+- `example/`: the demo site (`config/` settings, apps `dashboard`, `customers`, `showcase`).
 
 django-crud-views comes from the sibling checkout `../django-crud-views` as an editable path dependency
 (`[tool.uv.sources]`), because the theme tracks unreleased upstream features. Upstream changes there can break the
@@ -25,10 +25,10 @@ task up      # Taskfile.yaml: uv sync, migrate, superuser admin/admin, seed, run
 task setup   # the same without runserver; idempotent
 task reset   # delete example/db.sqlite3 + example/media, then setup (asks first)
 
-uv run python example/manage.py seed_demo_users | seed_demo_customers | seed_demo_catalog   # demo data by hand
+uv run python example/manage.py seed_demo_users | seed_demo_customers | seed_demo_showcase   # demo data by hand
 
 # Example apps' Django tests (the example's settings)
-uv run python example/manage.py test django_tabler dashboard catalog customers
+uv run python example/manage.py test django_tabler dashboard customers showcase
 uv run python example/manage.py test dashboard.tests.SomeTestCase.test_name   # single test
 
 # crud_views_tabler theme tests (pytest, own settings and test app: tests/crud_views_tabler/)
@@ -44,7 +44,7 @@ uv run python example/manage.py check --fail-level WARNING   # includes crud_vie
 
 There is no configured linter/formatter.
 
-The seed commands are not idempotent (a re-run adds rows: `seed_demo_users`/`seed_demo_catalog` skip a clashing row
+The seed commands are not idempotent (a re-run adds rows: `seed_demo_users`/`seed_demo_showcase` skip a clashing row
 before drawing its remaining random values, so later names change; `seed_demo_customers` never checks). The
 Taskfile's `seed:*` tasks guard against that with `status:` checks that skip a step when its table has data.
 
@@ -81,7 +81,7 @@ hand-edited (`HAND_EDITED` in the script) and the script refuses to overwrite th
 `widget/` are pack-owned. `django_tabler/crispy/vendored.py:CRISPY_BOOTSTRAP5_VERSION` must match the `test` group's
 crispy-bootstrap5 pin — `test_pack_parity.py` fails otherwise. `django_tabler.crispy.layout` subclasses
 crispy-bootstrap5's `FloatingField`/`Switch`, so that distribution stays installed (but not in `INSTALLED_APPS`).
-`docs/crispy_tabler_coverage.md` documents which template branches the `catalog` demo form exercises.
+`docs/crispy_tabler_coverage.md` documents which template branches the `showcase` demo form exercises.
 
 **Layout switch.** The navbar gear (`layout_switch_menu.html` + `static/django_tabler/layout-switch.js`) stores the
 user's layout choice in `localStorage` using Tabler's own `tabler-*` keys; nothing is server-side.

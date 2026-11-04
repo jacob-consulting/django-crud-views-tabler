@@ -18,7 +18,7 @@ recorded; all three were stale expectations, the rendered pages were right.
   `docs/reference/javascript.md#tooltips` still tells themes to replace `init`, so other themes hit the same gap;
   worth an upstream issue.
 - **Stale tests.** Form buttons are `<button type="submit">` since the form-button leaf (Phase 06), not `<input>`
-  (`test_delete_form_is_the_stock_crispy_delete_form`, catalog `test_form_actions_and_group_labels`); the
+  (`test_delete_form_is_the_stock_crispy_delete_form`, showcase `test_form_actions_and_group_labels`); the
   protected-objects alert needs `has_protected_objects` since Phase 06.3
   (`test_related_objects_alerts_get_the_tabler_layout`).
 - **Table pagination parity (Phase 05).** The table override gained upstream's `<nav aria-label="pagination">`, the

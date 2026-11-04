@@ -24,7 +24,7 @@ uv run python example/manage.py migrate
 uv run python example/manage.py createsuperuser
 uv run python example/manage.py seed_demo_users       # optional: 40 sample accounts so the charts have data
 uv run python example/manage.py seed_demo_customers   # optional: 60 sample customers for the crud_views demo
-uv run python example/manage.py seed_demo_catalog     # optional: 40 sample products for the crispy forms demo
+uv run python example/manage.py seed_demo_showcase    # optional: 40 sample items for the crispy forms demo
 uv run python example/manage.py runserver
 ```
 
@@ -44,7 +44,7 @@ Open http://127.0.0.1:8000/ and sign in. Every page except the login page requir
 | `/users/` | Searchable, paginated user list | `auth.view_user` permission |
 | `/users/new/` | Create a user (the form opens as a modal on the list) | `auth.add_user` permission |
 | `/customer/` | Customers: django-crud-views list (sort, filter), detail, create, update, delete (modal) | `customers.*_customer` permissions |
-| `/product/` | Products: a django-crud-views ViewSet whose form renders every branch of the crispy pack | `catalog.*_product` permissions |
+| `/showcase/` | Form showcase: a django-crud-views ViewSet whose form renders every branch of the crispy pack | `showcase.*_showcaseitem` permissions |
 | `/admin/` | Django admin | staff |
 
 Seeded demo users have no usable password and cannot sign in.
@@ -61,7 +61,7 @@ Seeded demo users have no usable password and cannot sign in.
 - `src/crud_views_tabler/`: Tabler theme for django-crud-views (template overrides, Tabler icon library, JS adapter),
   including `crud_views_tabler/page.html`, the page every crud_views view extends (`CRUD_VIEWS_EXTENDS`); design notes in
   [`docs/crud_views_tabler.md`](docs/crud_views_tabler.md)
-- `example/`: the demo project: `manage.py`, `config/`, the `dashboard`, `customers` and `catalog` apps, and
+- `example/`: the demo project: `manage.py`, `config/`, the `dashboard`, `customers` and `showcase` apps, and
   `templates/django_tabler/includes/`, whose `site_name.html`, `nav_menu.html` and `brand.html` override the package
   defaults with the Acme content
 - `tests/crispy_tabler/`: the template pack's test suite; `scripts/vendor_templates.py` re-vendors its templates
@@ -74,7 +74,7 @@ The built-in secret key is for local development only.
 ## Tests
 
 ```shell
-uv run python example/manage.py test django_tabler crud_views_tabler dashboard catalog customers
+uv run python example/manage.py test django_tabler crud_views_tabler dashboard customers showcase
 uv run --group test pytest                                                  # the crispy template pack
 ```
 

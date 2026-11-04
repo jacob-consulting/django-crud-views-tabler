@@ -16,7 +16,7 @@ def new_sku() -> str:
     return "SKU-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
 
-class Category(models.Model):
+class ShowcaseCategory(models.Model):
     """Lookup for a single-choice ``<select>``."""
 
     name = models.CharField(max_length=100, unique=True)
@@ -29,7 +29,7 @@ class Category(models.Model):
         return self.name
 
 
-class Tag(models.Model):
+class ShowcaseTag(models.Model):
     """Lookup for a multiple ``<select>`` and for the filter's inline checkboxes."""
 
     name = models.CharField(max_length=100, unique=True)
@@ -41,7 +41,7 @@ class Tag(models.Model):
         return self.name
 
 
-class Channel(models.Model):
+class ShowcaseChannel(models.Model):
     """Lookup for a stacked checkbox list."""
 
     name = models.CharField(max_length=100, unique=True)
@@ -53,7 +53,7 @@ class Channel(models.Model):
         return self.name
 
 
-class Product(models.Model):
+class ShowcaseItem(models.Model):
     class Size(models.TextChoices):
         S = "s", "Small"
         M = "m", "Medium"
@@ -73,9 +73,9 @@ class Product(models.Model):
     )
 
     # choices and relations
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
-    tags = models.ManyToManyField(Tag, blank=True, related_name="products")
-    channels = models.ManyToManyField(Channel, blank=True, related_name="products")
+    category = models.ForeignKey(ShowcaseCategory, on_delete=models.PROTECT, related_name="items")
+    tags = models.ManyToManyField(ShowcaseTag, blank=True, related_name="items")
+    channels = models.ManyToManyField(ShowcaseChannel, blank=True, related_name="items")
     size = models.CharField(max_length=1, choices=Size.choices, default=Size.M)
     shipping = models.CharField(max_length=20, choices=Shipping.choices, default=Shipping.STANDARD)
 

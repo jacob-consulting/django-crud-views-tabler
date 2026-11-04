@@ -51,14 +51,14 @@ tasks:
         sys.exit(0 if get_user_model().objects.filter(username='{{.ADMIN_USER}}').exists() else 1)"
 
   seed:
-    desc: Seed demo users, customers and products
+    desc: Seed demo users, customers and showcase items
     cmds:
       - task: seed:users
       - task: seed:customers
-      - task: seed:catalog
+      - task: seed:showcase
 
   # Each seed step is skipped when its table already has demo rows: none of the seed commands is safely
-  # re-runnable (seed_demo_users and seed_demo_catalog skip a clashing row before drawing its remaining
+  # re-runnable (seed_demo_users and seed_demo_showcase skip a clashing row before drawing its remaining
   # random values, so the following names change and a second run adds ~39 more rows).
 
   seed:users:
@@ -79,21 +79,21 @@ tasks:
         {{.MANAGE}} shell -c "import sys; from customers.models import Customer;
         sys.exit(0 if Customer.objects.exists() else 1)"
 
-  seed:catalog:
-    desc: Seed 40 demo products, unless there are products already
+  seed:showcase:
+    desc: Seed 40 demo showcase items, unless there are items already
     cmds:
-      - "{{.MANAGE}} seed_demo_catalog"
+      - "{{.MANAGE}} seed_demo_showcase"
     status:
       - >-
-        {{.MANAGE}} shell -c "import sys; from catalog.models import Product;
-        sys.exit(0 if Product.objects.exists() else 1)"
+        {{.MANAGE}} shell -c "import sys; from showcase.models import ShowcaseItem;
+        sys.exit(0 if ShowcaseItem.objects.exists() else 1)"
 
   test:
     desc: Run every test suite (crispy pack, theme, example apps) and the system check
     cmds:
       - uv run --group test pytest
       - uv run --group test pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
-      - "{{.MANAGE}} test django_tabler dashboard catalog customers"
+      - "{{.MANAGE}} test django_tabler dashboard customers showcase"
       - "{{.MANAGE}} check --fail-level WARNING"
 
   run:

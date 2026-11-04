@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from catalog.models import Category, Channel, Product, Tag
+from showcase.models import ShowcaseCategory, ShowcaseChannel, ShowcaseItem, ShowcaseTag
 
 CATEGORIES = ["Audio", "Cables", "Displays", "Keyboards", "Storage"]
 TAGS = ["bestseller", "clearance", "eco", "fragile", "new", "refurbished"]
@@ -24,23 +24,23 @@ class Command(BaseCommand):
 
     def handle(self, *args, count, seed, **options):
         rng = random.Random(seed)
-        categories = [Category.objects.get_or_create(name=name)[0] for name in CATEGORIES]
-        tags = [Tag.objects.get_or_create(name=name)[0] for name in TAGS]
-        channels = [Channel.objects.get_or_create(name=name)[0] for name in CHANNELS]
+        categories = [ShowcaseCategory.objects.get_or_create(name=name)[0] for name in CATEGORIES]
+        tags = [ShowcaseTag.objects.get_or_create(name=name)[0] for name in TAGS]
+        channels = [ShowcaseChannel.objects.get_or_create(name=name)[0] for name in CHANNELS]
         now = timezone.now()
         created = 0
         for i in range(count):
             name = f"{rng.choice(ADJECTIVES)} {rng.choice(NOUNS)} {i + 1}"
             slug = name.lower().replace(" ", "-")
-            if Product.objects.filter(slug=slug).exists():
+            if ShowcaseItem.objects.filter(slug=slug).exists():
                 continue
-            product = Product.objects.create(
+            product = ShowcaseItem.objects.create(
                 name=name,
                 slug=slug,
                 description=f"A {name.lower()} for the crispy form coverage demo.",
                 category=rng.choice(categories),
-                size=rng.choice(list(Product.Size)),
-                shipping=rng.choice(list(Product.Shipping)),
+                size=rng.choice(list(ShowcaseItem.Size)),
+                shipping=rng.choice(list(ShowcaseItem.Shipping)),
                 price=Decimal(rng.randrange(500, 150_000)) / 100,
                 warranty_months=rng.choice([12, 24, 36]),
                 stock=rng.choices([0, rng.randint(1, 9), rng.randint(10, 400)], weights=[1, 2, 7])[0],

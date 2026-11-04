@@ -10,10 +10,10 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Category, Channel, Product, Tag
+from .models import ShowcaseCategory, ShowcaseChannel, ShowcaseItem, ShowcaseTag
 
 
-class ProductFormCoverageTests(TestCase):
+class ShowcaseItemFormCoverageTests(TestCase):
     def find(self, pattern: str, html: str) -> str:
         match = re.search(pattern, html)
         self.assertIsNotNone(match, f"{pattern!r} not found in the rendered page")
@@ -22,31 +22,31 @@ class ProductFormCoverageTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.admin = get_user_model().objects.create_superuser("root", "root@example.com", "s3cret-pass")
-        cls.category = Category.objects.create(name="Audio")
-        cls.tag = Tag.objects.create(name="new")
-        cls.channel = Channel.objects.create(name="Online shop")
-        cls.product = Product.objects.create(name="Studio Speaker", slug="studio-speaker", category=cls.category)
+        cls.category = ShowcaseCategory.objects.create(name="Audio")
+        cls.tag = ShowcaseTag.objects.create(name="new")
+        cls.channel = ShowcaseChannel.objects.create(name="Online shop")
+        cls.product = ShowcaseItem.objects.create(name="Studio Speaker", slug="studio-speaker", category=cls.category)
 
     def setUp(self):
         self.client.force_login(self.admin)
 
     def create_page(self) -> str:
-        response = self.client.get(reverse("product-create"))
+        response = self.client.get(reverse("showcaseitem-create"))
         self.assertEqual(response.status_code, 200)
         return response.content.decode()
 
     def test_list_detail_update_and_filter_render(self):
         for url in [
-            reverse("product-list"),
-            reverse("product-detail", kwargs={"pk": self.product.pk}),
-            reverse("product-update", kwargs={"pk": self.product.pk}),
-            reverse("product-delete", kwargs={"pk": self.product.pk}),
+            reverse("showcaseitem-list"),
+            reverse("showcaseitem-detail", kwargs={"pk": self.product.pk}),
+            reverse("showcaseitem-update", kwargs={"pk": self.product.pk}),
+            reverse("showcaseitem-delete", kwargs={"pk": self.product.pk}),
         ]:
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_filter_form_covers_checkbox_and_boolean_widgets(self):
-        html = self.client.get(reverse("product-list"), {"cv_filter": "1"}).content.decode()
+        html = self.client.get(reverse("showcaseitem-list"), {"cv_filter": "1"}).content.decode()
         self.assertIn('name="tags"', html)  # checkboxselectmultiple_inline.html
         self.assertIn('name="is_featured"', html)  # NullBooleanSelect
         self.assertIn('name="price_min"', html)
@@ -128,11 +128,11 @@ class ProductFormCoverageTests(TestCase):
         # hardcoded bootstrap5/ includes, so this is now a regression guard for the pack and the theme.
         rendered = set()
         for url, query in [
-            (reverse("product-create"), {}),
-            (reverse("product-update", kwargs={"pk": self.product.pk}), {}),
-            (reverse("product-detail", kwargs={"pk": self.product.pk}), {}),
-            (reverse("product-list"), {"cv_filter": "1"}),  # renders checkboxselectmultiple_inline.html
-            (reverse("product-delete", kwargs={"pk": self.product.pk}), {}),
+            (reverse("showcaseitem-create"), {}),
+            (reverse("showcaseitem-update", kwargs={"pk": self.product.pk}), {}),
+            (reverse("showcaseitem-detail", kwargs={"pk": self.product.pk}), {}),
+            (reverse("showcaseitem-list"), {"cv_filter": "1"}),  # renders checkboxselectmultiple_inline.html
+            (reverse("showcaseitem-delete", kwargs={"pk": self.product.pk}), {}),
         ]:
             with self.subTest(url=url):
                 response = self.client.get(url, query)
@@ -154,11 +154,11 @@ class ProductFormCoverageTests(TestCase):
         html = self.create_page()
         self.assertIn("SKU-", html)
         response = self.client.post(
-            reverse("product-create"),
+            reverse("showcaseitem-create"),
             {
                 "name": "Rugged Hub", "slug": "rugged-hub", "description": "",
                 "category": self.category.pk, "tags": [self.tag.pk], "channels": [self.channel.pk],
-                "size": Product.Size.M, "shipping": Product.Shipping.STANDARD,
+                "size": ShowcaseItem.Size.M, "shipping": ShowcaseItem.Shipping.STANDARD,
                 "price": "19.90", "warranty_months": 24, "stock": 5, "rating": 4,
                 "released_on": "", "published_at": "", "restock_at": "",
                 "is_active": "on", "accent_color": "#066fd1",
@@ -168,6 +168,6 @@ class ProductFormCoverageTests(TestCase):
         )
         # MessageMixin renders the message template, so response.context is not the form's context
         self.assertEqual(response.status_code, 302, response.content[:400])
-        product = Product.objects.get(slug="rugged-hub")
+        product = ShowcaseItem.objects.get(slug="rugged-hub")
         self.assertTrue(product.sku.startswith("SKU-"))
         self.assertEqual(list(product.tags.all()), [self.tag])

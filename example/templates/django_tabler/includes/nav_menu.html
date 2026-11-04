@@ -13,11 +13,11 @@
           </a>
         </li>
         {% endif %}
-        {% if perms.catalog.view_product %}
-        <li class="nav-item{% if url_name|slice:':8' == 'product-' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'product-list' %}"{% if url_name == 'product-list' %} aria-current="page"{% endif %}>
-            <span class="nav-link-icon">{% icon "package" %}</span>
-            <span class="nav-link-title">Products</span>
+        {% if perms.showcase.view_showcaseitem %}
+        <li class="nav-item{% if url_name|slice:':13' == 'showcaseitem-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'showcaseitem-list' %}"{% if url_name == 'showcaseitem-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "layout-grid" %}</span>
+            <span class="nav-link-title">Form showcase</span>
           </a>
         </li>
         {% endif %}

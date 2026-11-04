@@ -13,6 +13,7 @@ task         # list all tasks (setup, run, seed, reset, …)
 ```
 
 `task setup` is safe to re-run: the superuser and each seed step are skipped when their data already exists.
+`task seed:reset` rebuilds the Acme Roasters demo data in place (`seed_demo --reset`; `admin` and showcase items stay).
 `task reset` deletes the SQLite database and uploaded media and sets everything up again. Change the login with
 `task up ADMIN_USER=… ADMIN_PASSWORD=…` (local development only).
 
@@ -22,8 +23,9 @@ Or by hand:
 uv sync
 uv run python example/manage.py migrate
 uv run python example/manage.py createsuperuser
-uv run python example/manage.py seed_demo             # optional: demo accounts alex, sam, kim (password demo)
+uv run python example/manage.py seed_demo             # optional: the Acme Roasters world and accounts alex, sam, kim (password demo)
 uv run python example/manage.py seed_demo_showcase    # optional: 40 sample items for the crispy forms demo
+uv run python example/manage.py seed_demo --reset     # delete the demo data (not admin) and rebuild it; --seed N varies it
 uv run python example/manage.py runserver
 ```
 
@@ -45,7 +47,8 @@ Open http://127.0.0.1:8000/ and sign in. Every page except the login page requir
 | `/showcase/` | Form showcase: a django-crud-views ViewSet whose form renders every branch of the crispy pack | `showcase.*_showcaseitem` permissions |
 | `/admin/` | Django admin | staff |
 
-`seed_demo` creates the demo accounts `alex` (owner), `sam` (account manager) and `kim` (head roaster); the password
+`seed_demo` builds the whole demo world (about 25 customers, 70 orders over 90 days in every workflow state, 30 products, 7
+green lots with cupping scores, roast batches, subscriptions) and the demo accounts `alex` (owner), `sam` (account manager) and `kim` (head roaster); the password
 is `demo` for all three, and the sign-in page has a button per account that fills the form.
 
 ## Layout

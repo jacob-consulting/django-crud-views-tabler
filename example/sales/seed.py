@@ -1,5 +1,5 @@
 """Sales demo data: about 25 customers (cafés, shops and consumers) with addresses, Sam looking after some of them,
-and a few orders in every workflow state (Task 10 grows the full world)."""
+and about 70 orders over the last 90 days in every workflow state."""
 
 import random
 from datetime import timedelta
@@ -99,39 +99,52 @@ def seed(rng: random.Random, world: dict) -> None:
     world["subscriptions"] = seed_subscriptions(rng, customers, world["products"])
 
 
-# How far each seeded order got along the happy path (or cancelled after the draft), oldest first.
-ORDER_PATHS = [
-    ["wf_confirm", "wf_roast", "wf_ship", "wf_deliver"],
-    ["wf_confirm", "wf_roast", "wf_ship", "wf_deliver"],
-    ["wf_confirm", "wf_roast", "wf_ship", "wf_deliver"],
-    ["wf_cancel"],
-    ["wf_confirm", "wf_roast", "wf_ship"],
-    ["wf_confirm", "wf_roast", "wf_ship"],
-    ["wf_confirm", "wf_cancel"],
-    ["wf_confirm", "wf_roast"],
-    ["wf_confirm", "wf_roast"],
-    ["wf_confirm", "wf_roast"],
-    ["wf_confirm"],
-    ["wf_confirm"],
-    ["wf_confirm"],
-    [],
-    [],
-    [],
+ORDER_COUNT = 72
+HISTORY_DAYS = 88
+
+# state -> workflow steps taken from the draft (a cancelled order may have been confirmed first)
+PATHS = {
+    "draft": [],
+    "confirmed": ["wf_confirm"],
+    "roasted": ["wf_confirm", "wf_roast"],
+    "shipped": ["wf_confirm", "wf_roast", "wf_ship"],
+    "delivered": ["wf_confirm", "wf_roast", "wf_ship", "wf_deliver"],
+    "cancelled": ["wf_cancel"],
+    "cancelled after confirm": ["wf_confirm", "wf_cancel"],
+}
+# hours between an order and each step
+STEP_HOURS = {"wf_confirm": 3, "wf_roast": 30, "wf_ship": 54, "wf_deliver": 100, "wf_cancel": 20}
+# (oldest age in days, weights per PATHS key): older orders are mostly delivered, newer ones still in progress
+STATE_MIX = [
+    (35, {"delivered": 84, "cancelled": 6, "cancelled after confirm": 6, "shipped": 4}),
+    (14, {"delivered": 35, "shipped": 25, "roasted": 15, "confirmed": 10, "cancelled": 5, "cancelled after confirm": 10}),
+    (5, {"delivered": 5, "shipped": 10, "roasted": 30, "confirmed": 35, "cancelled": 5, "draft": 15}),
+    (0, {"shipped": 4, "roasted": 22, "confirmed": 38, "draft": 32, "cancelled": 4}),
 ]
+# Orders by index (0 = oldest) with a fixed state, so every state is present whatever the dice say.
+FORCED = {1: "cancelled", 2: "delivered", ORDER_COUNT - 1: "draft", ORDER_COUNT - 2: "draft",
+          ORDER_COUNT - 3: "confirmed", ORDER_COUNT - 4: "roasted", ORDER_COUNT - 5: "shipped"}
 COMMENTS = {"wf_cancel": "Customer changed their mind.", "wf_ship": "DHL, two parcels.", "wf_roast": ""}
 
 
+def pick_path(rng: random.Random, age: int) -> list[str]:
+    mix = next(weights for oldest, weights in STATE_MIX if age >= oldest)
+    return PATHS[rng.choices(list(mix), weights=list(mix.values()))[0]]
+
+
 def seed_orders(rng: random.Random, customers: list[Customer], users: dict) -> list[Order]:
-    """``ORDER_PATHS`` twice, for Sam's customers and for the rest, numbered by date; each order has 1-4 lines."""
+    """``ORDER_COUNT`` orders spread over the last ``HISTORY_DAYS`` days, numbered by date; each has 1-4 lines."""
     products = list(Product.objects.instance_of(Beans, Equipment).filter(is_active=True))
     sams = [c for c in customers if c.owner == users["sam"]]
     others = [c for c in customers if c.owner != users["sam"]]
     now = timezone.now()
     plan = []
-    for pool, seller in ((sams, users["sam"]), (others, users["alex"])):
-        for n, path in enumerate(ORDER_PATHS):
-            created = now - timedelta(days=(len(ORDER_PATHS) - n) * 3 + rng.randint(0, 2), hours=rng.randint(1, 8))
-            plan.append((created, rng.choice(pool), seller, path))
+    for n in range(ORDER_COUNT):
+        age = round(HISTORY_DAYS * (1 - n / (ORDER_COUNT - 1)) ** 1.25) + rng.randint(0, 1)
+        created = now - timedelta(days=age, hours=rng.randint(0, 9))
+        path = PATHS[FORCED[n]] if n in FORCED else pick_path(rng, age)
+        by_sam = rng.random() < 0.4
+        plan.append((created, rng.choice(sams if by_sam else others), users["sam" if by_sam else "alex"], path))
     orders = []
     for created, customer, seller, path in sorted(plan, key=lambda p: p[0]):  # order numbers follow the dates
         order = Order.objects.create(
@@ -147,9 +160,10 @@ def seed_orders(rng: random.Random, customers: list[Customer], users: dict) -> l
                 grind=rng.choice(["whole", "filter", "espresso"]) if beans else "",
                 bag_size=rng.choice(["250g", "1kg"]) if beans else "",
             )
-        for step, name in enumerate(path, 1):
+        when = created
+        for name in path:
             by = users["kim"] if name == "wf_roast" else seller
-            when = created + timedelta(days=step, hours=step)
+            when = min(when + timedelta(hours=STEP_HOURS[name]), now - timedelta(minutes=5))  # never in the future
             run_transition(order, name, by, comment=COMMENTS.get(name) or None, when=when)
             if name == "wf_ship":
                 order.shipped_at = when
@@ -167,7 +181,8 @@ def seed_subscriptions(rng: random.Random, customers: list[Customer], products: 
     """About 17 subscriptions (14 active), spread over Sam's customers and others, wholesale first."""
     plans = [p for p in products if isinstance(p, Subscription)]
     sams = [c for c in customers if c.owner and c.owner.username == "sam"]
-    pool = [*rng.sample(sams, min(5, len(sams))), *rng.sample([c for c in customers if c not in sams], 12)]
+    rest = [c for c in customers if c not in sams]
+    pool = [*rng.sample(sams, min(5, len(sams))), *rng.sample(rest, min(12, len(rest)))]
     today = timezone.localdate()
     subs = []
     for n, (customer, offset) in enumerate(zip(pool, SUBSCRIPTION_OFFSETS)):

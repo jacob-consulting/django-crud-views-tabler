@@ -25,7 +25,7 @@ task up      # Taskfile.yaml: uv sync, migrate, superuser admin/admin, seed, run
 task setup   # the same without runserver; idempotent
 task reset   # delete example/db.sqlite3 + example/media, then setup (asks first)
 
-uv run python example/manage.py seed_demo | seed_demo_showcase   # demo data by hand
+uv run python example/manage.py seed_demo [--reset] | seed_demo_showcase   # demo data by hand
 
 # Example apps' Django tests (the example's settings)
 uv run python example/manage.py test django_tabler dashboard showcase
@@ -44,10 +44,12 @@ uv run python example/manage.py check --fail-level WARNING   # includes crud_vie
 
 There is no configured linter/formatter.
 
-`seed_demo` (demo accounts alex/sam/kim, password `demo`; apps listed in `SEED_APPS`) refuses to run when those users
-exist. `seed_demo_showcase` is not idempotent (a re-run adds rows: it skips a clashing row
-before drawing its remaining random values, so later names change). The
-Taskfile's `seed:*` tasks guard against that with `status:` checks that skip a step when its table has data.
+`seed_demo` (demo accounts alex/sam/kim, password `demo`; apps listed in `SEED_APPS`, each with a `seed(rng, world)`)
+builds the whole roastery world and is deterministic for a `--seed` (dates are relative to today). It refuses with
+"Demo data already present; use --reset to rebuild." when those users exist; `seed_demo --reset` deletes the demo rows
+(never `admin` or other users) in one transaction and rebuilds. `seed_demo_showcase` is separate and not idempotent
+(a re-run adds rows: it skips a clashing row before drawing its remaining random values, so later names change); the
+Taskfile's `seed:showcase` guards against that with a `status:` check that skips it when the table has data.
 
 ## Architecture
 

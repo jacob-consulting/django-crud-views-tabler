@@ -47,7 +47,9 @@ class ProductViewTests(CatalogTestCase):
         for label in ("Beans", "Equipment", "Subscription"):
             self.assertIn(label, html)
         page_two = self.client.get(reverse("product-list"), {"page": 2}).content.decode()
-        self.assertEqual(page_two.count('data-product-card="'), total - 12)
+        self.assertEqual(page_two.count('data-product-card="'), min(12, total - 12))
+        last = self.client.get(reverse("product-list"), {"page": -(-total // 12)}).content.decode()
+        self.assertEqual(last.count('data-product-card="'), total - 12 * (-(-total // 12) - 1))
 
     def test_table_list_renders(self):
         self.login()

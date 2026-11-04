@@ -31,6 +31,8 @@ LOTS = [
 TASTERS_BY_SESSION = [("alex", "kim"), ("kim", "alex", "sam"), ("alex", "kim"), ("kim", "sam")]
 NOTES = ["", "Sweet, clean cup; the acidity opens as it cools.", "Slightly papery at the start.", "Resubmit after resting a week."]
 
+BATCHES = 30
+
 # lot index -> profile for its batches
 PROFILES = {0: "light", 1: "light", 2: "medium", 3: "espresso", 4: "medium", 5: "dark", 6: "light"}
 
@@ -79,17 +81,17 @@ def seed(rng: random.Random, world: dict) -> None:
     open_orders = list(Order.objects.filter(state__in=[OrderState.CONFIRMED, OrderState.ROASTED]).order_by("number"))
     done_orders = list(Order.objects.filter(state__in=[OrderState.SHIPPED, OrderState.DELIVERED]).order_by("number"))
     batches = []
-    for n in range(14):
+    for n in range(BATCHES):
         lot_index = n % len(lots)
         lot = lots[lot_index][0]
         green = Decimal(rng.choice([8, 10, 12, 12, 15, 15, 20]))
         loss = Decimal(str(round(rng.uniform(0.12, 0.17), 3)))
         batch = RoastBatch.objects.create(
-            lot=lot, roasted_on=today - timedelta(days=(14 - n) * 2 + rng.randint(0, 1)),
+            lot=lot, roasted_on=today - timedelta(days=(BATCHES - n) * 2 + rng.randint(0, 1)),
             profile=PROFILES[lot_index], green_kg=green,
             roasted_kg=(green * (1 - loss)).quantize(Decimal("0.1")), roaster=users["kim"] if n % 4 else users["alex"],
         )
-        pool = open_orders if n >= 8 else done_orders
+        pool = open_orders if n >= BATCHES * 2 // 3 else done_orders
         if pool:
             batch.orders.set(rng.sample(pool, min(len(pool), rng.randint(0, 2))))
         batches.append(batch)

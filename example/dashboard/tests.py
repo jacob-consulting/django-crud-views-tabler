@@ -83,7 +83,7 @@ class DemoAccountTests(TestCase):
         call_command("seed_demo", stdout=open("/dev/null", "w"))
         out = StringIO()
         call_command("seed_demo", stdout=out)
-        self.assertIn("already", out.getvalue())
+        self.assertEqual(out.getvalue().strip(), "Demo data already present; use --reset to rebuild.")
         self.assertEqual(User.objects.filter(username__in=("alex", "sam", "kim")).count(), 3)
 
     def test_login_page_lists_demo_accounts(self):
@@ -243,3 +243,70 @@ class LayoutBoundaryTests(SimpleTestCase):
         for path in src.rglob("*.py"):
             with self.subTest(path=path):
                 self.assertIsNone(pattern.search(path.read_text()))
+
+
+def _counts():
+    """Row counts of every demo model, by label."""
+    from django.apps import apps
+
+    labels = ("catalog", "sales", "roastery")
+    models = [m for label in labels for m in apps.get_app_config(label).get_models()]
+    counts = {m._meta.label: m._base_manager.count() for m in models}
+    counts["auth.User"] = User.objects.count()
+    return counts
+
+
+class SeedWorldTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_demo", stdout=StringIO())
+
+    def test_seed_refuses_on_populated_db(self):
+        before = _counts()
+        out = StringIO()
+        call_command("seed_demo", stdout=out)
+        self.assertEqual(out.getvalue().strip(), "Demo data already present; use --reset to rebuild.")
+        self.assertEqual(_counts(), before)
+
+    def test_seed_reset_is_deterministic(self):
+        from sales.models import Customer
+
+        User.objects.create_superuser("admin", "a@example.com", "admin")
+        call_command("seed_demo", "--reset", stdout=StringIO())
+        first = (_counts(), Customer.objects.order_by("pk").first().name)
+        call_command("seed_demo", "--reset", stdout=StringIO())
+        self.assertEqual((_counts(), Customer.objects.order_by("pk").first().name), first)
+        self.assertTrue(User.objects.filter(username="admin").exists())  # reset never touches other users
+        self.assertEqual(User.objects.count(), 4)
+
+    def test_seed_world_shape(self):
+        from datetime import timedelta
+
+        from django.db.models import Count
+        from guardian.shortcuts import get_objects_for_user
+
+        from catalog.models import Beans, Equipment, Product, Subscription
+        from roastery.models import GreenLot
+        from sales.models import Customer, CustomerSubscription, Order, OrderState
+
+        self.assertGreaterEqual(Customer.objects.count(), 20)
+        self.assertGreaterEqual(Order.objects.count(), 60)
+        self.assertEqual({o.state for o in Order.objects.all()}, {s.value for s in OrderState})
+        self.assertGreaterEqual(Order.objects.filter(state=OrderState.DELIVERED).count(), 20)  # history, not all drafts
+        self.assertLess(Order.objects.filter(state=OrderState.DRAFT).count(), 15)
+        self.assertGreaterEqual(Product.objects.count(), 25)
+        for model in (Beans, Equipment, Subscription):
+            self.assertGreater(model.objects.count(), 0)
+        lots = GreenLot.objects.annotate(n=Count("sessions__scores")).filter(n__gt=0)
+        self.assertGreaterEqual(lots.count(), 6)
+        sam = User.objects.get(username="sam")
+        self.assertGreaterEqual(get_objects_for_user(sam, "sales.view_customer", Customer).count(), 3)
+        dates = [o.created_at.date() for o in Order.objects.all()]
+        today = timezone.localdate()
+        self.assertGreaterEqual((today - min(dates)).days, 80)
+        self.assertLessEqual((today - min(dates)).days, 92)
+        for start in range(0, 90, 30):  # every month has orders
+            window = [d for d in dates if start <= (today - d).days < start + 30]
+            self.assertGreaterEqual(len(window), 10)
+        self.assertGreaterEqual(CustomerSubscription.objects.filter(is_active=True).count(), 10)
+        self.assertTrue(Order.objects.filter(roast_batches__isnull=False).exists())

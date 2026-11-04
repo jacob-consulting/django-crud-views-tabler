@@ -51,10 +51,15 @@ tasks:
         sys.exit(0 if get_user_model().objects.filter(username='{{.ADMIN_USER}}').exists() else 1)"
 
   seed:
-    desc: Seed the demo data (accounts, then showcase items)
+    desc: Seed the roastery demo data, then the showcase items (seed_demo refuses when it is already there)
     cmds:
       - "{{.MANAGE}} seed_demo"
       - task: seed:showcase
+
+  seed:reset:
+    desc: Delete the roastery demo data (not admin) and rebuild it
+    cmds:
+      - "{{.MANAGE}} seed_demo --reset"
 
   # seed_demo refuses by itself when the demo accounts exist. seed_demo_showcase is not safely re-runnable (it skips
   # a clashing row before drawing its remaining random values, so a second run adds ~39 more rows), hence the guard.

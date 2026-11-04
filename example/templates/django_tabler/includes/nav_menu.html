@@ -8,7 +8,17 @@
             <span class="nav-link-title">Dashboard</span>
           </a>
         </li>
-        {# Sales: Customers, Orders, Subscriptions (sales app) #}
+        {# Sales: Customers, Orders, Subscriptions (sales app). Account managers hold only `add_customer` (their view #}
+        {# rights are Guardian object grants, which `perms` cannot see), so the section opens for add or view. #}
+        {% if perms.sales.view_customer or perms.sales.add_customer %}
+        <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Sales</div></li>
+        <li class="nav-item{% if url_name|slice:':9' == 'customer-' or url_name|slice:':8' == 'address-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'customer-list' %}"{% if url_name == 'customer-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "building-store" %}</span>
+            <span class="nav-link-title">Customers</span>
+          </a>
+        </li>
+        {% endif %}
         {% if perms.catalog.view_product or perms.catalog.view_category %}
         <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Catalog</div></li>
         {% if perms.catalog.view_product %}

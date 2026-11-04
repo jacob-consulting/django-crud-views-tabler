@@ -139,3 +139,60 @@ here in the same commit that introduces it.
 - **Suggested upstream change:** emit the picker assets only through the widget's `Media` on pages whose form uses a
   picker, and/or add a system check or a docs section stating the jQuery requirement.
 - **Severity:** annoyance.
+
+## Conditional groups only toggle on a boolean checkbox
+
+- **What happened:** `ConditionalGroup` takes a `ToggleSource` that reads a boolean (`ModelFieldToggle` / `UIFieldToggle`),
+  and `toggle.js` binds to a *checkbox* named by `ToggleGroup`. The roastery's `Customer.kind` is a two-value choice
+  (wholesale / consumer), so it cannot drive the group. The group also refuses fields whose form field is not a plain
+  text/number pair (a `TypedChoiceField` such as `price_tier`) until `empty_values` is given explicitly.
+- **Where:** `src/crud_views/lib/conditional/toggle.py` (`ToggleSource.is_on`), `group.py` (`resolve_conditional_empty_value`),
+  `static/crud_views/js/toggle.js` (`findCheckboxes`).
+- **What we did:** the customer form declares a transient `is_wholesale` checkbox (`UIFieldToggle`), derives
+  `Customer.kind` from it in `clean()`, seeds it from the stored kind when editing, and passes `empty_values` for the
+  choice fields (`example/sales/forms.py`). A POST of `kind=...` alone does nothing; tests post `is_wholesale`.
+- **Suggested upstream change:** a toggle source that compares a field to a value (`ValueToggle("kind", "wholesale")`),
+  with the JS reading a select/radio, and choice fields supported by the empty-value resolver (empty string / None
+  according to `null`).
+- **Severity:** annoyance.
+
+## `ToggleGroup(legend=...)` has an unstyled legend
+
+- **What happened:** the legend of the toggle fieldset renders at the browser/Bootstrap `legend` size (about 1.5rem,
+  floated), far larger than any label around it.
+- **Where:** `src/crud_views/templates/crud_views/conditional/toggle_group.html`.
+- **What we did:** CSS in `crud_views_tabler.css` (`.cv-toggle-group > legend`): not floated, 1rem, bold.
+- **Suggested upstream change:** a class on the legend (or a `legend` size in the stock template) so themes can style it.
+- **Severity:** cosmetic.
+
+## Object detail shows model `help_text` in the value column
+
+- **What happened:** a field's `help_text` (e.g. "ISO country code, e.g. DE.") is printed under its value on the detail
+  page, where it reads as noise.
+- **Where:** `crud_views_object_detail` property rendering.
+- **What we did:** moved the help text from the model to the form field (`example/sales/forms.py`).
+- **Suggested upstream change:** option to omit help text on detail pages (or omit it by default).
+- **Severity:** cosmetic.
+
+## Child viewsets under a Guardian parent need their own gate; no page tabs for children
+
+- **What happened:** `GuardianParentPermissionMixin` requires the child views to also carry per-object Guardian grants
+  on the child rows (`GuardianObjectPermissionMixin`/`GuardianQuerysetMixin`), so a child with a plain `ViewSet`
+  (addresses) is not covered by the parent's grants. The demo adds a 10-line `CustomerGrantMixin` that checks the URL
+  customer (view to read, change to write). Also, the mockup's tabs (Orders / Addresses / Subscriptions) on the parent
+  detail have no equivalent: `ChildContextButton` gives buttons linking to the nested lists instead.
+- **Where:** `src/crud_views_guardian/lib/mixins.py` (`_guardian_child_composition_error`),
+  `docs/reference/context_buttons.md` (ChildContextButton).
+- **What we did:** `example/sales/views/addresses.py` (`CustomerGrantMixin`); "Addresses" is a context button on the customer detail.
+- **Suggested upstream change:** a parent-only mode for Guardian child views (inherit the parent's grants), and a
+  tab/nav rendering of child viewsets on the parent detail page.
+- **Severity:** annoyance.
+
+## The detail header icon sits beside a custom avatar header
+
+- **What happened:** `cv_header_template` replaces only the heading text; the viewset icon is still drawn before it, so
+  a customer page shows the shop icon and then the avatar.
+- **Where:** the theme's `page_title` block (`src/crud_views_tabler/templates/crud_views_tabler/page.html`), `cv_header_icon`.
+- **What we did:** left as is.
+- **Suggested upstream change:** a per-view switch to hide the header icon.
+- **Severity:** cosmetic.

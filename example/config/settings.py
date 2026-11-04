@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'crud_views_widget_typeahead.apps.CrudViewsWidgetTypeaheadConfig',
     'dashboard',
     'catalog',
+    'sales',
     'showcase',
 ]
 

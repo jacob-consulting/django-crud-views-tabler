@@ -38,3 +38,13 @@
   height: var(--tblr-dropdown-item-icon-size);
   color: var(--tblr-dropdown-item-icon-color);
 }
+
+/* crud_views' ToggleGroup(legend=...) renders a bare <fieldset><legend>; browsers and Bootstrap size the legend like
+   a heading. Make it a section label like Tabler's .card-title. */
+.cv-toggle-group > legend {
+  float: none;
+  width: auto;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: var(--tblr-font-weight-bold, 600);
+}

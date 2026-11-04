@@ -1,0 +1,2 @@
+<span class="badge bg-{% if object.is_wholesale %}purple{% else %}secondary{% endif %}-lt me-1">{{ object.get_kind_display }}</span>
+{% if object.is_wholesale %}Tier {{ object.price_tier }} · {{ object.get_payment_terms_display }} · {% endif %}{{ object.city }}{% if object.country %}, {{ object.country }}{% endif %}

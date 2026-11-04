@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 # Each app listed here has a ``seed.py`` with ``seed(rng, world)``. Later apps append themselves, in dependency order.
-SEED_APPS = ["dashboard", "catalog"]
+SEED_APPS = ["dashboard", "catalog", "sales"]
 
 DEMO_USERNAMES = ("alex", "sam", "kim")
 

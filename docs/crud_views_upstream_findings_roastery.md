@@ -45,17 +45,53 @@ here in the same commit that introduces it.
 - **Suggested upstream change:** a documentation note, or a setting for the breakpoint.
 - **Severity:** cosmetic.
 
-## Workflow `BadgeEnum` values are Bootstrap colour names
+## Workflow `BadgeEnum` values are Bootstrap colour names; the badge template is a solid pill
 
 - **What happened:** `BadgeEnum` is documented as "Bootstrap contextual colours for state badges" (`primary`,
-  `success`, `danger`, `light`, `dark`, ...). Tabler has the same names but also its own palette (`bg-orange-lt`,
-  `bg-green-lt`, ...) and uses `-lt` (light) variants for status pills. The enum has no way to name those.
-  To be checked in detail when the order workflow badges are built.
-- **Where:** `src/crud_views_workflow/lib/enums.py:10` (`BadgeEnum`).
-- **What we did:** (to be completed by the workflow task) map the Bootstrap names to Tabler classes through the
-  theme's class keys where possible.
-- **Suggested upstream change:** let the enum, or the badge template, take a class string so a theme can supply
-  `bg-green-lt`.
+  `success`, `danger`, `light`, `dark`, ...), and `crud_views_workflow/badge.html` pastes the value into
+  `badge rounded-pill text-bg-<colour>`, a solid pill. Tabler's status badges are the light variants
+  (`bg-green-lt`, ...). There is no hook for the class, and CSS could only restyle `text-bg-*` colour by colour, on
+  every such badge of a project.
+- **Where:** `src/crud_views_workflow/lib/enums.py:10` (`BadgeEnum`), `src/crud_views_workflow/templates/crud_views_workflow/badge.html`,
+  rendered by `WorkflowModelMixin.get_state_badge` (`src/crud_views_workflow/lib/mixins.py:37`).
+- **What we did:** a one-line theme override, `src/crud_views_tabler/templates/crud_views_workflow/badge.html`
+  (`badge bg-<colour>-lt`; every `BadgeEnum` value has a `-lt` class in Tabler 1.6.1). The orders keep `BadgeEnum`
+  values in `STATE_BADGES` (`example/sales/models.py`). Tested in `tests/crud_views_tabler/test_theme.py`.
+- **Suggested upstream change:** a class key for the badge (`workflow:badge` → `badge rounded-pill text-bg-{colour}`),
+  or let `STATE_BADGES` values be class strings.
+- **Severity:** annoyance.
+
+## `WorkflowViewPermissionRequired` has one permission for every transition
+
+- **What happened:** the workflow view checks one `cv_permission` (`"change"`) before any transition is offered. The
+  roastery's Roasters may only take one step (confirmed → roasted) and otherwise only view orders. django-fsm's own
+  `permission=` on `@transition` supports per-step rules, and upstream filters the offered steps through
+  `get_available_user_state_transitions(user)`, so that part works; but the view-level gate has to be lowered to
+  `"view"` for it to matter, which nothing documents.
+- **Where:** `src/crud_views_workflow/lib/views.py:147` (`cv_permission = "change"`), `lib/mixins.py:84`
+  (`workflow_get_possible_transitions`).
+- **What we did:** `OrderWorkflowView.cv_permission = "view"`; each transition carries `permission=may_change_order`
+  or `may_roast_order` (`example/sales/models.py`); `cv_action_enabled` disables the workflow action when the user has
+  no step left (`example/sales/views/order_actions.py`). A disallowed step posted anyway is not a choice of the form,
+  so it fails validation.
+- **Suggested upstream change:** document the `permission=` + `cv_permission = "view"` recipe, or make the default
+  gate "any possible transition".
+- **Severity:** annoyance.
+
+## Workflow: no refusal-with-message hook, `WorkflowForm.clean()` returns None, no helper outside the view
+
+- **What happened:** (1) "Confirm only with at least one line" can be a django-fsm `conditions=[...]`, but then the
+  step silently disappears and a posted confirm fails as "Select a valid choice". To show a reason the project has to
+  subclass `WorkflowForm`. (2) `WorkflowForm.clean()` returns `None` instead of `cleaned_data`, so a subclass that
+  writes `cleaned = super().clean()` crashes with `'NoneType' object has no attribute 'get'`. (3) Running a transition
+  from code (seed data, a scheduled run) with its `WorkflowInfo` row means copying `WorkflowView.cv_form_valid`.
+- **Where:** `src/crud_views_workflow/lib/forms.py:62` (`clean`), `src/crud_views_workflow/lib/views.py:85`
+  (`cv_form_valid`).
+- **What we did:** `OrderWorkflowForm.clean()` adds the reason to the `transition` field (`example/sales/forms.py`);
+  `example/sales/workflow.py:run_transition` mirrors the view for the seed (Task 7 can reuse it).
+- **Suggested upstream change:** `clean()` returns `cleaned_data`; a `custom={"refuse": callable}` (or a model hook
+  `workflow_check_transition(name) -> str | None`) shown as a form error; a public `run_transition(obj, name, user,
+  comment)` used by the view itself.
 - **Severity:** annoyance.
 
 ## The card template has no block above the heading or at the card root
@@ -195,4 +231,85 @@ here in the same commit that introduces it.
 - **Where:** the theme's `page_title` block (`src/crud_views_tabler/templates/crud_views_tabler/page.html`), `cv_header_icon`.
 - **What we did:** left as is.
 - **Suggested upstream change:** a per-view switch to hide the header icon.
+- **Severity:** cosmetic.
+
+## Formsets have no per-row conditional fields
+
+- **What happened:** an order line's grind and bag size only apply when the row's product is coffee. Conditional
+  groups toggle on a checkbox of the main form, and `ConditionalFormSet` switches a whole first-level formset; neither
+  can follow a select inside each formset row.
+- **Where:** `src/crud_views/lib/conditional/` (`ConditionalGroup`, `ConditionalFormSet`), `static/crud_views/js/toggle.js`.
+- **What we did:** `OrderLineForm.clean()` clears the two fields for non-coffee products and `OrderLine.save()` does
+  too; `ProductSelect` marks coffee options `data-beans` and `example/sales/static/sales/sales.js` disables the two
+  selects in that row (progressive enhancement, registered with `register_assets`).
+- **Suggested upstream change:** a row-scoped toggle (a `ValueToggle` on a field of the same form, see the
+  conditional-groups finding above) that `formset.js` re-binds for added rows.
+- **Severity:** annoyance.
+
+## The formset title is an unstyled `<legend>`
+
+- **What happened:** `crud_views/formsets/formset.html` renders the formset title as a bare `<legend>` (about 1.5rem,
+  floated), larger than the page's card titles.
+- **Where:** `src/crud_views/templates/crud_views/formsets/formset.html` (`<legend>{{ x_formset.title }}</legend>`).
+- **What we did:** the existing legend rule in `crud_views_tabler.css` now covers `.cv-formset-fieldset > legend` too.
+- **Suggested upstream change:** a class key on the legend, as for the toggle group.
+- **Severity:** cosmetic.
+
+## The typeahead skins read Bootstrap's `--bs-*` custom properties
+
+- **What happened:** the select popup of `crud_views_widget_typeahead` uses `var(--bs-body-bg)`,
+  `--bs-border-color-translucent`, `--bs-border-radius`, `--bs-secondary-color`, `--bs-highlight-bg`. Tabler names its
+  properties `--tblr-*`, so the popup had no background or border and the form's buttons showed through the result
+  list. Tabler's `.dropdown-item` is also a flex row with a gap, which split the `<mark>` highlight off the word.
+- **Where:** `../django-crud-views-extensions/src/crud_views_widget_typeahead/static/crud_views_widget_typeahead/typeahead-select.css`
+  and `typeahead.css`.
+- **What we did:** CSS in `crud_views_tabler.css`: `.cv-typeahead, .cv-typeahead-select` define the `--bs-*`
+  properties from Tabler's, plus a dropdown shadow and `display: block` for the items. No template override needed.
+- **Suggested upstream change:** fall back in the CSS (`var(--bs-body-bg, var(--tblr-bg-surface, #fff))`) or expose
+  `--cv-typeahead-*` properties a theme sets.
+- **Severity:** annoyance (broken popup without the fix).
+
+## `Table` forces `sequence=("...", "actions")` and always adds the actions column
+
+- **What happened:** `crud_views.lib.table.Table.__init__` passes `sequence` unless the caller does, which beats a
+  subclass's `Meta.sequence`, so inherited columns come first. A list with `cv_list_actions = []` still renders an
+  empty "Actions" column.
+- **Where:** `src/crud_views/lib/table/table.py:28-33`.
+- **What we did:** `OrderTableBase.__init__` passes the wanted sequence; the top-level table sets
+  `Meta.exclude = ("actions",)` (`example/sales/views/orders.py`).
+- **Suggested upstream change:** honour `Meta.sequence` (append `actions` to it), and drop the column when the view has
+  no list actions.
+- **Severity:** annoyance.
+
+## Snippet templates only see the object, not the view
+
+- **What happened:** header, paragraph and message template codes render with a context that has `object` but not
+  `view`, so "Created {{ view.duplicate }} from {{ object }}" or "a draft for {{ view.cv_get_parent_object }}"
+  render empty.
+- **Where:** `src/crud_views/lib/view/base.py:436` (`render_snippet` builds `Context(data)` from the caller's dict).
+- **What we did:** plainer texts.
+- **Suggested upstream change:** add `view` (and the parent object on child views) to the snippet data.
+- **Severity:** cosmetic.
+
+## A second, top-level ViewSet on a child model needs hand-made links
+
+- **What happened:** orders live under the customer (`order`, the full editor) and in a top-level list (`orders`,
+  list + create). The top-level ViewSet has no detail view, so `LinkDetailColumn` and row actions cannot point at the
+  nested pages; the create view cannot redirect into the other ViewSet with a success key either.
+- **Where:** `src/crud_views/lib/table/columns.py` (`LinkDetailColumn` uses the table's own ViewSet),
+  `src/crud_views/lib/view/base.py:244` (`get_success_url`).
+- **What we did:** `AllOrdersTable.render_number` reverses `order-detail`; `AllOrdersCreateView.get_success_url`
+  reverses `order-update` (`example/sales/views/orders.py`).
+- **Suggested upstream change:** a `LinkColumn(viewset=..., key=...)` and a success target in another ViewSet.
+- **Severity:** cosmetic.
+
+## The workflow page is not framed like the other form pages
+
+- **What happened:** `crud_views_workflow/view_workflow.content.html` renders history and form directly, not through
+  `crud_views/snippets/form_frame.html`, so under the theme it has no card while create/update/delete pages do. The
+  xdsoft date picker likewise keeps its own (blue) look.
+- **Where:** `src/crud_views_workflow/templates/crud_views_workflow/view_workflow.action.html`.
+- **What we did:** nothing; the order page shows its own history and transition buttons, the workflow page is the
+  fallback for steps that need a comment.
+- **Suggested upstream change:** use the form frame in the workflow templates.
 - **Severity:** cosmetic.

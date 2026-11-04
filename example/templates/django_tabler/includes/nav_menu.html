@@ -18,6 +18,14 @@
             <span class="nav-link-title">Customers</span>
           </a>
         </li>
+        {% if perms.sales.view_order %}
+        <li class="nav-item{% if url_name|slice:':6' == 'order-' or url_name|slice:':7' == 'orders-' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'orders-list' %}"{% if url_name == 'orders-list' %} aria-current="page"{% endif %}>
+            <span class="nav-link-icon">{% icon "receipt" %}</span>
+            <span class="nav-link-title">Orders</span>
+          </a>
+        </li>
+        {% endif %}
         {% endif %}
         {% if perms.catalog.view_product or perms.catalog.view_category %}
         <li class="nav-item nav-section mt-2"><div class="nav-link text-uppercase small text-secondary">Catalog</div></li>

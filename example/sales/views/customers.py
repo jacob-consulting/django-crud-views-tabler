@@ -37,6 +37,7 @@ cv_customer = GuardianViewSet(
     icon_header="tabler:building-store",
     context_buttons=[
         *context_buttons_default(),
+        ChildContextButton(key="orders", child_name="order", label_template_code="Orders"),
         ChildContextButton(key="addresses", child_name="address", label_template_code="Addresses"),
     ],
 )
@@ -146,8 +147,8 @@ class CustomerDetailView(GlobalPermsMixin, BreadcrumbMixin, ObjectDetailMixin, G
     cv_object_detail_layout = "split-card"
     cv_header_template = "sales/snippets/customer_header.html"
     cv_paragraph_template = "sales/snippets/customer_paragraph.html"
-    cv_context_actions = ["home", "update", "addresses", "delete"]
-    cv_context_actions_inline = ["update", "addresses"]
+    cv_context_actions = ["home", "update", "orders", "addresses", "delete"]
+    cv_context_actions_inline = ["update", "orders", "addresses"]
     cv_property_display = WHOLESALE_DISPLAY
 
     @property

@@ -1,0 +1,10 @@
+{# The happy path as a Tabler steps bar; a cancelled order shows a note instead. #}
+{% if order.state == "cancelled" %}
+<div class="alert alert-danger mb-3" role="status">This order was cancelled.</div>
+{% else %}
+<div class="card mb-3"><div class="card-body py-3">
+  <div class="steps steps-counter steps-primary my-0">
+    {% for step in order.steps %}<span class="step-item{% if step.active %} active{% endif %}"{% if step.active %} aria-current="step"{% endif %}>{{ step.label }}</span>{% endfor %}
+  </div>
+</div></div>
+{% endif %}

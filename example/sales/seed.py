@@ -1,11 +1,17 @@
-"""Sales demo data: about 25 customers (cafés, shops and consumers) with addresses; Sam looks after some of them."""
+"""Sales demo data: about 25 customers (cafés, shops and consumers) with addresses, Sam looking after some of them,
+and a few orders in every workflow state (Task 10 grows the full world)."""
 
 import random
+from datetime import timedelta
 
 from django.contrib.auth.models import Group, Permission
+from django.utils import timezone
 
-from .models import Address, Customer
+from catalog.models import Beans, Equipment, Product
+
+from .models import Address, Customer, Order, OrderLine
 from .permissions import grant_customer
+from .workflow import run_transition
 
 # name, kind, contact, city, country, tier, terms, owner
 WHOLESALE = [
@@ -75,9 +81,75 @@ def seed(rng: random.Random, world: dict) -> None:
     # addresses of those; they get no model-level view permission on customers, or Guardian's object check would be
     # bypassed. Roasters (Kim) may look at customers and addresses, not edit.
     perm = lambda codename: Permission.objects.get(content_type__app_label="sales", codename=codename)  # noqa: E731
+    # Orders: account managers view, add and change them (for their granted customers, see CustomerGrantMixin) and
+    # take the workflow steps; Roasters only look, except that they mark confirmed orders as roasted.
     Group.objects.get(name="Account managers").permissions.add(
-        perm("add_customer"), *(perm(f"{a}_address") for a in ("view", "add", "change", "delete"))
+        perm("add_customer"),
+        *(perm(f"{a}_address") for a in ("view", "add", "change", "delete")),
+        *(perm(f"{a}_order") for a in ("view", "add", "change")),
     )
-    Group.objects.get(name="Roasters").permissions.add(perm("view_customer"), perm("view_address"))
+    Group.objects.get(name="Roasters").permissions.add(
+        perm("view_customer"), perm("view_address"), perm("view_order"), perm("roast_order")
+    )
 
     world["customers"] = customers
+    world["orders"] = seed_orders(rng, customers, users)
+
+
+# How far each seeded order got along the happy path (or cancelled after the draft), oldest first.
+ORDER_PATHS = [
+    ["wf_confirm", "wf_roast", "wf_ship", "wf_deliver"],
+    ["wf_confirm", "wf_roast", "wf_ship", "wf_deliver"],
+    ["wf_confirm", "wf_roast", "wf_ship", "wf_deliver"],
+    ["wf_cancel"],
+    ["wf_confirm", "wf_roast", "wf_ship"],
+    ["wf_confirm", "wf_roast", "wf_ship"],
+    ["wf_confirm", "wf_cancel"],
+    ["wf_confirm", "wf_roast"],
+    ["wf_confirm", "wf_roast"],
+    ["wf_confirm", "wf_roast"],
+    ["wf_confirm"],
+    ["wf_confirm"],
+    ["wf_confirm"],
+    [],
+    [],
+    [],
+]
+COMMENTS = {"wf_cancel": "Customer changed their mind.", "wf_ship": "DHL, two parcels.", "wf_roast": ""}
+
+
+def seed_orders(rng: random.Random, customers: list[Customer], users: dict) -> list[Order]:
+    """``ORDER_PATHS`` twice, for Sam's customers and for the rest, numbered by date; each order has 1-4 lines."""
+    products = list(Product.objects.instance_of(Beans, Equipment).filter(is_active=True))
+    sams = [c for c in customers if c.owner == users["sam"]]
+    others = [c for c in customers if c.owner != users["sam"]]
+    now = timezone.now()
+    plan = []
+    for pool, seller in ((sams, users["sam"]), (others, users["alex"])):
+        for n, path in enumerate(ORDER_PATHS):
+            created = now - timedelta(days=(len(ORDER_PATHS) - n) * 3 + rng.randint(0, 2), hours=rng.randint(1, 8))
+            plan.append((created, rng.choice(pool), seller, path))
+    orders = []
+    for created, customer, seller, path in sorted(plan, key=lambda p: p[0]):  # order numbers follow the dates
+        order = Order.objects.create(
+            customer=customer,
+            ship_to=customer.addresses.filter(is_default=True).first(),
+            requested_roast_date=(created + timedelta(days=rng.randint(2, 6))).date(),
+            notes="Please label the bags with the café logo." if rng.random() < 0.2 else "",
+        )
+        for product in rng.sample(products, rng.randint(1, 4)):
+            beans = isinstance(product, Beans)
+            OrderLine.objects.create(
+                order=order, product=product, quantity=rng.randint(1, 12) if beans else 1,
+                grind=rng.choice(["whole", "filter", "espresso"]) if beans else "",
+                bag_size=rng.choice(["250g", "1kg"]) if beans else "",
+            )
+        for step, name in enumerate(path, 1):
+            by = users["kim"] if name == "wf_roast" else seller
+            when = created + timedelta(days=step, hours=step)
+            run_transition(order, name, by, comment=COMMENTS.get(name) or None, when=when)
+            if name == "wf_ship":
+                order.shipped_at = when
+        Order.objects.filter(pk=order.pk).update(created_at=created, shipped_at=order.shipped_at)
+        orders.append(order)
+    return orders

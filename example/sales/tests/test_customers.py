@@ -4,6 +4,7 @@ from html import escape
 from django.test import TestCase
 from django.urls import reverse
 
+from catalog.seed import seed as seed_catalog
 from dashboard.seed import seed as seed_dashboard
 from sales.models import Address, Customer
 from sales.permissions import grant_customer
@@ -19,6 +20,7 @@ class SalesTestCase(TestCase):
         cls.world = {}
         rng = random.Random(1)
         seed_dashboard(rng, cls.world)
+        seed_catalog(rng, cls.world)  # the seeded orders need products
         seed_sales(rng, cls.world)
         cls.sam = cls.world["users"]["sam"]
         cls.granted = Customer.objects.filter(owner=cls.sam)
@@ -97,7 +99,8 @@ class CustomerViewTests(SalesTestCase):
         self.assertIn(customer.get_price_tier_display(), html)
         self.assertIn(reverse("address-list", kwargs={"customer_pk": customer.pk}), html)  # the Addresses link
         self.assertIn("Wholesale", html)
-        # TODO(Task 6/7): assert the Orders and Subscriptions links once those child views exist
+        self.assertIn(reverse("order-list", kwargs={"customer_pk": customer.pk}), html)  # the Orders link
+        # TODO(Task 7): assert the Subscriptions link once that child view exists
 
     def test_consumer_detail_has_no_wholesale_terms(self):
         self.login()
@@ -113,7 +116,7 @@ class CustomerViewTests(SalesTestCase):
 
     def test_delete_cascades_addresses(self):
         self.login()
-        customer = Customer.objects.filter(kind="consumer").first()
+        customer = Customer.objects.filter(kind="consumer", orders__isnull=True).first()  # orders protect a customer
         url = reverse("customer-delete", kwargs={"pk": customer.pk})
         self.assertContains(self.client.get(url), customer.name)
         self.assertEqual(self.client.post(url, {"confirm": "on"}).status_code, 302)
@@ -204,3 +207,23 @@ class AddressTests(SalesTestCase):
         self.assertEqual(self.client.post(url, data).status_code, 302)
         address.refresh_from_db()
         self.assertEqual(address.label, "Changed")
+
+    def test_sam_cannot_change_addresses_of_other_customers(self):
+        self.login("sam")
+        address = self.other.addresses.first()
+        kwargs = {"customer_pk": self.other.pk, "pk": address.pk}
+        data = {"label": "Hijacked", "street": "X 1", "zip_code": "1", "city": "Y", "country": "DE"}
+        self.assertEqual(self.client.post(reverse("address-update", kwargs=kwargs), data).status_code, 403)
+        self.assertEqual(self.client.post(reverse("address-delete", kwargs=kwargs), {"confirm": "on"}).status_code, 403)
+        self.assertEqual(self.client.post(reverse("address-make_default", kwargs=kwargs)).status_code, 403)
+        address.refresh_from_db()
+        self.assertNotEqual(address.label, "Hijacked")
+
+        # cross-parent: Sam's own customer in the URL, another customer's address
+        cross = {"customer_pk": self.granted.first().pk, "pk": address.pk}
+        for name in ("address-detail", "address-update", "address-delete"):
+            self.assertEqual(self.client.get(reverse(name, kwargs=cross)).status_code, 404, name)
+        self.assertEqual(self.client.post(reverse("address-make_default", kwargs=cross)).status_code, 404)
+        self.assertEqual(self.client.post(reverse("address-update", kwargs=cross), data).status_code, 404)
+        address.refresh_from_db()
+        self.assertNotEqual(address.label, "Hijacked")

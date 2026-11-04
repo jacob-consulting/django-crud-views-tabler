@@ -1,0 +1,10 @@
+{# Subtotal, tier discount and total of a saved order; the order form shows the saved state. #}
+{% if order.pk %}
+<hr class="my-3">
+<div class="d-flex"><span>Subtotal</span><span class="ms-auto">€ {{ order.subtotal|floatformat:"2g" }}</span></div>
+{% if order.discount_amount %}
+<div class="d-flex text-secondary"><span>Tier {{ customer.price_tier }} discount</span><span class="ms-auto">– € {{ order.discount_amount|floatformat:"2g" }}</span></div>
+{% endif %}
+<div class="d-flex fw-bold mt-1"><span>Total</span><span class="ms-auto" data-order-total>€ {{ order.total|floatformat:"2g" }}</span></div>
+{% if form_hint %}<div class="small text-secondary mt-1">{{ form_hint }}</div>{% endif %}
+{% endif %}

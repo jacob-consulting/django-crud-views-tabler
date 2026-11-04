@@ -789,3 +789,11 @@ class ThemeAdoptionTests(TestCase):
                 self.assertNotIn("fa-regular", markup)
                 glyph = "filter" if name == "customer-list" else "trash" if name == "customer-delete" else "check"
                 self.assertTrue(any(row["paths"] == ICONS[glyph] for row in self.controls(markup)))
+
+
+class WorkflowBadgeTests(SimpleTestCase):
+    def test_state_badge_is_a_tabler_light_badge(self):
+        # crud_views_workflow/badge.html: the theme's only template outside crud_views/ (WorkflowModelMixin renders it)
+        html = render_to_string("crud_views_workflow/badge.html", {"state": "done", "name": "Done", "class": "success"})
+        self.assertIn('<span class="badge bg-success-lt">Done</span>', html)
+        self.assertIn("crud_views_tabler", get_template("crud_views_workflow/badge.html").origin.name)

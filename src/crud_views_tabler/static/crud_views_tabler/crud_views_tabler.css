@@ -39,12 +39,36 @@
   color: var(--tblr-dropdown-item-icon-color);
 }
 
-/* crud_views' ToggleGroup(legend=...) renders a bare <fieldset><legend>; browsers and Bootstrap size the legend like
-   a heading. Make it a section label like Tabler's .card-title. */
-.cv-toggle-group > legend {
+/* crud_views' ToggleGroup(legend=...) and the formset title (crud_views/formsets/formset.html) render a bare
+   <fieldset><legend>; browsers and Bootstrap size the legend like a heading. Make it a section label like Tabler's
+   .card-title. */
+.cv-toggle-group > legend,
+.cv-formset-fieldset > legend {
   float: none;
   width: auto;
   margin-bottom: 0.75rem;
   font-size: 1rem;
   font-weight: var(--tblr-font-weight-bold, 600);
+}
+
+/* django-crud-views-extensions' typeahead skins read Bootstrap's custom properties (--bs-body-bg, ...). Tabler names
+   them --tblr-*, so the select popup had no background or border and the form buttons showed through it. Feed the
+   components Tabler's values; plain CSS, the theme does not depend on the extensions package. */
+.cv-typeahead,
+.cv-typeahead-select {
+  --bs-body-bg: var(--tblr-bg-surface);
+  --bs-border-color-translucent: var(--tblr-border-color-translucent);
+  --bs-border-radius: var(--tblr-border-radius);
+  --bs-secondary-color: var(--tblr-secondary-color);
+  --bs-highlight-bg: var(--tblr-highlight-bg);
+}
+
+.cv-typeahead-select-popup {
+  box-shadow: var(--tblr-shadow-dropdown);
+}
+
+/* Tabler's .dropdown-item is a flex row with a gap, which splits a match highlight (<mark>) off the rest of the word */
+.cv-typeahead .dropdown-item,
+.cv-typeahead-select .dropdown-item {
+  display: block;
 }

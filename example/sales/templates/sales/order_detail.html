@@ -1,0 +1,95 @@
+{% extends cv_extends %}
+{% load crud_views %}
+{# Order page (mockup tab "3 Order"): steps bar, line items, delivery card with totals, workflow history. #}
+
+{% block page_title %}{{ block.super }} {{ object.state_badge }}{% endblock %}
+
+{% block cv_context %}
+{% for t in transitions %}
+  {% if t.comment == 2 %}{# a required comment: open the workflow form with this step preselected #}
+  <a class="btn btn-outline-{{ t.variant }}" href="{{ workflow_url }}?transition={{ t.name }}" data-transition="{{ t.name }}">{% cv_icon t.icon %} {{ t.label }}</a>
+  {% else %}
+  <form method="post" action="{{ workflow_url }}" class="d-inline">
+    {% csrf_token %}<input type="hidden" name="transition" value="{{ t.name }}">
+    <button type="submit" class="btn btn-{{ t.variant }}" data-transition="{{ t.name }}">{% cv_icon t.icon %} {{ t.label }}</button>
+  </form>
+  {% endif %}
+{% endfor %}
+{{ block.super }}
+{% endblock %}
+
+{% block cv_content %}
+{% include "sales/snippets/order_steps.html" with order=object %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Line items</h3></div>
+      {% with lines=object.lines.all %}
+      {% if lines %}
+      <div class="table-responsive">
+        <table class="table card-table table-vcenter">
+          <thead><tr><th>Product</th><th>Grind</th><th>Bag</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Total</th></tr></thead>
+          <tbody>
+          {% for line in lines %}
+            <tr>
+              <td>{{ line.product }}</td>
+              <td>{{ line.get_grind_display|default:"—" }}</td>
+              <td>{{ line.get_bag_size_display|default:"—" }}</td>
+              <td class="text-end">{{ line.quantity }}</td>
+              <td class="text-end">€ {{ line.unit_price|floatformat:"2g" }}</td>
+              <td class="text-end">€ {{ line.line_total|floatformat:"2g" }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="card-body text-secondary">No line items yet.</div>
+      {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Delivery</h3></div>
+      <div class="card-body">
+        <div class="datagrid">
+          <div class="datagrid-item"><div class="datagrid-title">Ship to</div><div class="datagrid-content">{{ object.ship_to|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Requested roast date</div><div class="datagrid-content">{{ object.requested_roast_date|date:"d M Y"|default:"—" }}</div></div>
+          {% if object.shipped_at %}<div class="datagrid-item"><div class="datagrid-title">Shipped</div><div class="datagrid-content">{{ object.shipped_at|date:"d M Y H:i" }}</div></div>{% endif %}
+          <div class="datagrid-item"><div class="datagrid-title">Notes</div><div class="datagrid-content">{{ object.notes|default:"—"|linebreaksbr }}</div></div>
+        </div>
+        {% include "sales/snippets/order_totals.html" with order=object customer=object.customer %}
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">History</h3></div>
+      {% with history=object.workflow_data %}
+      {% if history %}
+      <div class="table-responsive">
+        <table class="table card-table table-vcenter" data-order-history>
+          <thead><tr><th>Step</th><th>By</th><th>From</th><th>To</th><th>Comment</th><th>When</th></tr></thead>
+          <tbody>
+          {% for wf in history %}
+            <tr>
+              <td>{{ wf.transition_label }}</td>
+              <td>{{ wf.user.get_full_name|default:wf.user }}</td>
+              <td>{{ wf.state_old_badge }}</td>
+              <td>{{ wf.state_new_badge }}</td>
+              <td class="text-secondary">{{ wf.comment|default:"—" }}</td>
+              <td class="text-secondary">{{ wf.timestamp|date:"d M Y H:i" }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="card-body text-secondary">No workflow steps yet.</div>
+      {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+</div>
+{% endblock %}

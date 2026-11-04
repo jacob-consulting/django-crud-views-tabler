@@ -124,6 +124,16 @@ pagination markup, so the theme no longer overrides it. Both paginations take th
 names `page-previous` / `page-next`, which the theme maps to Tabler's chevrons at the standard icon size, as in
 Tabler's examples (the old override used `icon-sm`). A project changes them with `CRUD_VIEWS_ICONS`.
 
+## Workflow state badges
+
+`crud_views_workflow` renders every state badge (`WorkflowModelMixin.state_badge`, the history table) through
+`crud_views_workflow/badge.html`, a solid Bootstrap pill (`badge rounded-pill text-bg-<colour>`). Tabler's status
+badges are the light variants, so the theme overrides that one-line template with `badge bg-<colour>-lt`. Every
+`BadgeEnum` value (`primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark`) has a `-lt` class in
+Tabler 1.6.1. There is no hook for the class (the colour is pasted into the class name), and CSS could only restyle
+`text-bg-*` everywhere, colour by colour, so this is a template override (logged in
+`crud_views_upstream_findings_roastery.md`).
+
 ## Card views
 
 `CardListView` pages (`view_card.content.html`, `tags/card.html`; the card buttons and the order bar are crud_views'

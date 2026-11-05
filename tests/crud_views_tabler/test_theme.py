@@ -303,8 +303,9 @@ class ThemeRenderingTests(TestCase):
              "related_summary_items": ["order: 2"],
              "related_objects": []},
         )
-        self.assertEqual(html.count('<div class="alert-icon">'), 3)
-        self.assertEqual(html.count('class="alert-heading"'), 3)
+        self.assertEqual(html.count('<div class="alert-icon">'), 2)
+        self.assertEqual(html.count('class="alert-heading"'), 2)
+        self.assertNotIn("Details about the related objects to be deleted:", html)
         self.assertIn(str(svg("alert-triangle", "alert-icon")), html)  # warning
         self.assertIn("<li>order: 2</li>", html)
 

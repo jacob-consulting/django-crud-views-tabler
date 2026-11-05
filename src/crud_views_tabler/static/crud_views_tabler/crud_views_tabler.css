@@ -72,12 +72,3 @@
 .cv-typeahead-select .dropdown-item {
   display: block;
 }
-
-/* A bare <table class="table"> straight in the page content (crud_views_workflow's history table has no
-   .table-responsive wrapper and no class to hook) is wider than a phone. The content container scrolls sideways
-   instead of the page; the table itself stays a table, so a narrow one still spans the full width. */
-@media (max-width: 767.98px) {
-  .page-body > .container-xl:has(> table.table) {
-    overflow-x: auto;
-  }
-}

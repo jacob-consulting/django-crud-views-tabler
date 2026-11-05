@@ -1,4 +1,9 @@
+import os
 import re
+import subprocess
+import sys
+from html.parser import HTMLParser
+from types import SimpleNamespace
 from pathlib import Path
 from unittest import mock
 
@@ -14,7 +19,7 @@ from django.template.loader import get_template, render_to_string
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
-from crud_views.lib.button_classes import DEFAULT_BUTTON_CLASSES, get_button_classes
+from crud_views.lib.button_classes import _get_default_button_classes, get_button_classes
 from crud_views.lib.crispy import CrispyDeleteForm
 from crud_views.lib.icons import DEFAULT_ICONS
 from crud_views.lib.icons import render_icon as cv_render_icon
@@ -85,7 +90,7 @@ class ButtonClassTests(SimpleTestCase):
         # A label-mode key (location:variant:mode, #209) extends an upstream action key.
         for key in TABLER_BUTTON_CLASSES:
             base, _, mode = key.rpartition(":") if key.count(":") == 2 else (key, "", "")
-            self.assertIn(base, DEFAULT_BUTTON_CLASSES, key)
+            self.assertIn(base, _get_default_button_classes(), key)
             if mode:
                 self.assertIn(mode, LABEL_MODES, key)
 
@@ -139,6 +144,8 @@ class ButtonClassTests(SimpleTestCase):
             "card-order:container": "btn-group",
             "formset:control": "btn btn-icon",
             "formset:control-danger": "btn btn-icon btn-danger",
+            **{f"workflow:badge-{colour}": f"badge bg-{colour}-lt" for colour in
+               ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")},
         }
         self.assertEqual(TABLER_BUTTON_CLASSES, expected)
 
@@ -296,8 +303,9 @@ class ThemeRenderingTests(TestCase):
              "related_summary_items": ["order: 2"],
              "related_objects": []},
         )
-        self.assertEqual(html.count('<div class="alert-icon">'), 3)
-        self.assertEqual(html.count('class="alert-heading"'), 3)
+        self.assertEqual(html.count('<div class="alert-icon">'), 2)
+        self.assertEqual(html.count('class="alert-heading"'), 2)
+        self.assertNotIn("Details about the related objects to be deleted:", html)
         self.assertIn(str(svg("alert-triangle", "alert-icon")), html)  # warning
         self.assertIn("<li>order: 2</li>", html)
 
@@ -561,7 +569,7 @@ class CardThemeTests(TestCase):
         self.assertNotIn('data-bs-toggle="tooltip"', delete)
 
 
-class IconCheckTests(SimpleTestCase):
+class IconCheckTests(TestCase):
     @override_settings(CRUD_VIEWS_ICONS={"detail": "tabler:does-not-exist"})
     def test_unknown_tabler_icon_is_reported(self):
         messages = [m for m in run_checks() if m.id == "crud_views_tabler.W001"]
@@ -662,15 +670,11 @@ class FilterToggleIconTests(SimpleTestCase):
 
 
 class BareTableTests(SimpleTestCase):
-    def test_bare_content_table_scrolls_inside_the_content_on_a_phone(self):
-        # crud_views_workflow's history table sits straight in the page content, without .table-responsive.
-        # The container scrolls; `display: block` on the table would shrink a narrow table to its content.
+    def test_workflow_no_longer_scrolls_the_whole_content_container(self):
         css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
-        self.assertRegex(
-            css,
-            r"@media \(max-width: 767\.98px\) \{\s*\.page-body > \.container-xl:has\(> table\.table\) \{\s*"
-            r"overflow-x: auto;",
-        )
+        self.assertNotIn(".page-body > .container-xl:has(> table.table)", css)
+        self.assertIn(".cv-typeahead-select-popup", css)
+        self.assertIn("--bs-body-bg: var(--tblr-bg-surface)", css)
         self.assertNotRegex(css, r"table\.table \{\s*display: block")
 
 
@@ -805,8 +809,208 @@ class ThemeAdoptionTests(TestCase):
 
 
 class WorkflowBadgeTests(SimpleTestCase):
-    def test_state_badge_is_a_tabler_light_badge(self):
-        # crud_views_workflow/badge.html: the theme's only template outside crud_views/ (WorkflowModelMixin renders it)
-        html = render_to_string("crud_views_workflow/badge.html", {"state": "done", "name": "Done", "class": "success"})
-        self.assertIn('<span class="badge bg-success-lt">Done</span>', html)
-        self.assertIn("crud_views_tabler", get_template("crud_views_workflow/badge.html").origin.name)
+    def badge(self, colour="success"):
+        from django.db.models import TextChoices
+        from crud_views_workflow.lib.mixins import WorkflowModelMixin
+
+        class States(TextChoices):
+            DONE = "done", '<Done "now"> {{ untouched }}'
+
+        class Item(WorkflowModelMixin):
+            STATE_CHOICES = States
+            STATE_BADGES = {"done": colour}
+
+        return Item().get_state_badge("done")
+
+    def test_badge_uses_current_upstream_source(self):
+        import crud_views_workflow.lib.mixins as mixins
+        upstream = Path(os.environ.get("CV_WORKFLOW_UPSTREAM_SRC", Path(__file__).resolve().parents[3] /
+                                      "django-crud-views/src")).resolve()
+        self.assertEqual(Path(mixins.__file__).resolve(), upstream / "crud_views_workflow/lib/mixins.py")
+        self.assertEqual(Path(get_template("crud_views_workflow/badge.html").origin.name).resolve(),
+                         upstream / "crud_views_workflow/templates/crud_views_workflow/badge.html")
+
+    def test_all_state_colours_are_light_badges(self):
+        from crud_views_workflow.lib.enums import BadgeEnum
+        for colour in BadgeEnum:
+            with self.subTest(colour=colour):
+                html = self.badge(colour)
+                self.assertIn(f'class="badge bg-{colour}-lt"', html)
+                self.assertIn('&lt;Done &quot;now&quot;&gt; {{ untouched }}', html)
+                self.assertNotIn("<Done", html)
+
+    def test_project_classes_override_theme_including_disabled_values(self):
+        for value in ("", None, 'custom" onmouseover="bad'):
+            with self.subTest(value=value), override_settings(CRUD_VIEWS_BUTTON_CLASSES={"workflow:badge-success": value}):
+                html = self.badge()
+                expected = 'custom&quot; onmouseover=&quot;bad' if value else ""
+                self.assertIn(f'class="{expected}"', html)
+                self.assertNotIn(' onmouseover="', html)
+
+    def test_optional_workflow_and_ready_orders_in_isolated_processes(self):
+        script = '''
+import sys
+from django.conf import settings
+from tests.crud_views_tabler import settings as test_settings
+values = {key: getattr(test_settings, key) for key in dir(test_settings) if key.isupper()}
+apps = list(values["INSTALLED_APPS"])
+apps.remove("crud_views_workflow")
+if sys.argv[1] != "absent":
+    apps.insert(apps.index("crud_views_tabler") + (sys.argv[1] == "after"), "crud_views_workflow")
+values["INSTALLED_APPS"] = apps
+settings.configure(**values)
+import django
+django.setup()
+from crud_views.lib.button_classes import get_button_classes, _THEME_BUTTON_CLASSES
+from django.core.checks import run_checks
+classes = get_button_classes()
+if sys.argv[1] == "absent":
+    assert not any(key.startswith("workflow:") for key in _THEME_BUTTON_CLASSES)
+    assert not any(key.startswith("workflow:") for key in classes)
+else:
+    assert classes["workflow:badge-success"] == "badge bg-success-lt"
+    from django.test import override_settings
+    with override_settings(CRUD_VIEWS_BUTTON_CLASSES={"workflow:badge-success": "project"}):
+        assert get_button_classes()["workflow:badge-success"] == "project"
+assert not any(check.id == "crud_views.W362" for check in run_checks())
+'''
+        for order in ("absent", "before", "after"):
+            with self.subTest(order=order):
+                result = subprocess.run([sys.executable, "-c", script, order], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
+class WorkflowMarkup(HTMLParser):
+    """Retain raw ancestry, including nested forms that browser parsers would repair."""
+
+    def __init__(self, markup):
+        super().__init__()
+        self.nodes = []
+        self.stack = []
+        self.feed(markup)
+
+    def handle_starttag(self, tag, attrs):
+        node = SimpleNamespace(tag=tag, attrs=dict(attrs), parents=tuple(self.stack))
+        self.nodes.append(node)
+        if tag not in {"input", "br", "hr", "img", "meta", "link", "wbr"}:
+            self.stack.append(node)
+
+    def handle_endtag(self, tag):
+        if self.stack and self.stack[-1].tag == tag:
+            self.stack.pop()
+
+    def select(self, tag):
+        return [node for node in self.nodes if node.tag == tag]
+
+
+class WorkflowPresentationTests(SimpleTestCase):
+    def render_workflow(self, choices=True, history=True, invalid=False, modal=False, settings_classes=None):
+        from django.contrib.auth.models import AnonymousUser
+        from crud_views.lib.view import CrudView
+        from crud_views_workflow.lib.enums import WorkflowComment
+        from crud_views_workflow.lib.forms import WorkflowForm
+
+        class Owner(CrudView):
+            cv_abstract = True
+
+            def get_cancel_button_context(self, **kwargs):
+                return {"cv_url": None}
+
+        request = RequestFactory().get("/workflow/", headers={"X-Cv-Modal": "true"} if modal else {})
+        request.user = AnonymousUser()
+        owner = Owner()
+        owner.request = request
+        form = WorkflowForm(owner, data={"transition": "finish", "comment": ""} if invalid else None,
+                            choices=[("finish", '<Finish "now">')] if choices else [],
+                            transition_comments={"finish": WorkflowComment.REQUIRED})
+        if invalid:
+            self.assertFalse(form.is_valid())
+            form.add_error(None, '<Invalid "workflow">')
+        rows = [dict(transition_label="<Finish>", user=SimpleNamespace(get_full_name=lambda: "<Actor>"),
+                     state_old_badge=WorkflowBadgeTests().badge(), state_new_badge=WorkflowBadgeTests().badge(),
+                     comment="<script>bad</script>")] if history else []
+        context = {"form": form, "has_workflow_choices": choices, "object": SimpleNamespace(workflow_data=rows)}
+        template = "crud_views/view_custom_form.content.html" if modal else "crud_views_workflow/view_workflow.content.html"
+        with override_settings(CRUD_VIEWS_BUTTON_CLASSES=settings_classes or {}):
+            markup = render_to_string(template, context, request=request)
+        return markup, WorkflowMarkup(markup)
+
+    def test_actual_template_and_pack_origins(self):
+        theme = Path(crud_views_tabler.__file__).resolve().parent
+        self.assertEqual(Path(get_template("crud_views/snippets/form_frame.html").origin.name),
+                         theme / "templates/crud_views/snippets/form_frame.html")
+        import crud_views_workflow
+        upstream = Path(crud_views_workflow.__file__).resolve().parent
+        for leaf in ("action", "history", "content"):
+            name = f"crud_views_workflow/view_workflow.{leaf}.html"
+            self.assertEqual(Path(get_template(name).origin.name), upstream / "templates" / name)
+        import django_tabler
+        self.assertEqual(Path(get_template("crispy_tabler/field.html").origin.name),
+                         Path(django_tabler.__file__).resolve().parent / "templates/crispy_tabler/field.html")
+
+    def test_action_frame_history_order_and_error_ownership(self):
+        for invalid in (False, True):
+            with self.subTest(invalid=invalid):
+                markup, tree = self.render_workflow(invalid=invalid)
+                self.assertEqual(len(tree.select("form")), 1)
+                form = tree.select("form")[0]
+                self.assertEqual(form.attrs, {"class": "cv-form", "method": "post", "novalidate": None})
+                self.assertEqual(form.parents[-1].attrs["class"], "card-body")
+                self.assertEqual(form.parents[-2].attrs["class"], "card")
+                headings = tree.select("h5")
+                self.assertEqual(headings[-1].parents, form.parents)
+                table = tree.select("table")[0]
+                wrapper = table.parents[-1]
+                self.assertEqual(wrapper.attrs["class"], "table-responsive")
+                self.assertEqual([node.tag for node in tree.nodes if node.parents and node.parents[-1] is wrapper], ["table"])
+                self.assertNotIn(wrapper, form.parents)
+                self.assertNotIn(wrapper, headings[0].parents)
+                self.assertLess(tree.nodes.index(table), tree.nodes.index(form))
+                tokens = [node for node in tree.select("input") if node.attrs.get("name") == "csrfmiddlewaretoken"]
+                self.assertEqual(len(tokens), 1)
+                self.assertIn(form, tokens[0].parents)
+                submits = [node for node in tree.nodes if node.attrs.get("type") == "submit"]
+                self.assertEqual(len(submits), 1)
+                self.assertIn(form, submits[0].parents)
+                self.assertNotIn("<script>", markup)
+                self.assertIn("&lt;Finish &quot;now&quot;&gt;", markup)
+                if invalid:
+                    self.assertIn("Comment is required for this transition", markup)
+                    self.assertIn("&lt;Invalid &quot;workflow&quot;&gt;", markup)
+                    errors = [node for node in tree.nodes if "invalid-feedback" in node.attrs.get("class", "")]
+                    self.assertTrue(errors)
+                    self.assertTrue(all(form in node.parents for node in errors))
+                self.assertFalse(tree.stack)
+
+    def test_empty_actions_and_history_are_independent(self):
+        for history in (False, True):
+            markup, tree = self.render_workflow(choices=False, history=history)
+            self.assertIn('class="card-body"', markup)
+            self.assertIn("There are no workflow steps available from the current state.", markup)
+            self.assertNotIn("Workflow Action", markup)
+            self.assertFalse(tree.select("form"))
+            self.assertNotIn("csrfmiddlewaretoken", markup)
+            self.assertEqual(len(tree.select("table")), int(history))
+        markup, tree = self.render_workflow(history=False)
+        self.assertNotIn("Workflow History", markup)
+        self.assertFalse(tree.select("table"))
+        self.assertEqual(len(tree.select("form")), 1)
+
+    def test_history_wrapper_and_table_classes_are_independent(self):
+        for wrapper_class in ("table-responsive", "custom-wrap", "", None):
+            for table_class in ("table", "custom-table", "", None):
+                markup, tree = self.render_workflow(settings_classes={"workflow:history-wrapper": wrapper_class,
+                                                                     "workflow:history-table": table_class})
+                table = tree.select("table")[0]
+                self.assertEqual(table.attrs["class"], table_class or "")
+                self.assertEqual(table.parents[-1].attrs["class"], wrapper_class or "")
+                self.assertEqual(len(tree.select("th")), 6)
+
+    def test_supported_modal_keeps_the_actual_frame_bare(self):
+        for choices in (False, True):
+            markup, tree = self.render_workflow(choices=choices, modal=True)
+            self.assertNotIn('class="card"', markup)
+            self.assertNotIn('class="card-body"', markup)
+            self.assertNotIn("Workflow History", markup)
+            self.assertEqual(len(tree.select("form")), 1)
+            self.assertFalse(tree.stack)

@@ -1,6 +1,14 @@
 """Tabler classes for django-crud-views' button class table, registered from CrudViewsTablerConfig.ready()."""
 
 TABLER_BUTTON_CLASSES: dict[str, str] = {
+    "workflow:badge-primary": "badge bg-primary-lt",
+    "workflow:badge-secondary": "badge bg-secondary-lt",
+    "workflow:badge-success": "badge bg-success-lt",
+    "workflow:badge-danger": "badge bg-danger-lt",
+    "workflow:badge-warning": "badge bg-warning-lt",
+    "workflow:badge-info": "badge bg-info-lt",
+    "workflow:badge-light": "badge bg-light-lt",
+    "workflow:badge-dark": "badge bg-dark-lt",
     "context:primary": "btn btn-primary",
     "context:secondary": "btn",
     "context:tertiary": "btn",

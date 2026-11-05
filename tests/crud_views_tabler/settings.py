@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     # The Tabler theme overrides crud_views templates, so it must come before crud_views.
     "crud_views_tabler",
     "crud_views.apps.CrudViewsConfig",
+    "crud_views_workflow",
     "tests.crud_views_tabler.testapp",
 ]
 

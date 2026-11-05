@@ -1,4 +1,7 @@
+import os
 import re
+import subprocess
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -14,7 +17,7 @@ from django.template.loader import get_template, render_to_string
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
-from crud_views.lib.button_classes import DEFAULT_BUTTON_CLASSES, get_button_classes
+from crud_views.lib.button_classes import _get_default_button_classes, get_button_classes
 from crud_views.lib.crispy import CrispyDeleteForm
 from crud_views.lib.icons import DEFAULT_ICONS
 from crud_views.lib.icons import render_icon as cv_render_icon
@@ -85,7 +88,7 @@ class ButtonClassTests(SimpleTestCase):
         # A label-mode key (location:variant:mode, #209) extends an upstream action key.
         for key in TABLER_BUTTON_CLASSES:
             base, _, mode = key.rpartition(":") if key.count(":") == 2 else (key, "", "")
-            self.assertIn(base, DEFAULT_BUTTON_CLASSES, key)
+            self.assertIn(base, _get_default_button_classes(), key)
             if mode:
                 self.assertIn(mode, LABEL_MODES, key)
 
@@ -139,6 +142,8 @@ class ButtonClassTests(SimpleTestCase):
             "card-order:container": "btn-group",
             "formset:control": "btn btn-icon",
             "formset:control-danger": "btn btn-icon btn-danger",
+            **{f"workflow:badge-{colour}": f"badge bg-{colour}-lt" for colour in
+               ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")},
         }
         self.assertEqual(TABLER_BUTTON_CLASSES, expected)
 
@@ -561,7 +566,7 @@ class CardThemeTests(TestCase):
         self.assertNotIn('data-bs-toggle="tooltip"', delete)
 
 
-class IconCheckTests(SimpleTestCase):
+class IconCheckTests(TestCase):
     @override_settings(CRUD_VIEWS_ICONS={"detail": "tabler:does-not-exist"})
     def test_unknown_tabler_icon_is_reported(self):
         messages = [m for m in run_checks() if m.id == "crud_views_tabler.W001"]
@@ -805,8 +810,72 @@ class ThemeAdoptionTests(TestCase):
 
 
 class WorkflowBadgeTests(SimpleTestCase):
-    def test_state_badge_is_a_tabler_light_badge(self):
-        # crud_views_workflow/badge.html: the theme's only template outside crud_views/ (WorkflowModelMixin renders it)
-        html = render_to_string("crud_views_workflow/badge.html", {"state": "done", "name": "Done", "class": "success"})
-        self.assertIn('<span class="badge bg-success-lt">Done</span>', html)
-        self.assertIn("crud_views_tabler", get_template("crud_views_workflow/badge.html").origin.name)
+    def badge(self, colour="success"):
+        from django.db.models import TextChoices
+        from crud_views_workflow.lib.mixins import WorkflowModelMixin
+
+        class States(TextChoices):
+            DONE = "done", '<Done "now"> {{ untouched }}'
+
+        class Item(WorkflowModelMixin):
+            STATE_CHOICES = States
+            STATE_BADGES = {"done": colour}
+
+        return Item().get_state_badge("done")
+
+    def test_badge_uses_current_upstream_source(self):
+        import crud_views_workflow.lib.mixins as mixins
+        upstream = Path(os.environ.get("CV_WORKFLOW_UPSTREAM_SRC", Path(__file__).resolve().parents[3] /
+                                      "django-crud-views/src")).resolve()
+        self.assertEqual(Path(mixins.__file__).resolve(), upstream / "crud_views_workflow/lib/mixins.py")
+        self.assertEqual(Path(get_template("crud_views_workflow/badge.html").origin.name).resolve(),
+                         upstream / "crud_views_workflow/templates/crud_views_workflow/badge.html")
+
+    def test_all_state_colours_are_light_badges(self):
+        from crud_views_workflow.lib.enums import BadgeEnum
+        for colour in BadgeEnum:
+            with self.subTest(colour=colour):
+                html = self.badge(colour)
+                self.assertIn(f'class="badge bg-{colour}-lt"', html)
+                self.assertIn('&lt;Done &quot;now&quot;&gt; {{ untouched }}', html)
+                self.assertNotIn("<Done", html)
+
+    def test_project_classes_override_theme_including_disabled_values(self):
+        for value in ("", None, 'custom" onmouseover="bad'):
+            with self.subTest(value=value), override_settings(CRUD_VIEWS_BUTTON_CLASSES={"workflow:badge-success": value}):
+                html = self.badge()
+                expected = 'custom&quot; onmouseover=&quot;bad' if value else ""
+                self.assertIn(f'class="{expected}"', html)
+                self.assertNotIn(' onmouseover="', html)
+
+    def test_optional_workflow_and_ready_orders_in_isolated_processes(self):
+        script = '''
+import sys
+from django.conf import settings
+from tests.crud_views_tabler import settings as test_settings
+values = {key: getattr(test_settings, key) for key in dir(test_settings) if key.isupper()}
+apps = list(values["INSTALLED_APPS"])
+apps.remove("crud_views_workflow")
+if sys.argv[1] != "absent":
+    apps.insert(apps.index("crud_views_tabler") + (sys.argv[1] == "after"), "crud_views_workflow")
+values["INSTALLED_APPS"] = apps
+settings.configure(**values)
+import django
+django.setup()
+from crud_views.lib.button_classes import get_button_classes, _THEME_BUTTON_CLASSES
+from django.core.checks import run_checks
+classes = get_button_classes()
+if sys.argv[1] == "absent":
+    assert not any(key.startswith("workflow:") for key in _THEME_BUTTON_CLASSES)
+    assert not any(key.startswith("workflow:") for key in classes)
+else:
+    assert classes["workflow:badge-success"] == "badge bg-success-lt"
+    from django.test import override_settings
+    with override_settings(CRUD_VIEWS_BUTTON_CLASSES={"workflow:badge-success": "project"}):
+        assert get_button_classes()["workflow:badge-success"] == "project"
+assert not any(check.id == "crud_views.W362" for check in run_checks())
+'''
+        for order in ("absent", "before", "after"):
+            with self.subTest(order=order):
+                result = subprocess.run([sys.executable, "-c", script, order], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

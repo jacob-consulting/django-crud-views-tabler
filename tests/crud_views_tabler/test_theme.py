@@ -2,6 +2,8 @@ import os
 import re
 import subprocess
 import sys
+from html.parser import HTMLParser
+from types import SimpleNamespace
 from pathlib import Path
 from unittest import mock
 
@@ -667,15 +669,11 @@ class FilterToggleIconTests(SimpleTestCase):
 
 
 class BareTableTests(SimpleTestCase):
-    def test_bare_content_table_scrolls_inside_the_content_on_a_phone(self):
-        # crud_views_workflow's history table sits straight in the page content, without .table-responsive.
-        # The container scrolls; `display: block` on the table would shrink a narrow table to its content.
+    def test_workflow_no_longer_scrolls_the_whole_content_container(self):
         css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
-        self.assertRegex(
-            css,
-            r"@media \(max-width: 767\.98px\) \{\s*\.page-body > \.container-xl:has\(> table\.table\) \{\s*"
-            r"overflow-x: auto;",
-        )
+        self.assertNotIn(".page-body > .container-xl:has(> table.table)", css)
+        self.assertIn(".cv-typeahead-select-popup", css)
+        self.assertIn("--bs-body-bg: var(--tblr-bg-surface)", css)
         self.assertNotRegex(css, r"table\.table \{\s*display: block")
 
 
@@ -879,3 +877,139 @@ assert not any(check.id == "crud_views.W362" for check in run_checks())
             with self.subTest(order=order):
                 result = subprocess.run([sys.executable, "-c", script, order], capture_output=True, text=True)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
+class WorkflowMarkup(HTMLParser):
+    """Retain raw ancestry, including nested forms that browser parsers would repair."""
+
+    def __init__(self, markup):
+        super().__init__()
+        self.nodes = []
+        self.stack = []
+        self.feed(markup)
+
+    def handle_starttag(self, tag, attrs):
+        node = SimpleNamespace(tag=tag, attrs=dict(attrs), parents=tuple(self.stack))
+        self.nodes.append(node)
+        if tag not in {"input", "br", "hr", "img", "meta", "link", "wbr"}:
+            self.stack.append(node)
+
+    def handle_endtag(self, tag):
+        if self.stack and self.stack[-1].tag == tag:
+            self.stack.pop()
+
+    def select(self, tag):
+        return [node for node in self.nodes if node.tag == tag]
+
+
+class WorkflowPresentationTests(SimpleTestCase):
+    def render_workflow(self, choices=True, history=True, invalid=False, modal=False, settings_classes=None):
+        from django.contrib.auth.models import AnonymousUser
+        from crud_views.lib.view import CrudView
+        from crud_views_workflow.lib.enums import WorkflowComment
+        from crud_views_workflow.lib.forms import WorkflowForm
+
+        class Owner(CrudView):
+            cv_abstract = True
+
+            def get_cancel_button_context(self, **kwargs):
+                return {"cv_url": None}
+
+        request = RequestFactory().get("/workflow/", headers={"X-Cv-Modal": "true"} if modal else {})
+        request.user = AnonymousUser()
+        owner = Owner()
+        owner.request = request
+        form = WorkflowForm(owner, data={"transition": "finish", "comment": ""} if invalid else None,
+                            choices=[("finish", '<Finish "now">')] if choices else [],
+                            transition_comments={"finish": WorkflowComment.REQUIRED})
+        if invalid:
+            self.assertFalse(form.is_valid())
+            form.add_error(None, '<Invalid "workflow">')
+        rows = [dict(transition_label="<Finish>", user=SimpleNamespace(get_full_name=lambda: "<Actor>"),
+                     state_old_badge=WorkflowBadgeTests().badge(), state_new_badge=WorkflowBadgeTests().badge(),
+                     comment="<script>bad</script>")] if history else []
+        context = {"form": form, "has_workflow_choices": choices, "object": SimpleNamespace(workflow_data=rows)}
+        template = "crud_views/view_custom_form.content.html" if modal else "crud_views_workflow/view_workflow.content.html"
+        with override_settings(CRUD_VIEWS_BUTTON_CLASSES=settings_classes or {}):
+            markup = render_to_string(template, context, request=request)
+        return markup, WorkflowMarkup(markup)
+
+    def test_actual_template_and_pack_origins(self):
+        theme = Path(crud_views_tabler.__file__).resolve().parent
+        self.assertEqual(Path(get_template("crud_views/snippets/form_frame.html").origin.name),
+                         theme / "templates/crud_views/snippets/form_frame.html")
+        import crud_views_workflow
+        upstream = Path(crud_views_workflow.__file__).resolve().parent
+        for leaf in ("action", "history", "content"):
+            name = f"crud_views_workflow/view_workflow.{leaf}.html"
+            self.assertEqual(Path(get_template(name).origin.name), upstream / "templates" / name)
+        import django_tabler
+        self.assertEqual(Path(get_template("crispy_tabler/field.html").origin.name),
+                         Path(django_tabler.__file__).resolve().parent / "templates/crispy_tabler/field.html")
+
+    def test_action_frame_history_order_and_error_ownership(self):
+        for invalid in (False, True):
+            with self.subTest(invalid=invalid):
+                markup, tree = self.render_workflow(invalid=invalid)
+                self.assertEqual(len(tree.select("form")), 1)
+                form = tree.select("form")[0]
+                self.assertEqual(form.attrs, {"class": "cv-form", "method": "post", "novalidate": None})
+                self.assertEqual(form.parents[-1].attrs["class"], "card-body")
+                self.assertEqual(form.parents[-2].attrs["class"], "card")
+                headings = tree.select("h5")
+                self.assertEqual(headings[-1].parents, form.parents)
+                table = tree.select("table")[0]
+                wrapper = table.parents[-1]
+                self.assertEqual(wrapper.attrs["class"], "table-responsive")
+                self.assertEqual([node.tag for node in tree.nodes if node.parents and node.parents[-1] is wrapper], ["table"])
+                self.assertNotIn(wrapper, form.parents)
+                self.assertNotIn(wrapper, headings[0].parents)
+                self.assertLess(tree.nodes.index(table), tree.nodes.index(form))
+                tokens = [node for node in tree.select("input") if node.attrs.get("name") == "csrfmiddlewaretoken"]
+                self.assertEqual(len(tokens), 1)
+                self.assertIn(form, tokens[0].parents)
+                submits = [node for node in tree.nodes if node.attrs.get("type") == "submit"]
+                self.assertEqual(len(submits), 1)
+                self.assertIn(form, submits[0].parents)
+                self.assertNotIn("<script>", markup)
+                self.assertIn("&lt;Finish &quot;now&quot;&gt;", markup)
+                if invalid:
+                    self.assertIn("Comment is required for this transition", markup)
+                    self.assertIn("&lt;Invalid &quot;workflow&quot;&gt;", markup)
+                    errors = [node for node in tree.nodes if "invalid-feedback" in node.attrs.get("class", "")]
+                    self.assertTrue(errors)
+                    self.assertTrue(all(form in node.parents for node in errors))
+                self.assertFalse(tree.stack)
+
+    def test_empty_actions_and_history_are_independent(self):
+        for history in (False, True):
+            markup, tree = self.render_workflow(choices=False, history=history)
+            self.assertIn('class="card-body"', markup)
+            self.assertIn("There are no workflow steps available from the current state.", markup)
+            self.assertNotIn("Workflow Action", markup)
+            self.assertFalse(tree.select("form"))
+            self.assertNotIn("csrfmiddlewaretoken", markup)
+            self.assertEqual(len(tree.select("table")), int(history))
+        markup, tree = self.render_workflow(history=False)
+        self.assertNotIn("Workflow History", markup)
+        self.assertFalse(tree.select("table"))
+        self.assertEqual(len(tree.select("form")), 1)
+
+    def test_history_wrapper_and_table_classes_are_independent(self):
+        for wrapper_class in ("table-responsive", "custom-wrap", "", None):
+            for table_class in ("table", "custom-table", "", None):
+                markup, tree = self.render_workflow(settings_classes={"workflow:history-wrapper": wrapper_class,
+                                                                     "workflow:history-table": table_class})
+                table = tree.select("table")[0]
+                self.assertEqual(table.attrs["class"], table_class or "")
+                self.assertEqual(table.parents[-1].attrs["class"], wrapper_class or "")
+                self.assertEqual(len(tree.select("th")), 6)
+
+    def test_supported_modal_keeps_the_actual_frame_bare(self):
+        for choices in (False, True):
+            markup, tree = self.render_workflow(choices=choices, modal=True)
+            self.assertNotIn('class="card"', markup)
+            self.assertNotIn('class="card-body"', markup)
+            self.assertNotIn("Workflow History", markup)
+            self.assertEqual(len(tree.select("form")), 1)
+            self.assertFalse(tree.stack)

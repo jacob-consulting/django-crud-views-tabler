@@ -920,6 +920,8 @@ class WorkflowPresentationTests(SimpleTestCase):
         request.user = AnonymousUser()
         owner = Owner()
         owner.request = request
+        # WorkflowForm.clean() asks the view's object for business blockers (upstream #322); this one has none
+        owner.object = SimpleNamespace(workflow_check_transition=lambda name, *, user: None)
         form = WorkflowForm(owner, data={"transition": "finish", "comment": ""} if invalid else None,
                             choices=[("finish", '<Finish "now">')] if choices else [],
                             transition_comments={"finish": WorkflowComment.REQUIRED})

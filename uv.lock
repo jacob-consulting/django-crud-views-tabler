@@ -139,7 +139,7 @@ provides-extras = ["workflow", "polymorphic", "ordered", "guardian", "all", "dev
 
 [[package]]
 name = "django-crud-views-extensions"
-version = "0.3.2"
+version = "0.3.3"
 source = { editable = "../django-crud-views-extensions" }
 dependencies = [
     { name = "django-crud-views" },

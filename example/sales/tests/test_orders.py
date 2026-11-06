@@ -263,7 +263,8 @@ class OrderPageTests(OrderTestCase):
         response = self.client.get(reverse("product-delete", kwargs={"pk": self.huila.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["has_protected_objects"])
-        labels = [str(o) for o in response.context["protected_objects"]]
+        # entries are {"obj": instance, "url": None} since upstream #307/#316
+        labels = [str(entry["obj"]) for entry in response.context["protected_objects"]]
         self.assertTrue(labels)
         self.assertIn(str(order.lines.get()), labels)
         self.assertContains(response, escape(labels[0]))

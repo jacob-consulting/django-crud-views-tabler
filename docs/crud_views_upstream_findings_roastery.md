@@ -5,8 +5,12 @@ Building the Acme Roasters back-office (apps `sales`, `catalog`, `roastery`, `sh
 conditional groups, workflow, polymorphic models, object detail packs, Guardian, resources, card views, custom
 forms and the two django-crud-views-extensions widgets. This file collects every place where that needed a theme
 CSS rule, a theme template override, or a workaround in the demo instead of an upstream hook, and every upstream bug
-or awkwardness found on the way. None is filed yet; they are candidates to triage into issues for
-django-crud-views (and, where marked, django-crud-views-extensions).
+or awkwardness found on the way. Findings 4–5 are tracked in
+[django-crud-views #319](https://github.com/jacob-consulting/django-crud-views/issues/319), finding 6 in
+[#320](https://github.com/jacob-consulting/django-crud-views/issues/320), finding 7 in
+[#322](https://github.com/jacob-consulting/django-crud-views/issues/322), and findings 8–9 in
+[#325](https://github.com/jacob-consulting/django-crud-views/issues/325). The remaining findings are candidates to
+triage into issues for django-crud-views (and, where marked, django-crud-views-extensions).
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
 @ `cf2bfc0f` ("Delete confirm checkbox spans the full row (#308) (#310)"; the demo was built from `b73337ce`, #309,
@@ -112,6 +116,9 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 4. Workflow `BadgeEnum` values are Bootstrap colour names; the badge is a solid pill
 
+- **Upstream tracking:** [django-crud-views #319](https://github.com/jacob-consulting/django-crud-views/issues/319)
+  — phase 1, shared with finding 5; filed, not yet implemented.
+
 - **What happened:** `BadgeEnum` is documented as "Bootstrap contextual colours for state badges" (`primary`,
   `success`, `danger`, `light`, `dark`, ...), and `crud_views_workflow/badge.html` pastes the value into
   `badge rounded-pill text-bg-<colour>`, a solid pill. Tabler's status badges are the light variants
@@ -128,6 +135,9 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Severity:** annoyance.
 
 ### 5. The workflow page is not framed, and its history table is not responsive
+
+- **Upstream tracking:** [django-crud-views #319](https://github.com/jacob-consulting/django-crud-views/issues/319)
+  — phase 1, shared with finding 4; filed, not yet implemented.
 
 - **What happened:** `view_workflow.content.html` renders the history and the form straight into the page, not
   through `crud_views/snippets/form_frame.html`, so under the theme the workflow page has no card while every
@@ -147,6 +157,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 6. `WorkflowViewPermissionRequired` has one permission for every transition
 
+- **Upstream tracking:** [django-crud-views #320](https://github.com/jacob-consulting/django-crud-views/issues/320)
+  — phase 2, document and test the opt-in permission recipe while retaining the default `"change"` gate;
+  filed, not yet implemented.
+
 - **What happened:** the workflow view checks one `cv_permission` (`"change"`) before any transition is offered. The
   roastery's Roasters may take one step (confirmed → roasted) and otherwise only view orders. django-fsm's own
   `permission=` on `@transition` supports per-step rules, and upstream filters the offered steps through
@@ -163,6 +177,11 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Severity:** annoyance.
 
 ### 7. Workflow: no refusal-with-message hook, `WorkflowForm.clean()` returns None, no helper outside the view
+
+- **Upstream tracking:** [django-crud-views #322](https://github.com/jacob-consulting/django-crud-views/issues/322)
+  — phase 3, shared model business-validation hook, opt-in transition buttons with explanations and comment
+  requirements, `clean()` return fix, and reusable execution helper; filed, not yet implemented.
+  Reuse phase 1 (#319)'s action form frame; implement that template integration after #319.
 
 - **What happened:** (1) "Confirm only with at least one line" can be a django-fsm `conditions=[...]`, but then the
   step silently disappears and a posted confirm fails as "Select a valid choice". To show a reason the project has to
@@ -183,6 +202,11 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 8. The card template has no block above the title
 
+- **Upstream tracking:** [django-crud-views #325](https://github.com/jacob-consulting/django-crud-views/issues/325)
+  — one small GSD phase shared with finding 9; add empty `card_root` and `card_header` insertion blocks,
+  documentation, and regression tests. Theme template overrides must adopt the new blocks downstream;
+  filed, not yet implemented.
+
 - **What happened:** the product card (type badge row above the title, a `card-status-top` stripe as a direct child of
   `.card`) cannot be built by extending `crud_views/tags/card.html`: `card_content` renders below the title, and
   nothing sits at the card root. The `card:root` / `card:body` class keys exist, but they are global, and putting the
@@ -196,6 +220,11 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Severity:** annoyance.
 
 ### 9. A card list as the landing page needs `cv_key = "list"`
+
+- **Upstream tracking:** [django-crud-views #325](https://github.com/jacob-consulting/django-crud-views/issues/325)
+  — one small GSD phase shared with finding 8; document and test the existing cards-first/table-secondary
+  configuration, including switching and navigation behavior, without adding a `cv_default_list` API;
+  filed, not yet implemented.
 
 - **What happened:** `CardListView` is `cv_key = "card"`, `cv_path = "card"`; "home", the cancel/success keys and the
   breadcrumbs all point at `list`. A ViewSet whose default list is the cards (with a table beside it) has to set

@@ -1,14 +1,17 @@
 import random
+from copy import deepcopy
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from dashboard.seed import seed as seed_dashboard
 
 from .models import Beans, Category, Equipment, Product, Subscription
 from .seed import seed as seed_catalog
+from .views import PROPERTY_DISPLAY, ProductDetailView
 
 
 class CatalogTestCase(TestCase):
@@ -36,6 +39,26 @@ class SeedTests(CatalogTestCase):
 
 
 class ProductViewTests(CatalogTestCase):
+    def test_declared_mapping_tracer(self):
+        self.login()
+        response = self.client.get(reverse("product-create_select"))
+        self.assertEqual(response.status_code, 200)
+        choices = [(self.ctype_id(model), model.__name__) for model in (Beans, Equipment, Subscription)]
+        self.assertEqual(list(response.context["form"].fields["polymorphic_ctype_id"].choices), choices)
+        for value, label in choices:
+            self.assertContains(response, f'<option value="{value}">{label}</option>', html=True)
+        self.assertContains(response, "Continue")
+        self.assertContains(response, "col-md-4")
+        beans = Beans.objects.first()
+        response = self.client.get(reverse("product-detail", kwargs={"pk": beans.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [str(group.title) for group in response.context["object_detail_groups"]], ["Coffee", "Commerce", "About"]
+        )
+        self.assertContains(response, beans.name)
+        self.assertContains(response, beans.sku)
+        self.assertContains(response, beans.get_process_display())
+
     def test_card_list_shows_type_badges(self):
         self.login()
         response = self.client.get(reverse("product-list"))
@@ -101,16 +124,32 @@ class ProductViewTests(CatalogTestCase):
         """Each kind shows its own property labels and none of another kind's."""
         self.login()
         cases = (
+            (Beans, "Altitude", ("Warranty months", "Bags per delivery")),
             (Equipment, "Warranty months", ("Altitude", "Bags per delivery")),
             (Subscription, "Bags per delivery", ("Altitude", "Warranty months")),
             (Beans, "Altitude", ("Warranty months", "Bags per delivery")),
         )
+        original = deepcopy(PROPERTY_DISPLAY)
         for model, present, absent in cases:
-            html = self.client.get(reverse("product-detail", kwargs={"pk": model.objects.first().pk})).content.decode()
+            obj = model.objects.first()
+            response = self.client.get(reverse("product-detail", kwargs={"pk": obj.pk}))
+            self.assertEqual(response.status_code, 200)
+            html = response.content.decode()
             self.assertIn(present, html, model)
             self.assertIn("Commerce", html)
+            self.assertIn("About", html)
+            properties = {
+                prop.path: prop.value
+                for group in response.context["object_detail_groups"]
+                for prop in group.properties
+            }
+            self.assertEqual(properties["sku"], obj.sku)
+            field = {Beans: "altitude_m", Equipment: "warranty_months", Subscription: "bags_per_delivery"}[model]
+            self.assertEqual(properties[field], getattr(obj, field))
             for label in absent:
                 self.assertNotIn(label, html, model)
+        self.assertIs(ProductDetailView.cv_property_display, PROPERTY_DISPLAY)
+        self.assertEqual(PROPERTY_DISPLAY, original)
 
     def test_stock_row_only_for_stocked_kinds(self):
         """Subscriptions are not stocked (``show_stock = False``): their detail has no Stock row, like their card."""
@@ -142,6 +181,50 @@ class ProductViewTests(CatalogTestCase):
         self.login("sam")
         self.assertEqual(self.client.get(reverse("product-list")).status_code, 200)
         self.assertEqual(self.client.get(reverse("product-create_select")).status_code, 403)
+
+    def test_unprivileged_user_cannot_select_create_or_view_details(self):
+        user = get_user_model().objects.create_user(username="no-catalog-permissions")
+        self.client.force_login(user)
+        selector = reverse("product-create_select")
+        self.assertEqual(self.client.get(selector).status_code, 403)
+        self.assertEqual(self.client.post(selector, {"polymorphic_ctype_id": self.ctype_id(Beans)}).status_code, 403)
+        for model in (Beans, Equipment, Subscription):
+            obj = model.objects.first()
+            detail = reverse("product-detail", kwargs={"pk": obj.pk})
+            create = reverse("product-create", kwargs={"polymorphic_ctype_id": self.ctype_id(model)})
+            self.assertEqual(self.client.get(detail).status_code, 403)
+            self.assertEqual(self.client.get(create).status_code, 403)
+            self.assertEqual(self.client.post(create, {}).status_code, 403)
+
+
+class ProductMappingCheckTests(SimpleTestCase):
+    def messages(self):
+        return [message for check in ProductDetailView.checks() for message in check.messages()]
+
+    def test_declared_mapping_checks(self):
+        self.assertIs(ProductDetailView.cv_property_display, PROPERTY_DISPLAY)
+        self.assertEqual(set(PROPERTY_DISPLAY), {Beans, Equipment, Subscription})
+        self.assertEqual(self.messages(), [])
+
+    def test_non_first_entry_diagnostics(self):
+        original = deepcopy(PROPERTY_DISPLAY)
+        for model in (Equipment, Subscription):
+            with self.subTest(model=model.__name__, invalid="value"):
+                mapping = {**PROPERTY_DISPLAY, model: None}
+                with patch.object(ProductDetailView, "cv_property_display", mapping):
+                    messages = self.messages()
+                self.assertEqual([message.id for message in messages], ["viewset.E241"])
+                self.assertIn(f"cv_property_display[{model._meta.label}]", messages[0].msg)
+            with self.subTest(model=model.__name__, invalid="property"):
+                mapping = deepcopy(PROPERTY_DISPLAY)
+                mapping[model][0]["properties"][0] = 42
+                with patch.object(ProductDetailView, "cv_property_display", mapping):
+                    messages = self.messages()
+                self.assertEqual([message.id for message in messages], ["viewset.E245"])
+                self.assertIn(f"cv_property_display[{model._meta.label}][0]['properties'][0]", messages[0].msg)
+            self.assertIs(ProductDetailView.cv_property_display, PROPERTY_DISPLAY)
+            self.assertEqual(self.messages(), [])
+        self.assertEqual(PROPERTY_DISPLAY, original)
 
 
 class CategoryViewTests(CatalogTestCase):

@@ -211,11 +211,7 @@ PROPERTY_DISPLAY = {
 class ProductDetailView(BreadcrumbMixin, ObjectDetailMixin, PolymorphicDetailViewPermissionRequired):
     cv_viewset = cv_product
     model = Product
-    cv_property_display = PROPERTY_DISPLAY[Beans]  # satisfies the system check; `property_display` picks by kind
-
-    @property
-    def property_display(self):
-        return PROPERTY_DISPLAY[type(self.object)]
+    cv_property_display = PROPERTY_DISPLAY
 
 
 # --------------------------------------------------------------------------- categories

@@ -36,6 +36,26 @@ class SeedTests(CatalogTestCase):
 
 
 class ProductViewTests(CatalogTestCase):
+    def test_declared_mapping_tracer(self):
+        self.login()
+        response = self.client.get(reverse("product-create_select"))
+        self.assertEqual(response.status_code, 200)
+        choices = [(self.ctype_id(model), model.__name__) for model in (Beans, Equipment, Subscription)]
+        self.assertEqual(list(response.context["form"].fields["polymorphic_ctype_id"].choices), choices)
+        for value, label in choices:
+            self.assertContains(response, f'<option value="{value}">{label}</option>', html=True)
+        self.assertContains(response, "Continue")
+        self.assertContains(response, "col-md-4")
+        beans = Beans.objects.first()
+        response = self.client.get(reverse("product-detail", kwargs={"pk": beans.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [str(group.title) for group in response.context["object_detail_groups"]], ["Coffee", "Commerce", "About"]
+        )
+        self.assertContains(response, beans.name)
+        self.assertContains(response, beans.sku)
+        self.assertContains(response, beans.get_process_display())
+
     def test_card_list_shows_type_badges(self):
         self.login()
         response = self.client.get(reverse("product-list"))

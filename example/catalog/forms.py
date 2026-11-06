@@ -15,12 +15,6 @@ class ProductContentTypeForm(CrispyForm, PolymorphicContentTypeForm):
 
     submit_label = "Continue"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # the choices are the content types' lower-case verbose names; the picker reads better capitalised
-        field = self.fields["polymorphic_ctype_id"]
-        field.choices = [(pk, str(label).capitalize()) for pk, label in field.choices]
-
     def get_layout_fields(self):
         return Row(Column4("polymorphic_ctype_id"))
 

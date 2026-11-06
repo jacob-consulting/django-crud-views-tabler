@@ -35,8 +35,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 7 | [No refusal message, `WorkflowForm.clean()` returns None, no transition helper](#7-workflow-no-refusal-with-message-hook-workflowformclean-returns-none-no-helper-outside-the-view) | annoyance | form subclass; `sales/workflow.py:run_transition` copies the view |
 | 8 | [Card template has no block above the title](#8-the-card-template-has-no-block-above-the-title) | annoyance | demo replaces the product card template outright |
 | 9 | [Card list as landing page needs `cv_key = "list"`](#9-a-card-list-as-the-landing-page-needs-cv_key--list) | cosmetic | overrides `cv_key`/`cv_path`/`cv_home_key` on both list views |
-| 10 | [Polymorphic create-select shows lower-case type names](#10-polymorphic-create-select-shows-lower-case-type-names) | cosmetic | form subclass capitalises the labels |
-| 11 | [Polymorphic detail cannot vary property groups per kind](#11-a-polymorphic-detail-view-cannot-give-each-kind-its-own-property-groups) | annoyance | overrides `property_display`, dummy `cv_property_display` for E240 |
+| 10 | [Polymorphic create-select shows lower-case type names](#10-polymorphic-create-select-shows-lower-case-type-names) | cosmetic | resolved #326: upstream labels; Continue/layout retained |
+| 11 | [Polymorphic detail cannot vary property groups per kind](#11-a-polymorphic-detail-view-cannot-give-each-kind-its-own-property-groups) | annoyance | resolved #326: direct model mapping; catalog/check verified |
 | 12 | [Object detail prints stored value of a `choices` field](#12-object-detail-prints-the-stored-value-of-a-field-with-choices) | annoyance | `x("get_<field>_display", title=...)` per choice field |
 | 13 | [Object detail shows model `help_text` under values](#13-object-detail-shows-model-help_text-in-the-value-column) | cosmetic | help text moved from the model to the form |
 | 14 | [Object detail renders a blank text field as an empty row](#14-object-detail-renders-a-blank-text-field-as-an-empty-row) | cosmetic | customer detail leaves blank optional fields out |
@@ -211,23 +211,38 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 10. Polymorphic create-select shows lower-case type names
 
-- **What happened:** the "Type" choices are `ContentType.name`, the model's lower-case `verbose_name` ("beans",
-  "equipment"). Every project capitalises them in its own form subclass.
-- **Where:** `src/crud_views_polymorphic/lib/create_select.py:68` (`(ct.id, ct.name)` in `get_form`).
-- **What we did:** `ProductContentTypeForm.__init__` capitalises the labels (`example/catalog/forms.py`).
-- **Suggested upstream change:** `capfirst(ct.model_class()._meta.verbose_name)` for the labels.
-- **Severity:** cosmetic.
+- **Resolved:** [upstream issue #326](https://github.com/jacob-consulting/django-crud-views/issues/326),
+  verified against phase 06.15 source on 2026-11-06; not a claim about a published release.
+- **What happened:** the Type choices used lower-case `ContentType.name`; the consumer rewrote every label.
+- **Upstream change:** `capfirst(ct.name)` changes only the first character and preserves the content-type IDs.
+- **Adopted here:** removed `ProductContentTypeForm.__init__`; the subclass, `Continue` submit label and
+  `Row(Column4("polymorphic_ctype_id"))` remain. The real selector test checks exact IDs/labels and presentation.
+- **Verification:** the source-bound catalog suite passed all 18 tests in 5.742s on Python 3.14.7 / Django 6.1.2;
+  `check --fail-level WARNING` reported no issues (0 silenced). See finding 11 for source provenance.
+- **Severity:** cosmetic (resolved in the verified source).
 
 ### 11. A polymorphic detail view cannot give each kind its own property groups
 
-- **What happened:** `ObjectDetailMixin.cv_property_display` is a single class attribute (and check `E240` demands
-  it), but a polymorphic ViewSet shows a different set of fields per kind.
-- **Where:** `src/crud_views_object_detail/lib/mixins.py:37` (`property_display`), `:63` (`E240`);
-  `examples/bootstrap5/polymorphic_demo/views.py:84` sidesteps it with one shared group.
-- **What we did:** `ProductDetailView.property_display` returns `PROPERTY_DISPLAY[type(self.object)]`, with a dummy
-  `cv_property_display` for the check (`example/catalog/views.py`).
-- **Suggested upstream change:** document the `property_display` hook, or accept a `{Model: groups}` dict.
-- **Severity:** annoyance.
+- **Resolved:** [upstream issue #326](https://github.com/jacob-consulting/django-crud-views/issues/326),
+  verified against phase 06.15 source on 2026-11-06; not a claim about a published release.
+- **What happened:** a dummy Beans list satisfied the static check while `property_display` chose by runtime type.
+- **Adopted here:** `ProductDetailView.cv_property_display = PROPERTY_DISPLAY`; removed the override and dummy list.
+  Existing Coffee/Equipment/Subscription, Commerce/About groups, stock rules, breadcrumbs and view composition remain.
+- **Verification:** 18 catalog tests passed in 5.742s, including sequential Beans/Equipment/Subscription/Beans
+  details with actual values and sibling-field absence, stock visibility, all typed forms, permission denials,
+  and checks of the real mapping plus invalid non-first Equipment/Subscription values/properties and restoration.
+  `check --fail-level WARNING` passed with no issues (0 silenced). The tracer passed twice (1.037s and 0.932s).
+- **Provenance:** the execution-only `/tmp/dcv-phase0615-verification/run_catalog.py` validates explicit roots,
+  all five package import paths and required test IDs in the same process as each Django command. Core,
+  object-detail and polymorphic imports came from `/home/alex/projects/workspaces/cv-phase-06-15/django-crud-views/src`
+  at upstream `1d7a0c90e7b1f3c5f8ede748b41464bca05e4290`. Both configured widgets came from a clean detached
+  checkout of `https://github.com/jacob-consulting/django-crud-views-extensions.git` at
+  `0d84859a08b8bc706a877ce25c89da81d1321bfa`, project version 0.3.2. This is the historical report revision,
+  not a Git revision from the editable-path lockfile. No dependency/settings/demo-data edits or installations.
+  Commands: launcher modes `catalog` (`test catalog`) and `check` (`check --fail-level WARNING`), with explicit
+  phase, extension and consumer roots; logs are retained beside the launcher. Upstream plan 03 separately passed
+  10,175 tests on Django 5.2 (one Django-6-only skip), 471 focused tests each on Django 4.2/6.0, and strict docs build.
+- **Severity:** annoyance (resolved in the verified source).
 
 ## Object detail
 

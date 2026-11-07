@@ -102,17 +102,30 @@ class CustomerViewTests(SalesTestCase):
         self.assertIn(reverse("order-list", kwargs={"customer_pk": customer.pk}), html)  # the Orders link
         self.assertIn(reverse("subscription-list", kwargs={"customer_pk": customer.pk}), html)  # the Subscriptions link
 
-    def test_detail_leaves_out_blank_optional_rows(self):
+    def test_detail_shows_a_dash_for_blank_optional_rows(self):
         self.login()
         customer = Customer.objects.filter(kind="consumer").first()
         Customer.objects.filter(pk=customer.pk).update(phone="", notes="")
         html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
-        self.assertNotRegex(html, r">\s*Phone\s*<")
-        self.assertNotRegex(html, r">\s*Notes\s*<")
+        for label in ("Phone", "Notes"):
+            # the dash sits in the value cell right after the label, not in some later row
+            self.assertRegex(html, rf">\s*{label}\s*</div>\s*<div[^>]*>\s*<span class=\"text-body-tertiary\">&mdash;</span>")
         Customer.objects.filter(pk=customer.pk).update(phone="+49 40 123", notes="Likes it light")
         html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
         self.assertRegex(html, r">\s*Phone\s*<")
         self.assertIn("Likes it light", html)
+
+    def test_detail_shows_choice_labels_and_no_model_help_text(self):
+        self.login()
+        customer = Customer.objects.filter(kind="wholesale").first()
+        Customer.objects.filter(pk=customer.pk).update(payment_terms=Customer.PaymentTerms.NET_60, country="DE")
+        html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
+        self.assertRegex(html, r">\s*Payment terms\s*<")
+        self.assertRegex(html, r">\s*Net 60\s*<")
+        self.assertNotRegex(html, r">\s*net_60\s*<")
+        self.assertNotIn("ISO country code", html)  # the model help text is for the form only
+        form = self.client.get(reverse("customer-update", kwargs={"pk": customer.pk})).content.decode()
+        self.assertIn("ISO country code, e.g. DE.", form)
 
     def test_detail_header_shows_the_avatar_not_the_viewset_icon(self):
         self.login()

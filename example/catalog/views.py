@@ -178,9 +178,9 @@ PROPERTY_DISPLAY = {
             "properties": [
                 "origin",
                 x("green_lot", title=_("Green lot")),
-                x("get_process_display", title=_("Process")),
+                "process",
                 x("altitude_m", title=_("Altitude (m)")),
-                x("get_roast_level_display", title=_("Roast level")),
+                "roast_level",
                 "flavor_notes",
             ],
         },
@@ -197,9 +197,9 @@ PROPERTY_DISPLAY = {
             "title": _("Subscription"),
             "icon": "tabler:repeat",
             "properties": [
-                x("get_interval_display", title=_("Interval")),
+                "interval",
                 "bags_per_delivery",
-                x("get_bag_size_display", title=_("Bag size")),
+                "bag_size",
             ],
         },
         commerce(Subscription),

@@ -125,7 +125,7 @@ class LotDetailView(BreadcrumbMixin, ObjectDetailViewPermissionRequired):
         {
             "title": _("Origin and producer"),
             "icon": "tabler:map-pin",
-            "properties": ["origin", "producer", "variety", x("get_process_display", title=_("Process")), "harvest_year"],
+            "properties": ["origin", "producer", "variety", "process", "harvest_year"],
         },
         {
             "title": _("Stock and price"),

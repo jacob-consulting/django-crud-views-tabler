@@ -8,8 +8,10 @@ CSS rule, a theme template override, or a workaround in the demo instead of an u
 or awkwardness found on the way. Findings 4–5 are tracked in
 [django-crud-views #319](https://github.com/jacob-consulting/django-crud-views/issues/319), finding 6 in
 [#320](https://github.com/jacob-consulting/django-crud-views/issues/320), finding 7 in
-[#322](https://github.com/jacob-consulting/django-crud-views/issues/322), and findings 8–9 in
-[#325](https://github.com/jacob-consulting/django-crud-views/issues/325). The remaining findings are candidates to
+[#322](https://github.com/jacob-consulting/django-crud-views/issues/322), findings 8–9 in
+[#325](https://github.com/jacob-consulting/django-crud-views/issues/325), findings 10–11 in
+[#326](https://github.com/jacob-consulting/django-crud-views/issues/326), and findings 12–14 and 16 in
+[#327](https://github.com/jacob-consulting/django-crud-views/issues/327). The remaining findings are candidates to
 triage into issues for django-crud-views (and, where marked, django-crud-views-extensions).
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
@@ -41,11 +43,11 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 9 | [Card list as landing page needs `cv_key = "list"`](#9-a-card-list-as-the-landing-page-needs-cv_key--list) | cosmetic | overrides `cv_key`/`cv_path`/`cv_home_key` on both list views |
 | 10 | [Polymorphic create-select shows lower-case type names](#10-polymorphic-create-select-shows-lower-case-type-names) | cosmetic | resolved #326: upstream labels; Continue/layout retained |
 | 11 | [Polymorphic detail cannot vary property groups per kind](#11-a-polymorphic-detail-view-cannot-give-each-kind-its-own-property-groups) | annoyance | resolved #326: direct model mapping; catalog/check verified |
-| 12 | [Object detail prints stored value of a `choices` field](#12-object-detail-prints-the-stored-value-of-a-field-with-choices) | annoyance | `x("get_<field>_display", title=...)` per choice field |
-| 13 | [Object detail shows model `help_text` under values](#13-object-detail-shows-model-help_text-in-the-value-column) | cosmetic | help text moved from the model to the form |
-| 14 | [Object detail renders a blank text field as an empty row](#14-object-detail-renders-a-blank-text-field-as-an-empty-row) | cosmetic | customer detail leaves blank optional fields out |
+| 12 | [Object detail prints stored value of a `choices` field](#12-object-detail-prints-the-stored-value-of-a-field-with-choices) | annoyance | resolved #327: plain field names show the choice label |
+| 13 | [Object detail shows model `help_text` under values](#13-object-detail-shows-model-help_text-in-the-value-column) | cosmetic | resolved #327: help text back on the model, hidden on detail pages |
+| 14 | [Object detail renders a blank text field as an empty row](#14-object-detail-renders-a-blank-text-field-as-an-empty-row) | cosmetic | resolved #327: blank fields keep their row and show a dash |
 | 15 | [Accordion pack opens every panel closed](#15-the-accordion-detail-pack-opens-every-panel-closed) | annoyance | accordion pack not used; card-rows, tabs, split-card instead |
-| 16 | [`ObjectDetailMixin` + `ObjectDetailViewPermissionRequired` is an MRO error](#16-objectdetailmixin-plus-objectdetailviewpermissionrequired-is-an-mro-error) | cosmetic | permission-required class alone |
+| 16 | [`ObjectDetailMixin` + `ObjectDetailViewPermissionRequired` is an MRO error](#16-objectdetailmixin-plus-objectdetailviewpermissionrequired-is-an-mro-error) | cosmetic | documented upstream #327; permission-required class alone |
 | 17 | [`tabs.js` reads `globalThis.bootstrap`](#17-tabsjs-looks-up-globalthisbootstrap-directly) | annoyance | nothing (Bootstrap's data API still switches tabs) |
 | 18 | [Header icon is drawn beside a custom header template](#18-the-header-icon-is-drawn-beside-a-custom-header-template) | cosmetic | customer detail overrides `cv_get_header_icon()` to return None |
 | 19 | [Conditional groups toggle only on a checkbox](#19-conditional-groups-only-toggle-on-a-boolean-checkbox) | annoyance | transient `is_wholesale` checkbox drives `Customer.kind` |
@@ -277,33 +279,61 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 12. Object detail prints the stored value of a field with `choices`
 
+- **Implemented upstream:** [issue #327](https://github.com/jacob-consulting/django-crud-views/issues/327)
+  (closed 2026-11-07), [PR #333](https://github.com/jacob-consulting/django-crud-views/pull/333) (phase 06.16, merge
+  `8df4917e`); not a claim about a published release. `PropertyConfig.choices_display` (default `True`)
+  renders the choice label for scalar and single-object FK/O2O paths, keeps the automatic title, and passes the
+  stored code to badge colour/label maps; `x("process", choices_display=False)` restores the raw value.
+- **Adopted here:** `process`, `roast_level`, `interval`, `bag_size` (`example/catalog/views.py`), the green lot's
+  `process` (`example/roastery/views.py`) and the customer's `payment_terms` are plain field names; the
+  hand-written titles are gone (the field names give the same titles). `test_detail_shows_choice_labels_and_no_model_help_text`
+  checks "Net 60" (not `net_60`) under "Payment terms"; the catalog tests still find the process label.
 - **What happened:** `"process"` renders `washed`, not `Washed`; the resolver does not use `get_FOO_display`. Showing
   the label needs `x("get_process_display", title=...)` per choice field, plus a hand-written title.
 - **Where:** `src/crud_views_object_detail/lib/resolvers.py:171` (`resolve_property`).
-- **What we did:** every such property points at `get_<field>_display` with an explicit title.
+- **What we did before #327:** every such property points at `get_<field>_display` with an explicit title.
 - **Suggested upstream change:** when the model field has `choices`, resolve to the display value by default.
-- **Severity:** annoyance.
+- **Verification:** against the `../django-crud-views` checkout at `33bcaf44` (phase 06.17 branch, which contains
+  the #333 merge): 197 example tests, 79 theme tests, 34 crispy_tabler tests and `check --fail-level WARNING` pass.
+- **Severity:** annoyance (resolved in the upstream source).
 
 ### 13. Object detail shows model `help_text` in the value column
 
+- **Implemented upstream:** [issue #327](https://github.com/jacob-consulting/django-crud-views/issues/327)
+  (closed 2026-11-07), [PR #333](https://github.com/jacob-consulting/django-crud-views/pull/333) (phase 06.16, merge
+  `8df4917e`); not a claim about a published release. Model help text is hidden by default; precedence is
+  property `detail` → view `cv_object_detail_show_help_text` → setting `CRUD_VIEWS_OBJECT_DETAIL_SHOW_HELP_TEXT`
+  → `False`.
+- **Adopted here:** "ISO country code, e.g. DE." is back on `Customer.country` and `Address.country`
+  (migration `sales/0005_country_help_text`); the two form `__init__` overrides that set it are gone. The demo keeps
+  the default (no `CRUD_VIEWS_OBJECT_DETAIL_SHOW_HELP_TEXT`); the customer test checks the text is on the edit form
+  and not on the detail page.
 - **What happened:** a field's `help_text` (e.g. "ISO country code, e.g. DE.") is printed under its value on the
   detail page, where it reads as noise.
 - **Where:** `src/crud_views_object_detail/lib/resolvers.py:155-157`.
-- **What we did:** moved the help text from the model to the form field (`example/sales/forms.py`).
+- **What we did before #327:** moved the help text from the model to the form field (`example/sales/forms.py`).
 - **Suggested upstream change:** an option to omit help text on detail pages (or omit it by default).
-- **Severity:** cosmetic.
+- **Severity:** cosmetic (resolved in the upstream source).
 
 ### 14. Object detail renders a blank text field as an empty row
 
+- **Implemented upstream:** [issue #327](https://github.com/jacob-consulting/django-crud-views/issues/327)
+  (closed 2026-11-07), [PR #333](https://github.com/jacob-consulting/django-crud-views/pull/333) (phase 06.16, merge
+  `8df4917e`); not a claim about a published release. The stock `char`, `text` and `default` value
+  templates show the muted em dash for `""` as for `None` (rows are kept; `0`/`False` stay values). No hide-empty
+  option was added.
+- **Adopted here:** `CustomerDetailView.property_display` no longer drops blank `phone`, `notes`, `company` and
+  `vat_id`; it only picks the wholesale or consumer groups, and a blank field shows the dash.
+  `test_detail_shows_a_dash_for_blank_optional_rows` checks the dash sits in the Phone and Notes value cells.
 - **What happened:** the text type shows a dash only for `None`. A blank `CharField`/`TextField` (`""`, Django's
   convention for an empty string field) renders as a label with nothing beside it; a customer without phone or
   notes showed two empty rows.
 - **Where:** `src/crud_views_object_detail/templates/crud_views_object_detail/types/default/text.html:1`
   (`{% if value is None %}`).
-- **What we did:** `CustomerDetailView.property_display` leaves `phone`, `notes`, `company` and `vat_id` out when
+- **What we did before #327:** `CustomerDetailView.property_display` leaves `phone`, `notes`, `company` and `vat_id` out when
   they are blank (`example/sales/views/customers.py`).
 - **Suggested upstream change:** treat `""` like `None` in the text type, or a per-property / setting "hide empty".
-- **Severity:** cosmetic.
+- **Severity:** cosmetic (resolved in the upstream source).
 
 ### 15. The accordion detail pack opens every panel closed
 
@@ -318,6 +348,12 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Severity:** annoyance.
 
 ### 16. `ObjectDetailMixin` plus `ObjectDetailViewPermissionRequired` is an MRO error
+
+- **Implemented upstream:** [issue #327](https://github.com/jacob-consulting/django-crud-views/issues/327)
+  (closed 2026-11-07), [PR #333](https://github.com/jacob-consulting/django-crud-views/pull/333) (phase 06.16, merge
+  `8df4917e`); not a claim about a published release. Documentation only, as suggested: the object detail
+  docs warn that `ObjectDetailView`/`ObjectDetailViewPermissionRequired` already include `ObjectDetailMixin`. No
+  class hierarchy change; nothing to adopt here.
 
 - **What happened:** a detail view declared `(BreadcrumbMixin, ObjectDetailMixin, ObjectDetailViewPermissionRequired)`
   raises "Cannot create a consistent method resolution order": the permission-required class already includes the

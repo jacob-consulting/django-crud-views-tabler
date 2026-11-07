@@ -52,7 +52,6 @@ class CustomerForm(ConditionalGroupModelForm):
         # a model-declared form field would be redeclared by the mixin; keep the declared one, seed it from the row
         self.fields["is_wholesale"].initial = self.instance.is_wholesale
         self.fields["owner"].empty_label = "Unassigned"
-        self.fields["country"].help_text = "ISO country code, e.g. DE."
 
     def clean(self):
         cleaned = super().clean()
@@ -77,10 +76,6 @@ class CustomerForm(ConditionalGroupModelForm):
 
 class AddressForm(CrispyModelForm):
     submit_label = "Save"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["country"].help_text = "ISO country code, e.g. DE."
 
     class Meta:
         model = Address

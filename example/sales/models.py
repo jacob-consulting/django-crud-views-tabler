@@ -38,7 +38,7 @@ class Customer(models.Model):
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=50, blank=True)
     city = models.CharField(max_length=100, blank=True)
-    country = models.CharField(max_length=2, blank=True)
+    country = models.CharField(max_length=2, blank=True, help_text="ISO country code, e.g. DE.")
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -93,7 +93,7 @@ class Address(models.Model):
     street = models.CharField(max_length=200)
     zip_code = models.CharField(max_length=20)
     city = models.CharField(max_length=100)
-    country = models.CharField(max_length=2)
+    country = models.CharField(max_length=2, help_text="ISO country code, e.g. DE.")
     is_default = models.BooleanField(default=False)
 
     class Meta:

@@ -12,8 +12,9 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 [#325](https://github.com/jacob-consulting/django-crud-views/issues/325), findings 10–11 in
 [#326](https://github.com/jacob-consulting/django-crud-views/issues/326), and findings 12–14 and 16 in
 [#327](https://github.com/jacob-consulting/django-crud-views/issues/327), findings 15 and 17 in
-[#328](https://github.com/jacob-consulting/django-crud-views/issues/328), finding 18 in [#329](https://github.com/jacob-consulting/django-crud-views/issues/329) (open), and the first half of finding 23 in
-[PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (merged, no issue). The remaining findings are candidates to
+[#328](https://github.com/jacob-consulting/django-crud-views/issues/328), finding 18 in [#329](https://github.com/jacob-consulting/django-crud-views/issues/329) (open), the first half of finding 23 in
+[PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (merged, no issue), and finding 27 in
+[#314](https://github.com/jacob-consulting/django-crud-views/issues/314) (open, backlog; supersedes #311). The remaining findings are candidates to
 triage into issues for django-crud-views (and, where marked, django-crud-views-extensions).
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
@@ -60,7 +61,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | `Meta.permissions` entry + `cv_permission = "run"` |
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | table `__init__` passes the sequence; `Meta.exclude = ("actions",)` |
-| 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | `render_number` and `get_success_url` reverse the nested URLs |
+| 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | tracked in #314 (open, backlog); `render_number` and `get_success_url` reverse the nested URLs |
 | 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | `cv_header_template_code` on the lists; breadcrumb keeps the model name |
 | 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | plainer message texts |
 | 30 | ext: [Datetimepicker assets on every page, need jQuery](#30-ext-the-datetimepicker-assets-load-on-every-page-and-need-jquery) | annoyance | project head include loads jQuery 3.7.1 |
@@ -597,7 +598,18 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   `src/crud_views/lib/view/base.py:244` (`get_success_url`).
 - **What we did:** `AllOrdersTable.render_number` reverses `order-detail`; `AllOrdersCreateView.get_success_url`
   reverses `order-update` (`example/sales/views/orders.py`).
-- **Suggested upstream change:** a `LinkColumn(viewset=..., key=...)` and a success target in another ViewSet.
+- **Tracked upstream:** filed as [#311](https://github.com/jacob-consulting/django-crud-views/issues/311) (derive a
+  missing parent pk from the object inside the existing URL builders). The maintainer closed it on 2026-11-04 in favour
+  of [#314](https://github.com/jacob-consulting/django-crud-views/issues/314), an opt-in, request-free helper that
+  builds a URL from a target ViewSet, a key and an object. #314 is open backlog work, not part of 1.0, and leaves the
+  existing URL builders, columns, row actions and success redirects unchanged.
+- **Suggested upstream change:** the #314 helper, nothing more. A `LinkColumn(viewset=..., key=...)` or a success
+  target in another ViewSet is not asked for upstream: #314 rules out that kind of core integration. If wanted, such a
+  column is a thin wrapper over the helper in the theme or the demo.
+- **When #314 lands:** both call sites are its plain case (one level, ForeignKey `Order.customer`) and switch to the
+  helper; they can serve as the downstream example its acceptance criteria ask for. The helper builds a route, not an
+  access check; here they agree because `AllOrdersListView.get_queryset` already limits the rows to
+  `customers_for(user)`.
 - **Severity:** cosmetic.
 
 ### 28. Two ViewSets on one model share every default label

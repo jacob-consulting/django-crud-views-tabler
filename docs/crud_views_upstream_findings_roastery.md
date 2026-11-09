@@ -13,8 +13,10 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 [#326](https://github.com/jacob-consulting/django-crud-views/issues/326), and findings 12–14 and 16 in
 [#327](https://github.com/jacob-consulting/django-crud-views/issues/327), findings 15 and 17 in
 [#328](https://github.com/jacob-consulting/django-crud-views/issues/328), finding 18 in [#329](https://github.com/jacob-consulting/django-crud-views/issues/329) (open), the first half of finding 23 in
-[PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (merged, no issue), and finding 27 in
-[#314](https://github.com/jacob-consulting/django-crud-views/issues/314) (open, backlog; supersedes #311). The remaining findings are candidates to
+[PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (merged, no issue), finding 27 in
+[#314](https://github.com/jacob-consulting/django-crud-views/issues/314) (open, backlog; supersedes #311), finding 28 in
+[#338](https://github.com/jacob-consulting/django-crud-views/issues/338) (open) and finding 29 in
+[#339](https://github.com/jacob-consulting/django-crud-views/issues/339) (open). The remaining findings are candidates to
 triage into issues for django-crud-views (and, where marked, django-crud-views-extensions).
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
@@ -62,8 +64,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | table `__init__` passes the sequence; `Meta.exclude = ("actions",)` |
 | 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | tracked in #314 (open, backlog); `render_number` and `get_success_url` reverse the nested URLs |
-| 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | `cv_header_template_code` on the lists; breadcrumb keeps the model name |
-| 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | plainer message texts |
+| 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | tracked in #338 (open); `cv_header_template_code` on the lists; breadcrumb keeps the model name |
+| 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | tracked in #339 (open); plainer message texts |
 | 30 | ext: [Datetimepicker assets on every page, need jQuery](#30-ext-the-datetimepicker-assets-load-on-every-page-and-need-jquery) | annoyance | project head include loads jQuery 3.7.1 |
 | 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | theme CSS maps `--bs-*` to Tabler's `--tblr-*` |
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
@@ -619,8 +621,16 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   view (`cv_header_template_code`), the breadcrumb and create/update headers keep the model name.
 - **Where:** `src/crud_views/lib/viewset/__init__.py:478-487` (`get_meta`: `verbose_name` from the model's `_meta`).
 - **What we did:** `cv_header_template_code = "Subscriptions"` on the two lists; the breadcrumb keeps the model name.
-- **Suggested upstream change:** a `ViewSet(verbose_name=..., verbose_name_plural=...)` override that every default
-  label follows.
+- **Tracked upstream:** filed as [#338](https://github.com/jacob-consulting/django-crud-views/issues/338) on
+  2026-11-09: `ViewSet(verbose_name=..., verbose_name_plural=...)` as two optional `LazyStr` fields that `get_meta()`
+  resolves independently (singular and plural each fall back to the model), so every default snippet, the breadcrumb
+  container item, `LinkChildColumn` and `ChildContextButton` follow; per-view template codes still win. Model-centric
+  texts (delete summaries, 404s) stay on the model. The issue carries the decisions and acceptance criteria for the
+  upstream phase.
+- **Suggested upstream change:** the #338 fields, nothing more.
+- **When #338 lands:** `cv_subscription` and `cv_all_subscriptions` declare `verbose_name=_("subscription")`,
+  `verbose_name_plural=_("subscriptions")`; the two `cv_header_template_code` overrides go, and the breadcrumb and the
+  create/update/delete headers read "Subscription(s)" without further code.
 - **Severity:** cosmetic.
 
 ### 29. Snippet templates only see the object, not the view
@@ -631,7 +641,16 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Where:** `src/crud_views/lib/view/base.py:436` (`render_snippet` builds its context from the caller's dict at
   `:442`).
 - **What we did:** plainer texts.
-- **Suggested upstream change:** add `view` (and the parent object on child views) to the snippet data.
+- **Tracked upstream:** filed as [#339](https://github.com/jacob-consulting/django-crud-views/issues/339) on
+  2026-11-09: `cv_get_meta()` adds `view` (the instance) and, on child ViewSets, a lazy `parent_object` (absent on
+  top-level ViewSets, reusing the parent the ancestor guard resolved, so no extra query) for the snippets a view renders
+  for its own page: header, paragraph, filter header, success and error message. Class-level labels (action, short
+  action, breadcrumb current-page label, buttons) keep their context on purpose: there `context.view` is the hosting
+  page, not the labelled view. The issue carries the decisions and acceptance criteria for the upstream phase.
+- **Suggested upstream change:** the #339 keys, nothing more.
+- **When #339 lands:** the duplicate action's message becomes "Created {{ view.duplicate }} from {{ object }}" and the
+  nested order create view can say "New order for {{ parent_object }}" (`example/sales/views/order_actions.py`,
+  `orders.py`).
 - **Severity:** cosmetic.
 
 ## django-crud-views-extensions

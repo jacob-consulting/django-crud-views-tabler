@@ -50,12 +50,6 @@ class SubscriptionTableBase(Table):
     interval = tables.Column(verbose_name="Interval", accessor="product__interval", order_by="product__interval")
     next_delivery = tables.DateColumn(verbose_name="Next delivery", format="d M Y")
     is_active = tables.Column(verbose_name="Status")
-    column_sequence: tuple = ()
-
-    def __init__(self, *args, **kwargs):
-        # crud_views' Table passes sequence=("...", "actions") unless given one, which beats Meta.sequence
-        kwargs.setdefault("sequence", (*self.column_sequence, "..."))
-        super().__init__(*args, **kwargs)
 
     def render_interval(self, record):
         return record.product.get_interval_display()
@@ -65,14 +59,15 @@ class SubscriptionTableBase(Table):
 
 
 class SubscriptionTable(SubscriptionTableBase):
-    column_sequence = ("product", "interval", "next_delivery", "is_active")
+    class Meta:
+        sequence = ("product", "interval", "next_delivery", "is_active", "...")
 
 
 class AllSubscriptionsTable(SubscriptionTableBase):
-    column_sequence = ("customer", "product", "interval", "next_delivery", "is_active")
     customer = tables.Column()
 
     class Meta:
+        sequence = ("customer", "product", "interval", "next_delivery", "is_active", "...")
         exclude = ("actions",)  # edit them on the customer's page
 
 

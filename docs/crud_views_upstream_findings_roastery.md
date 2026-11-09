@@ -13,7 +13,8 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 [#326](https://github.com/jacob-consulting/django-crud-views/issues/326), and findings 12–14 and 16 in
 [#327](https://github.com/jacob-consulting/django-crud-views/issues/327), findings 15 and 17 in
 [#328](https://github.com/jacob-consulting/django-crud-views/issues/328), finding 18 in [#329](https://github.com/jacob-consulting/django-crud-views/issues/329) (open), the first half of finding 23 in
-[PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (merged, no issue), finding 27 in
+[PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (merged, no issue), finding 26 in
+[#337](https://github.com/jacob-consulting/django-crud-views/issues/337) (closed), finding 27 in
 [#314](https://github.com/jacob-consulting/django-crud-views/issues/314) (open, backlog; supersedes #311), finding 28 in
 [#338](https://github.com/jacob-consulting/django-crud-views/issues/338) (open) and finding 29 in
 [#339](https://github.com/jacob-consulting/django-crud-views/issues/339) (open). The remaining findings are candidates to
@@ -62,7 +63,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs open; context buttons instead of tabs |
 | 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | `Meta.permissions` entry + `cv_permission = "run"` |
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
-| 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | table `__init__` passes the sequence; `Meta.exclude = ("actions",)` |
+| 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | resolved #337: tables declare `Meta.sequence` (the `__init__` workaround is gone); `Meta.exclude = ("actions",)` drops the column |
 | 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | tracked in #314 (open, backlog); `render_number` and `get_success_url` reverse the nested URLs |
 | 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | tracked in #338 (open); `cv_header_template_code` on the lists; breadcrumb keeps the model name |
 | 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | tracked in #339 (open); plainer message texts |
@@ -581,15 +582,29 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 26. `Table` forces `sequence` and always adds the actions column
 
+- **Implemented upstream:** [issue #337](https://github.com/jacob-consulting/django-crud-views/issues/337)
+  (closed 2026-11-09), [PR #340](https://github.com/jacob-consulting/django-crud-views/pull/340) (phase 06.19, merge
+  `910d8bb9`); not a claim about a published release. `Table.__init__` applies its default `("...", "actions")` only
+  when the table declares no `Meta.sequence`; a declared one is used as written. Upstream re-scoped the second half of
+  the ask: the column is not dropped automatically when the view has no list actions. The documented way to drop it is
+  the table's own `Meta.exclude = ("actions",)` (`docs/reference/list_view.md`, `docs/faq.md`), which is what the demo
+  already did; `actions = None` on a subclass is unsupported and raises `KeyError`. A `Meta.sequence` that leaves out
+  `actions` places it at the `"..."` position, so list it explicitly where it must come last.
+- **Adopted here:** `OrderTable`, `AllOrdersTable`, `SubscriptionTable` and `AllSubscriptionsTable` declare
+  `Meta.sequence`; the `column_sequence` attribute and the `__init__` overrides in `OrderTableBase` and
+  `SubscriptionTableBase` are removed (`example/sales/views/orders.py`, `example/sales/views/subscriptions.py`). The
+  column order of all four tables is unchanged.
+- **Verification:** against the `../django-crud-views` checkout at `910d8bb9` (`main`, the #340 merge): 209 example
+  tests and `check --fail-level WARNING` pass.
 - **What happened:** `crud_views.lib.table.Table.__init__` passes `sequence=("...", "actions")` unless the caller
   does, which beats a subclass's `Meta.sequence`, so inherited columns come first. A list with `cv_list_actions = []`
   still renders an empty "Actions" column.
 - **Where:** `src/crud_views/lib/table/table.py:31-33`.
-- **What we did:** `OrderTableBase.__init__` passes the wanted sequence; the top-level table sets
+- **What we did before #337:** `OrderTableBase.__init__` passed the wanted sequence; the top-level table set
   `Meta.exclude = ("actions",)` (`example/sales/views/orders.py`).
 - **Suggested upstream change:** honour `Meta.sequence` (append `actions` to it), and drop the column when the view has
   no list actions.
-- **Severity:** annoyance.
+- **Severity:** annoyance (resolved in the upstream source).
 
 ### 27. A second, top-level ViewSet on a child model needs hand-made links
 

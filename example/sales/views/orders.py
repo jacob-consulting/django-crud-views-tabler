@@ -74,33 +74,28 @@ class EditableOrderMixin:
 
 
 class OrderTableBase(Table):
-    column_sequence: tuple = ()
-
     created_at = tables.DateColumn(verbose_name="Date", format="d M Y")
     line_count = tables.Column(verbose_name="Items", orderable=False, empty_values=())
     total = tables.Column(orderable=False, empty_values=(), attrs={"td": {"class": "text-end"}, "th": {"class": "text-end"}})
     state = tables.Column(verbose_name="Status", accessor="state_badge", order_by="state")
-
-    def __init__(self, *args, **kwargs):
-        # crud_views' Table passes sequence=("...", "actions") unless given one, which beats Meta.sequence
-        kwargs.setdefault("sequence", (*self.column_sequence, "..."))
-        super().__init__(*args, **kwargs)
 
     def render_total(self, record):
         return f"€ {record.total:,.2f}"
 
 
 class OrderTable(OrderTableBase):
-    column_sequence = ("number", "created_at", "line_count", "total", "state")
     number = LinkDetailColumn(verbose_name="#")
+
+    class Meta:
+        sequence = ("number", "created_at", "line_count", "total", "state", "...")
 
 
 class AllOrdersTable(OrderTableBase):
-    column_sequence = ("number", "customer", "created_at", "line_count", "total", "state")
     number = tables.Column(verbose_name="#")
     customer = tables.Column()
 
     class Meta:
+        sequence = ("number", "customer", "created_at", "line_count", "total", "state", "...")
         exclude = ("actions",)  # no row actions: the number links into the customer's order pages
 
     def render_number(self, record):

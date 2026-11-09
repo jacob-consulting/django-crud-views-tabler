@@ -11,7 +11,8 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 [#322](https://github.com/jacob-consulting/django-crud-views/issues/322), findings 8–9 in
 [#325](https://github.com/jacob-consulting/django-crud-views/issues/325), findings 10–11 in
 [#326](https://github.com/jacob-consulting/django-crud-views/issues/326), and findings 12–14 and 16 in
-[#327](https://github.com/jacob-consulting/django-crud-views/issues/327). The remaining findings are candidates to
+[#327](https://github.com/jacob-consulting/django-crud-views/issues/327), findings 15 and 17 in
+[#328](https://github.com/jacob-consulting/django-crud-views/issues/328), and finding 18 in [#329](https://github.com/jacob-consulting/django-crud-views/issues/329) (open). The remaining findings are candidates to
 triage into issues for django-crud-views (and, where marked, django-crud-views-extensions).
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
@@ -35,21 +36,21 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 1 | ["Show code" panel is example-only](#1-the-show-code-panel-is-example-only-upstream) | annoyance | own collector and lazy-loading panel in `example/config/` |
 | 2 | [Tooltip recipe says to replace `init`](#2-the-tooltip-recipe-still-says-to-replace-init) | annoyance | theme wraps `init` and calls the original |
 | 3 | [`Column1..12` hard-code `col-md-N`](#3-column1column12-hard-code-col-md-n) | cosmetic | nothing (Tabler uses the same grid) |
-| 4 | [Workflow badge is a solid Bootstrap pill](#4-workflow-badgeenum-values-are-bootstrap-colour-names-the-badge-is-a-solid-pill) | annoyance | theme template override `crud_views_workflow/badge.html` |
-| 5 | [Workflow page has no card frame, history table not responsive](#5-the-workflow-page-is-not-framed-and-its-history-table-is-not-responsive) | cosmetic | theme CSS lets the content scroll sideways around a bare table on phones; no frame |
-| 6 | [One permission gates every workflow transition](#6-workflowviewpermissionrequired-has-one-permission-for-every-transition) | annoyance | `cv_permission = "view"` plus django-fsm `permission=` per step |
-| 7 | [No refusal message, `WorkflowForm.clean()` returns None, no transition helper](#7-workflow-no-refusal-with-message-hook-workflowformclean-returns-none-no-helper-outside-the-view) | annoyance | form subclass; `sales/workflow.py:run_transition` copies the view |
-| 8 | [Card template has no block above the title](#8-the-card-template-has-no-block-above-the-title) | annoyance | demo replaces the product card template outright |
-| 9 | [Card list as landing page needs `cv_key = "list"`](#9-a-card-list-as-the-landing-page-needs-cv_key--list) | cosmetic | overrides `cv_key`/`cv_path`/`cv_home_key` on both list views |
+| 4 | [Workflow badge is a solid Bootstrap pill](#4-workflow-badgeenum-values-are-bootstrap-colour-names-the-badge-is-a-solid-pill) | annoyance | resolved #319 upstream, not yet adopted; theme template override `crud_views_workflow/badge.html` |
+| 5 | [Workflow page has no card frame, history table not responsive](#5-the-workflow-page-is-not-framed-and-its-history-table-is-not-responsive) | cosmetic | resolved #319 upstream, not yet adopted; theme CSS lets the content scroll sideways around a bare table on phones; no frame |
+| 6 | [One permission gates every workflow transition](#6-workflowviewpermissionrequired-has-one-permission-for-every-transition) | annoyance | resolved #320 upstream, not yet adopted; `cv_permission = "view"` plus django-fsm `permission=` per step |
+| 7 | [No refusal message, `WorkflowForm.clean()` returns None, no transition helper](#7-workflow-no-refusal-with-message-hook-workflowformclean-returns-none-no-helper-outside-the-view) | annoyance | resolved #322 upstream, not yet adopted; form subclass; `sales/workflow.py:run_transition` copies the view |
+| 8 | [Card template has no block above the title](#8-the-card-template-has-no-block-above-the-title) | annoyance | resolved #325 upstream, not yet adopted; demo replaces the product card template outright |
+| 9 | [Card list as landing page needs `cv_key = "list"`](#9-a-card-list-as-the-landing-page-needs-cv_key--list) | cosmetic | resolved #325 upstream, not yet adopted; overrides `cv_key`/`cv_path`/`cv_home_key` on both list views |
 | 10 | [Polymorphic create-select shows lower-case type names](#10-polymorphic-create-select-shows-lower-case-type-names) | cosmetic | resolved #326: upstream labels; Continue/layout retained |
 | 11 | [Polymorphic detail cannot vary property groups per kind](#11-a-polymorphic-detail-view-cannot-give-each-kind-its-own-property-groups) | annoyance | resolved #326: direct model mapping; catalog/check verified |
 | 12 | [Object detail prints stored value of a `choices` field](#12-object-detail-prints-the-stored-value-of-a-field-with-choices) | annoyance | resolved #327: plain field names show the choice label |
 | 13 | [Object detail shows model `help_text` under values](#13-object-detail-shows-model-help_text-in-the-value-column) | cosmetic | resolved #327: help text back on the model, hidden on detail pages |
 | 14 | [Object detail renders a blank text field as an empty row](#14-object-detail-renders-a-blank-text-field-as-an-empty-row) | cosmetic | resolved #327: blank fields keep their row and show a dash |
-| 15 | [Accordion pack opens every panel closed](#15-the-accordion-detail-pack-opens-every-panel-closed) | annoyance | accordion pack not used; card-rows, tabs, split-card instead |
+| 15 | [Accordion pack opens every panel closed](#15-the-accordion-detail-pack-opens-every-panel-closed) | annoyance | resolved #328 upstream, not yet adopted; accordion pack not used; card-rows, tabs, split-card instead |
 | 16 | [`ObjectDetailMixin` + `ObjectDetailViewPermissionRequired` is an MRO error](#16-objectdetailmixin-plus-objectdetailviewpermissionrequired-is-an-mro-error) | cosmetic | documented upstream #327; permission-required class alone |
-| 17 | [`tabs.js` reads `globalThis.bootstrap`](#17-tabsjs-looks-up-globalthisbootstrap-directly) | annoyance | nothing (Bootstrap's data API still switches tabs) |
-| 18 | [Header icon is drawn beside a custom header template](#18-the-header-icon-is-drawn-beside-a-custom-header-template) | cosmetic | customer detail overrides `cv_get_header_icon()` to return None |
+| 17 | [`tabs.js` reads `globalThis.bootstrap`](#17-tabsjs-looks-up-globalthisbootstrap-directly) | annoyance | resolved #328 upstream, not yet adopted; nothing (Bootstrap's data API still switches tabs) |
+| 18 | [Header icon is drawn beside a custom header template](#18-the-header-icon-is-drawn-beside-a-custom-header-template) | cosmetic | tracked in #329 (open); customer detail overrides `cv_get_header_icon()` to return None |
 | 19 | [Conditional groups toggle only on a checkbox](#19-conditional-groups-only-toggle-on-a-boolean-checkbox) | annoyance | transient `is_wholesale` checkbox drives `Customer.kind` |
 | 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | `clean()`/`save()` clear the fields; `sales.js` disables them per row |
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | theme CSS sizes `.cv-toggle-group > legend`, `.cv-formset-fieldset > legend` |
@@ -118,8 +119,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 4. Workflow `BadgeEnum` values are Bootstrap colour names; the badge is a solid pill
 
-- **Upstream tracking:** [django-crud-views #319](https://github.com/jacob-consulting/django-crud-views/issues/319)
-  — phase 1, shared with finding 5; filed, not yet implemented.
+- **Implemented upstream:** [issue #319](https://github.com/jacob-consulting/django-crud-views/issues/319)
+  (closed 2026-11-05), [PR #323](https://github.com/jacob-consulting/django-crud-views/pull/323) (phase 06.12, merge
+  `cb35b1aa`); not a claim about a published release. Themeable workflow state badges, shared with finding 5.
+- **Adopted here:** not yet; the workaround below is still in place.
 
 - **What happened:** `BadgeEnum` is documented as "Bootstrap contextual colours for state badges" (`primary`,
   `success`, `danger`, `light`, `dark`, ...), and `crud_views_workflow/badge.html` pastes the value into
@@ -138,8 +141,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 5. The workflow page is not framed, and its history table is not responsive
 
-- **Upstream tracking:** [django-crud-views #319](https://github.com/jacob-consulting/django-crud-views/issues/319)
-  — phase 1, shared with finding 4; filed, not yet implemented.
+- **Implemented upstream:** [issue #319](https://github.com/jacob-consulting/django-crud-views/issues/319)
+  (closed 2026-11-05), [PR #323](https://github.com/jacob-consulting/django-crud-views/pull/323) (phase 06.12, merge
+  `cb35b1aa`); not a claim about a published release. The action form uses the shared form frame and the history table is responsive, shared with finding 4.
+- **Adopted here:** not yet; the workaround below is still in place.
 
 - **What happened:** `view_workflow.content.html` renders the history and the form straight into the page, not
   through `crud_views/snippets/form_frame.html`, so under the theme the workflow page has no card while every
@@ -159,9 +164,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 6. `WorkflowViewPermissionRequired` has one permission for every transition
 
-- **Upstream tracking:** [django-crud-views #320](https://github.com/jacob-consulting/django-crud-views/issues/320)
-  — phase 2, document and test the opt-in permission recipe while retaining the default `"change"` gate;
-  filed, not yet implemented.
+- **Implemented upstream:** [issue #320](https://github.com/jacob-consulting/django-crud-views/issues/320)
+  (closed 2026-11-06), [PR #324](https://github.com/jacob-consulting/django-crud-views/pull/324) (phase 06.13, merge
+  `d7c8e170`); not a claim about a published release. The opt-in per-transition permission recipe is documented and tested; the default `"change"` gate stays.
+- **Adopted here:** not yet; the workaround below is still in place.
 
 - **What happened:** the workflow view checks one `cv_permission` (`"change"`) before any transition is offered. The
   roastery's Roasters may take one step (confirmed → roasted) and otherwise only view orders. django-fsm's own
@@ -180,10 +186,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 7. Workflow: no refusal-with-message hook, `WorkflowForm.clean()` returns None, no helper outside the view
 
-- **Upstream tracking:** [django-crud-views #322](https://github.com/jacob-consulting/django-crud-views/issues/322)
-  — phase 3, shared model business-validation hook, opt-in transition buttons with explanations and comment
-  requirements, `clean()` return fix, and reusable execution helper; filed, not yet implemented.
-  Reuse phase 1 (#319)'s action form frame; implement that template integration after #319.
+- **Implemented upstream:** [issue #322](https://github.com/jacob-consulting/django-crud-views/issues/322)
+  (closed 2026-11-06), [PR #332](https://github.com/jacob-consulting/django-crud-views/pull/332) (phase 06.13.1, merge
+  `fa7cc2d9`); not a claim about a published release. Model business-validation hook, opt-in transition buttons, `clean()` return fix and a reusable execution helper.
+- **Adopted here:** not yet; the workaround below is still in place.
 
 - **What happened:** (1) "Confirm only with at least one line" can be a django-fsm `conditions=[...]`, but then the
   step silently disappears and a posted confirm fails as "Select a valid choice". To show a reason the project has to
@@ -204,10 +210,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 8. The card template has no block above the title
 
-- **Upstream tracking:** [django-crud-views #325](https://github.com/jacob-consulting/django-crud-views/issues/325)
-  — one small GSD phase shared with finding 9; add empty `card_root` and `card_header` insertion blocks,
-  documentation, and regression tests. Theme template overrides must adopt the new blocks downstream;
-  filed, not yet implemented.
+- **Implemented upstream:** [issue #325](https://github.com/jacob-consulting/django-crud-views/issues/325)
+  (closed 2026-11-06), [PR #330](https://github.com/jacob-consulting/django-crud-views/pull/330) (phase 06.14, merge
+  `f693a38a`); not a claim about a published release. Empty `card_root` and `card_header` insertion blocks, shared with finding 9.
+- **Adopted here:** not yet; the workaround below is still in place.
 
 - **What happened:** the product card (type badge row above the title, a `card-status-top` stripe as a direct child of
   `.card`) cannot be built by extending `crud_views/tags/card.html`: `card_content` renders below the title, and
@@ -223,10 +229,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 9. A card list as the landing page needs `cv_key = "list"`
 
-- **Upstream tracking:** [django-crud-views #325](https://github.com/jacob-consulting/django-crud-views/issues/325)
-  — one small GSD phase shared with finding 8; document and test the existing cards-first/table-secondary
-  configuration, including switching and navigation behavior, without adding a `cv_default_list` API;
-  filed, not yet implemented.
+- **Implemented upstream:** [issue #325](https://github.com/jacob-consulting/django-crud-views/issues/325)
+  (closed 2026-11-06), [PR #330](https://github.com/jacob-consulting/django-crud-views/pull/330) (phase 06.14, merge
+  `f693a38a`); not a claim about a published release. The existing cards-first, table-secondary configuration is documented and tested, with no `cv_default_list` API; shared with finding 8.
+- **Adopted here:** not yet; the workaround below is still in place.
 
 - **What happened:** `CardListView` is `cv_key = "card"`, `cv_path = "card"`; "home", the cancel/success keys and the
   breadcrumbs all point at `list`. A ViewSet whose default list is the cards (with a table beside it) has to set
@@ -337,6 +343,11 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 15. The accordion detail pack opens every panel closed
 
+- **Implemented upstream:** [issue #328](https://github.com/jacob-consulting/django-crud-views/issues/328)
+  (closed 2026-11-07), [PR #335](https://github.com/jacob-consulting/django-crud-views/pull/335) (phase 06.17, merge
+  `be449c57`); not a claim about a published release. The accordion pack opens the first group initially; users can still close it. Shared with finding 17.
+- **Adopted here:** not yet; the workaround below is still in place.
+
 - **What happened:** with `cv_object_detail_layout = "accordion"` a detail page shows only the group titles and an
   "N properties" badge until each panel is clicked; the docs say "Accordions remain initially collapsed; the tab
   `selected` flag does not open them". For a page whose point is its facts that reads as an empty page.
@@ -365,6 +376,11 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 17. `tabs.js` looks up `globalThis.bootstrap` directly
 
+- **Implemented upstream:** [issue #328](https://github.com/jacob-consulting/django-crud-views/issues/328)
+  (closed 2026-11-07), [PR #335](https://github.com/jacob-consulting/django-crud-views/pull/335) (phase 06.17, merge
+  `be449c57`); not a claim about a published release. Object-detail tabs initialise through the theme adapters (`cv.adapters`) instead of `globalThis.bootstrap`. Shared with finding 15.
+- **Adopted here:** not yet; the workaround below is still in place.
+
 - **What happened:** the object-detail tab initialiser calls `globalThis.bootstrap?.Tab`, bypassing `cv.adapters`.
   Tabler exposes Bootstrap only as `window.tabler`, so the init silently does nothing. The tabs still switch
   (Bootstrap's data API in Tabler's bundle handles `data-bs-toggle="pill"`), but the keyboard handling the init is
@@ -375,6 +391,9 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Severity:** annoyance.
 
 ### 18. The header icon is drawn beside a custom header template
+
+- **Upstream tracking:** [django-crud-views #329](https://github.com/jacob-consulting/django-crud-views/issues/329) — explicit header-icon suppression with
+  `Icon` constants; agreed, not yet implemented (open).
 
 - **What happened:** `cv_header_template` replaces only the heading text; the viewset's header icon is still drawn
   before it, so the customer page showed the shop icon and then the customer's avatar. `cv_icon_header = ""` does not

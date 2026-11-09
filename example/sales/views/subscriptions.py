@@ -1,6 +1,6 @@
 """Customer subscriptions: a child ViewSet of the customer, a top-level list of all of them, and "Run subscriptions".
 
-The nested views check the URL's customer first (``CustomerGrantMixin``), as for addresses and orders; the top-level
+The nested views are gated on the URL's customer by upstream's ancestor guard, as for addresses and orders; the top-level
 list filters by the same Guardian grants. Running the subscriptions creates orders for *every* customer, so it has its
 own model permission (``run_customersubscription``, held by the Owner only); others see the button disabled and get
 403 on the URL.
@@ -33,7 +33,7 @@ from ..forms import CustomerSubscriptionForm, RunSubscriptionsForm
 from ..models import CustomerSubscription
 from ..permissions import customers_for
 from ..services import run_subscriptions
-from .addresses import BreadcrumbMixin, CustomerGrantMixin
+from .addresses import BreadcrumbMixin
 
 cv_subscription = ViewSet(
     model=CustomerSubscription,
@@ -94,7 +94,7 @@ class SubscriptionFilterFormHelper(ListViewFilterFormHelper):
 # --------------------------------------------------------------------------- nested
 
 
-class SubscriptionListView(CustomerGrantMixin, BreadcrumbMixin, ListViewTableMixin, ListViewPermissionRequired):
+class SubscriptionListView(BreadcrumbMixin, ListViewTableMixin, ListViewPermissionRequired):
     cv_viewset = cv_subscription
     table_class = SubscriptionTable
     cv_list_actions = ["update", "delete"]
@@ -106,20 +106,20 @@ class SubscriptionListView(CustomerGrantMixin, BreadcrumbMixin, ListViewTableMix
 
 
 class SubscriptionCreateView(
-    CustomerGrantMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewParentMixin, CreateViewPermissionRequired
+    BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewParentMixin, CreateViewPermissionRequired
 ):
     cv_viewset = cv_subscription
     form_class = CustomerSubscriptionForm
     cv_message_template_code = _("Subscribed {{ object.customer }} to {{ object.product }}")
 
 
-class SubscriptionUpdateView(CustomerGrantMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
+class SubscriptionUpdateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
     cv_viewset = cv_subscription
     form_class = CustomerSubscriptionForm
     cv_message_template_code = _("Updated the subscription of {{ object.customer }}")
 
 
-class SubscriptionDeleteView(CustomerGrantMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
+class SubscriptionDeleteView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
     cv_viewset = cv_subscription
     form_class = CrispyDeleteForm
     cv_modal = True

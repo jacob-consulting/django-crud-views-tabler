@@ -1,6 +1,6 @@
 """Orders: a child ViewSet of the customer (the full editor) and a top-level ViewSet (all orders, and "new order").
 
-Like addresses, the nested views check the URL's customer first (``CustomerGrantMixin``): an account manager reaches
+Like addresses, the nested views are gated on the URL's customer by upstream's ancestor guard: an account manager reaches
 the orders of granted customers only. The top-level list filters by the same Guardian grants, never by
 ``Customer.owner``. An order can be edited or deleted only while it is a draft or confirmed; afterwards the actions
 show disabled and their URLs answer 403. The workflow, packing slip and duplicate views live in ``order_actions.py``.
@@ -25,7 +25,7 @@ from crud_views.lib.views import (
     UpdateViewPermissionRequired,
 )
 from crud_views.lib.views.list import ListViewFilterFormHelper
-from crud_views.lib.viewset import ParentViewSet, ViewSet, context_buttons_default
+from crud_views.lib.viewset import AncestorPermissions, AncestorPolicy, ParentViewSet, ViewSet, context_buttons_default
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -33,13 +33,19 @@ from django.utils.translation import gettext_lazy as _
 from ..forms import ORDER_FORMSETS, OrderForm, OrderStartForm
 from ..models import Order, OrderState
 from ..permissions import customers_for
-from .addresses import BreadcrumbMixin, CustomerGrantMixin
+from .addresses import BreadcrumbMixin
 
 cv_order = ViewSet(
     model=Order,
     name="order",
     parent=ParentViewSet(name="customer"),
     icon_header="tabler:receipt",
+    ancestor_policy=AncestorPolicy(
+        actions={
+            "duplicate": AncestorPermissions(nearest="change", higher="view"),
+            "workflow": AncestorPermissions(nearest="view", higher="view"),
+        }
+    ),
     context_buttons=[
         *context_buttons_default(),
         ContextButton(key="packing_slip", key_target="packing_slip"),
@@ -117,7 +123,7 @@ class OrderFilterFormHelper(ListViewFilterFormHelper):
 # --------------------------------------------------------------------------- nested: list / detail
 
 
-class OrderListView(CustomerGrantMixin, BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired):
+class OrderListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired):
     cv_viewset = cv_order
     table_class = OrderTable
     filterset_class = OrderFilter
@@ -129,7 +135,7 @@ class OrderListView(CustomerGrantMixin, BreadcrumbMixin, ListViewTableMixin, Lis
         return super().get_queryset().select_related("customer").prefetch_related("lines")
 
 
-class OrderDetailView(CustomerGrantMixin, BreadcrumbMixin, DetailViewPermissionRequired):
+class OrderDetailView(BreadcrumbMixin, DetailViewPermissionRequired):
     """Steps bar, line items, delivery card with totals, history; the possible transitions are header buttons."""
 
     cv_viewset = cv_order
@@ -156,7 +162,6 @@ class OrderDetailView(CustomerGrantMixin, BreadcrumbMixin, DetailViewPermissionR
 
 
 class OrderCreateView(
-    CustomerGrantMixin,
     BreadcrumbMixin,
     CrispyViewMixin,
     FormSetMixin,
@@ -174,7 +179,7 @@ class OrderCreateView(
 
 
 class OrderUpdateView(
-    EditableOrderMixin, CustomerGrantMixin, BreadcrumbMixin, CrispyViewMixin, FormSetMixin, MessageMixin, UpdateViewPermissionRequired
+    EditableOrderMixin, BreadcrumbMixin, CrispyViewMixin, FormSetMixin, MessageMixin, UpdateViewPermissionRequired
 ):
     cv_viewset = cv_order
     form_class = OrderForm
@@ -189,7 +194,7 @@ class OrderUpdateView(
 
 
 class OrderDeleteView(
-    EditableOrderMixin, CustomerGrantMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired
+    EditableOrderMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired
 ):
     cv_viewset = cv_order
     form_class = CrispyDeleteForm

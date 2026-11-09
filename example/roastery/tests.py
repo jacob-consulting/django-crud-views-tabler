@@ -122,6 +122,13 @@ class CuppingTests(RoasteryTestCase):
 
 
 class LotTests(RoasteryTestCase):
+    def test_detail_is_an_accordion_with_the_first_group_open(self):
+        self.login()
+        html = self.client.get(reverse("lot-detail", kwargs={"pk": self.lot.pk})).content.decode()
+        self.assertEqual(html.count('class="accordion-collapse collapse show"'), 1)
+        self.assertLess(html.index("Origin and producer"), html.index("Stock and price"))
+        self.assertLess(html.index("collapse show"), html.index("Stock and price"))
+
     def test_lot_delete_previews_sessions(self):
         session = CuppingSession.objects.create(lot=self.lot, held_on=date(2026, 11, 4))
         self.login()

@@ -1,4 +1,5 @@
 import random
+from pathlib import Path
 from copy import deepcopy
 from unittest.mock import patch
 
@@ -195,6 +196,12 @@ class ProductViewTests(CatalogTestCase):
             self.assertEqual(self.client.get(detail).status_code, 403)
             self.assertEqual(self.client.get(create).status_code, 403)
             self.assertEqual(self.client.post(create, {}).status_code, 403)
+
+
+class ProductCardCssTests(SimpleTestCase):
+    def test_product_card_title_keeps_its_tight_margin(self):
+        css = (Path(__file__).resolve().parents[1] / "static" / "acme" / "acme.css").read_text()
+        self.assertIn("[data-product-card] ~ .card-body .card-title { margin-bottom: .25rem; }", css)
 
 
 class ProductMappingCheckTests(SimpleTestCase):

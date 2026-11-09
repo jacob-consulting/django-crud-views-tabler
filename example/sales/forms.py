@@ -10,7 +10,6 @@ from crud_views.lib.conditional import ConditionalGroup, ConditionalGroupModelFo
 from crud_views.lib.crispy import Column2, Column3, Column4, Column6, Column12, CrispyForm, CrispyModelForm
 from crud_views.lib.formsets import FormSet, FormSets, Formsets, InlineFormSet
 from crud_views_widget_datetimepicker.widgets import DatePickerInput
-from crud_views_workflow.lib import WorkflowForm
 from crud_views_widget_typeahead.fields import TypeaheadField
 from crud_views_widget_typeahead.widgets import TypeaheadSelect
 from django import forms
@@ -243,19 +242,6 @@ class OrderDuplicateForm(CrispyForm):
 
     def get_layout_fields(self):
         return [Row(Column4("requested_roast_date"))]
-
-
-class OrderWorkflowForm(WorkflowForm):
-    """Refuses to confirm an order without lines, with a message instead of hiding the step."""
-
-    class Meta(WorkflowForm.Meta):
-        model = Order
-
-    def clean(self):
-        super().clean()  # upstream's clean() returns None
-        if self.cleaned_data.get("transition") == "wf_confirm" and (problem := self.cv_view.object.confirm_problem()):
-            self.add_error("transition", problem)
-        return self.cleaned_data
 
 
 # --------------------------------------------------------------------------- subscriptions

@@ -6,8 +6,8 @@
 
 {% block cv_context %}
 {% for t in transitions %}
-  {% if t.comment == 2 %}{# a required comment: open the workflow form with this step preselected #}
-  <a class="btn btn-outline-{{ t.variant }}" href="{{ workflow_url }}?transition={{ t.name }}" data-transition="{{ t.name }}">{% cv_icon t.icon %} {{ t.label }}</a>
+  {% if t.comment == 2 %}{# a required comment: the workflow page, where the user types it and clicks this step's button #}
+  <a class="btn btn-outline-{{ t.variant }}" href="{{ workflow_url }}" data-transition="{{ t.name }}">{% cv_icon t.icon %} {{ t.label }}</a>
   {% else %}
   <form method="post" action="{{ workflow_url }}" class="d-inline">
     {% csrf_token %}<input type="hidden" name="transition" value="{{ t.name }}">

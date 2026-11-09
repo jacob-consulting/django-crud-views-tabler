@@ -13,7 +13,7 @@ from crud_views.lib.table import LinkDetailColumn, Table
 from crud_views.lib.view import ChildContextButton
 from crud_views.lib.views import ListViewTableFilterMixin, ListViewTableMixin, MessageMixin
 from crud_views.lib.views.list import ListViewFilterFormHelper
-from crud_views.lib.viewset import context_buttons_default
+from crud_views.lib.viewset import AncestorPolicy, context_buttons_default
 from crud_views_guardian.lib.views import (
     GuardianCreateViewPermissionRequired,
     GuardianDeleteViewPermissionRequired,
@@ -35,6 +35,7 @@ cv_customer = GuardianViewSet(
     model=Customer,
     name="customer",
     icon_header="tabler:building-store",
+    ancestor_policy=AncestorPolicy(accept_global_perms=True),
     context_buttons=[
         *context_buttons_default(),
         ChildContextButton(key="orders", child_name="order", label_template_code="Orders"),

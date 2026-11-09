@@ -5,6 +5,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from crud_views_workflow.lib import BadgeEnum, WorkflowComment, WorkflowModelMixin
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -207,12 +208,17 @@ class Order(WorkflowModelMixin, models.Model):
             return "Add at least one line item before confirming the order."
         return None
 
+    def workflow_check_transition(self, name, *, user):
+        """Upstream's business hook: the workflow page shows Confirm disabled with the reason, and refuses it on POST."""
+        if name == "wf_confirm" and (problem := self.confirm_problem()):
+            raise ValidationError(problem)
+
     @transition(
         field=state, source=OrderState.DRAFT, target=OrderState.CONFIRMED, permission=may_change_order,
         custom={"label": "Confirm", "comment": WorkflowComment.NONE, "icon": "tabler:check", "variant": "success"},
     )
     def wf_confirm(self, request=None, by=None, comment=None):
-        if problem := self.confirm_problem():  # the workflow form refuses first; this guards direct calls
+        if problem := self.confirm_problem():  # workflow_check_transition refuses first; this guards direct calls
             raise TransitionNotAllowed(problem)
 
     @transition(

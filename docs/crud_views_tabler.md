@@ -132,15 +132,16 @@ pagination markup, so the theme no longer overrides it. Both paginations take th
 names `page-previous` / `page-next`, which the theme maps to Tabler's chevrons at the standard icon size, as in
 Tabler's examples (the old override used `icon-sm`). A project changes them with `CRUD_VIEWS_ICONS`.
 
-## Workflow state badges
+## Workflow state badges and history
 
-`crud_views_workflow` renders every state badge (`WorkflowModelMixin.state_badge`, the history table) through
-`crud_views_workflow/badge.html`, a solid Bootstrap pill (`badge rounded-pill text-bg-<colour>`). Tabler's status
-badges are the light variants, so the theme overrides that one-line template with `badge bg-<colour>-lt`. Every
-`BadgeEnum` value (`primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark`) has a `-lt` class in
-Tabler 1.6.1. There is no hook for the class (the colour is pasted into the class name), and CSS could only restyle
-`text-bg-*` everywhere, colour by colour, so this is a template override (logged in
-`crud_views_upstream_findings_roastery.md`).
+`crud_views_workflow` renders every state badge (`WorkflowModelMixin.state_badge`, the history table) with the class
+key `workflow:badge-<colour>` (upstream #319). The theme registers each `BadgeEnum` value (`primary`, `secondary`,
+`success`, `danger`, `warning`, `info`, `light`, `dark`) as Tabler's light status badge, `badge bg-<colour>-lt`, in
+`buttons.TABLER_BUTTON_CLASSES`; a project overrides any of them with `CRUD_VIEWS_BUTTON_CLASSES`. The workflow page
+puts its action form in the shared form frame (a card) and the history table in `workflow:history-wrapper`
+(`table-responsive` upstream); the theme sets `workflow:history-table` to `table table-vcenter`, the list tables'
+classes without `card-table`, because the history is not inside a card. The theme overrides no workflow template and
+adds no workflow CSS. The `workflow:*` keys are registered only when `crud_views_workflow` is installed.
 
 ## Card views
 
@@ -166,9 +167,12 @@ own):
 - no results render Tabler's `.empty` state; pagination is crud_views' `snippets/pagination.html` (see Pagination).
 
 **Custom card content** without repeating the actions markup: a view's `cv_card_template` extends
-`crud_views/tags/card.html` and fills crud_views' blocks (`card_title`, `card_content`, `card_actions`; #243). Under
-this theme that resolves to the Tabler card, so the same template works with or without the theme. Emptying
-`card_actions` drops the footer along with the actions:
+`crud_views/tags/card.html` and fills crud_views' blocks (`card_root`, `card_header`, `card_title`, `card_content`, `card_actions`; #243, #325). Under
+this theme that resolves to the Tabler card, so the same template works with or without the theme. `card_root`
+is the first child of the root `.card` (a `.card-status-top` stripe), `card_header` the first child of `.card-body`
+above the heading (a badge row); both are empty by default. A card that adds its own footer fills `card_actions`
+with that footer plus `{{ block.super }}` (the demo's product card does). Emptying `card_actions` drops the footer
+along with the actions:
 
 ```html
 {% extends "crud_views/tags/card.html" %}
@@ -283,7 +287,7 @@ class (`h2`, `h3`). `django_tabler/layouts/app.html` has a `page_heading` block 
 
 ## Overridden templates
 
-Nine templates, all about page layout; none of them renders a button:
+Eight templates, all about page layout; none of them renders a button:
 
 ```
 crud_views/
@@ -294,19 +298,17 @@ crud_views/
   tags/alert.html                 every alert (messages, delete page) in Tabler's layout: .alert-icon, .alert-heading
   tags/list_filter.html, list_filter.inner.html   filter as a Tabler card
   view_card.content.html          card grid and empty state
-crud_views_workflow/
-  badge.html                      workflow state badge as Tabler's light badge (bg-<colour>-lt), see above
 static/crud_views_tabler/
   crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons,
-                                  toggle-group and formset legends, the typeahead --bs-* bridge, content that
-                                  scrolls sideways around a bare table on phones (the workflow history)
+                                  toggle-group and formset legends, the typeahead --bs-* bridge
   tabler-adapters.js              cv.adapters -> window.tabler, toolbar tooltips below
 ```
 
 The CSS rules added for the roastery demo each have a finding in
 [crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md): the bare `<legend>` of toggle
 groups and formsets (#21), the typeahead skins reading Bootstrap's `--bs-*` properties (#31, plain CSS, the theme
-does not import the extensions package), and the workflow history table without `.table-responsive` (#5).
+does not import the extensions package). The workflow history's sideways-scroll rule (#5) went with upstream's
+`.table-responsive` wrapper.
 
 The theme used to override the context, list and card action templates, both containers, the `⋯` toggle, the filter
 toggle and the card-order bar (nine templates). crud_views' class table, leaves and tooltip markers made all of them
@@ -335,13 +337,13 @@ related-objects alerts, which used to render in plain Bootstrap style, now get t
 
 ## Not covered yet
 
-The roastery demo now renders object detail packs (`split-card`, `card-rows`, `tabs-vertical`), formsets with their
+The roastery demo now renders object detail packs (`split-card`, `accordion`, `tabs-vertical`), formsets with their
 control buttons, conditional toggle groups, the workflow badge/history/form, polymorphic create-select, Guardian
 views, resources, card views, custom form and action views, and the typeahead and datetimepicker widgets; the sweep
 before the demo's hand-over checked every page at 1280/1400 px and 390 px, light and dark, with no console errors.
 Still not covered:
 
-- The **accordion** object-detail pack (finding #15), the **manage** views (off in the demo, finding #25; their tables
+- The **manage** views (off in the demo, finding #25; their tables
   are not responsive) and the **language selector**.
 - A Tabler-style cancel button.
 - The datetimepicker's own look (finding #32).

@@ -1,12 +1,15 @@
 import re
+from datetime import timedelta
 from html import escape
 from decimal import Decimal
 
 from crud_views_widget_typeahead.lookups import get_lookup
 from crud_views_workflow.models import WorkflowInfo
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 from django.urls import reverse
+from django.utils import timezone
 
 from catalog.models import Beans, Equipment, Origin
 from sales.models import Address, Customer, Order, OrderLine, OrderState
@@ -180,6 +183,23 @@ class OrderWorkflowTests(OrderTestCase):
         order.refresh_from_db()
         self.assertEqual(order.state, OrderState.CANCELLED)
 
+    def test_blocked_confirm_shows_disabled_button_with_reason(self):
+        self.login()
+        order = self.make_order(lines=False)
+        html = self.client.get(reverse("order-workflow", kwargs=self.order_kwargs(order))).content.decode()
+        self.assertRegex(html, r'<button[^>]*name="transition"[^>]*value="wf_confirm"[^>]*disabled')
+        self.assertIn("Add at least one line item before confirming the order.", html)
+
+    def test_workflow_page_uses_buttons(self):
+        self.login()
+        html = self.client.get(reverse("order-workflow", kwargs=self.order_kwargs(self.make_order()))).content.decode()
+        self.assertNotIn('type="radio"', html)
+        self.assertIn('value="wf_cancel"', html)
+
+    def test_model_hook_refuses_confirm_without_lines(self):
+        with self.assertRaisesMessage(ValidationError, "Add at least one line item"):
+            self.make_order(lines=False).workflow_check_transition("wf_confirm", user=self.sam)
+
     def test_detail_shows_steps_and_transition_buttons(self):
         self.login()
         order = self.make_order()
@@ -187,7 +207,7 @@ class OrderWorkflowTests(OrderTestCase):
         self.assertIn("steps steps-counter", html)
         self.assertRegex(html, r'class="step-item active"[^>]*>Draft<')
         self.assertIn('data-transition="wf_confirm"', html)
-        self.assertIn(f'href="{reverse("order-workflow", kwargs=self.order_kwargs(order))}?transition=wf_cancel"', html)
+        self.assertIn(f'href="{reverse("order-workflow", kwargs=self.order_kwargs(order))}" data-transition="wf_cancel"', html)
         self.assertIn('class="badge bg-secondary-lt"', html)  # the theme's light workflow badge
 
     def test_shipped_order_edit_is_disabled_and_forbidden(self):
@@ -214,6 +234,14 @@ class OrderWorkflowTests(OrderTestCase):
         delivered = Order.objects.filter(state=OrderState.DELIVERED).first()
         self.assertEqual(history(delivered).count(), 4)
         self.assertIsNotNone(delivered.shipped_at)
+
+
+class SeedHistoryTests(OrderTestCase):
+    def test_seed_history_is_backdated(self):
+        shipped = Order.objects.filter(state=OrderState.SHIPPED).first()
+        steps = history(shipped).order_by("timestamp")
+        self.assertLess(steps.last().timestamp, timezone.now() - timedelta(minutes=4))
+        self.assertLessEqual(steps.first().timestamp, shipped.created_at + timedelta(days=1))
 
 
 class OrderPageTests(OrderTestCase):

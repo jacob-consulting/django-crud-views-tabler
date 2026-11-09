@@ -4,6 +4,8 @@ and about 70 orders over the last 90 days in every workflow state."""
 import random
 from datetime import timedelta
 
+from crud_views_workflow.lib import run_transition
+from crud_views_workflow.models import WorkflowInfo
 from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
 
@@ -11,7 +13,6 @@ from catalog.models import Beans, Equipment, Product, Subscription
 
 from .models import Address, Customer, CustomerSubscription, Order, OrderLine
 from .permissions import grant_customer
-from .workflow import run_transition
 
 # name, kind, contact, city, country, tier, terms, owner
 WHOLESALE = [
@@ -81,7 +82,7 @@ def seed(rng: random.Random, world: dict) -> None:
     # addresses of those; they get no model-level view permission on customers, or Guardian's object check would be
     # bypassed. Roasters (Kim) may look at customers and addresses, not edit.
     perm = lambda codename: Permission.objects.get(content_type__app_label="sales", codename=codename)  # noqa: E731
-    # Orders: account managers view, add and change them (for their granted customers, see CustomerGrantMixin) and
+    # Orders: account managers view, add and change them (for their granted customers, via upstream's ancestor guard) and
     # take the workflow steps; Roasters only look, except that they mark confirmed orders as roasted.
     Group.objects.get(name="Account managers").permissions.add(
         perm("add_customer"),
@@ -164,7 +165,8 @@ def seed_orders(rng: random.Random, customers: list[Customer], users: dict) -> l
         for name in path:
             by = users["kim"] if name == "wf_roast" else seller
             when = min(when + timedelta(hours=STEP_HOURS[name]), now - timedelta(minutes=5))  # never in the future
-            run_transition(order, name, by, comment=COMMENTS.get(name) or None, when=when)
+            info = run_transition(order, name, user=by, comment=COMMENTS.get(name) or None)
+            WorkflowInfo.objects.filter(pk=info.pk).update(timestamp=when)
             if name == "wf_ship":
                 order.shipped_at = when
         Order.objects.filter(pk=order.pk).update(created_at=created, shipped_at=order.shipped_at)

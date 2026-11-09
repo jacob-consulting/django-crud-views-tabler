@@ -38,3 +38,7 @@
 }
 .code-files .nav-link { padding: .25rem .625rem; font-size: .8125rem; font-family: var(--tblr-font-monospace); }
 .code-block-full { max-height: none; }
+
+/* Product cards (catalog/product_card.html): the card:title class key gives the title Tabler's 1rem bottom margin; the
+   mockup's tight .25rem sits between the title and the summary line. */
+[data-product-card] ~ .card-body .card-title { margin-bottom: .25rem; }

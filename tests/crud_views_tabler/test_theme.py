@@ -146,6 +146,7 @@ class ButtonClassTests(SimpleTestCase):
             "formset:control-danger": "btn btn-icon btn-danger",
             **{f"workflow:badge-{colour}": f"badge bg-{colour}-lt" for colour in
                ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")},
+            "workflow:history-table": "table table-vcenter",
         }
         self.assertEqual(TABLER_BUTTON_CLASSES, expected)
 
@@ -238,6 +239,18 @@ class ThemeRenderingTests(TestCase):
         self.assertIn("cv.adapters.tooltip.init", source)
         self.assertIn('location === "context"', source)
         self.assertIn('setAttribute("data-bs-placement", "bottom")', source)
+
+    def test_upstream_adapter_set_includes_tab_and_theme_takes_all_of_it(self):
+        # crud_views/js/adapters.js's bootstrapAdapters returns a `tab:` entry using component(ns, "Tab"), which
+        # the object-detail tabs.js initialises through (#328); the theme assigns the whole set, so no tab shim.
+        from django.contrib.staticfiles import finders
+        with open(finders.find("crud_views/js/adapters.js"), encoding="utf-8") as f:
+            core = f.read()
+        self.assertRegex(core, r'tab: \{\s*init\(el\) \{ component\(ns, "Tab"\)')
+        with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
+            source = f.read()
+        self.assertIn("Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler))", source)
+        self.assertNotRegex(source, r"cv\.adapters\.tab\b")
 
     def test_tooltip_adapter_wraps_upstream_init(self):
         # crud_views' init guards Bootstrap 5.3 tooltip transitions that outlive dispose() (06.8); the theme must
@@ -502,6 +515,21 @@ class CardThemeTests(TestCase):
         self.assertIn("<p>C</p>", html)
         self.assertNotIn("card-footer", html)  # dropping the actions drops the footer with them
         self.assertNotIn("cv-card-container", html)
+
+    def _render_card(self, template):
+        page = self.client.get(reverse("customer-card")).context
+        customer = Customer.objects.get(name="Customer 03")
+        return template.render(Context({"object": customer, "view": page["view"], "request": page["request"]}))
+
+    def test_card_new_blocks_are_empty_by_default(self):
+        # upstream #325: card_root and card_header exist and render nothing unless filled
+        html = self._render_card(Template('{% extends "crud_views/tags/card.html" %}'))
+        self.assertRegex(html, r'<div class="card">\s*<div class="card-body">\s*<h3 class="card-title">')
+
+    def test_card_root_and_header_blocks_render_in_place(self):
+        html = self._render_card(get_template("testapp/customer_card_blocks.html").template)
+        self.assertRegex(html, r'<div class="card">\s*<i data-root></i>\s*<div class="card-body">')
+        self.assertRegex(html, r'<div class="card-body">\s*<i data-head></i>\s*<h3 class="card-title">')
 
     def test_card_links_carry_their_origin(self):
         html = self.get()
@@ -838,6 +866,9 @@ class WorkflowBadgeTests(SimpleTestCase):
                 self.assertIn(f'class="badge bg-{colour}-lt"', html)
                 self.assertIn('&lt;Done &quot;now&quot;&gt; {{ untouched }}', html)
                 self.assertNotIn("<Done", html)
+
+    def test_history_table_matches_the_theme_list_table(self):
+        self.assertEqual(get_button_classes()["workflow:history-table"], "table table-vcenter")
 
     def test_project_classes_override_theme_including_disabled_values(self):
         for value in ("", None, 'custom" onmouseover="bad'):

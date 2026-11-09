@@ -77,9 +77,10 @@ from `/_code/<app_label>/` when it opens).
 The theme is an app listed *before* `crud_views` in `INSTALLED_APPS`, so its `templates/crud_views/...` files shadow
 the stock Bootstrap 5 templates; anything not overridden falls through. No crud_views code is patched or subclassed.
 Overrides are deliberately limited to page *layout* (modal shell, form frame, table, card, alert, filter, card
-content, plus the workflow state badge) — none renders a button. Everything else is registered in `CrudViewsTablerConfig.ready()`:
+content) — none renders a button. Everything else is registered in `CrudViewsTablerConfig.ready()`:
 - button classes: `buttons.TABLER_BUTTON_CLASSES` via `register_button_classes()` (keys like `location:variant` and
-  `location:variant:icon`; the `:icon` variant adds `btn-icon` for icon-only label mode),
+  `location:variant:icon`; the `:icon` variant adds `btn-icon` for icon-only label mode; also the `workflow:*` keys:
+  `workflow:badge-<colour>` for the state badge and `workflow:history-table`),
 - label modes: `register_label_mode_defaults({"form": "both"})`, so form buttons show icon plus label,
 - icons: `register_icon_library("tabler", ...)` + `register_icons(TABLER_ICONS)` mapping crud_views' semantic icon
   names to `tabler:<name>`; SVG paths live in `django_tabler.icons.ICONS`, and the system check

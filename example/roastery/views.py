@@ -115,10 +115,11 @@ class LotListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin,
 
 
 class LotDetailView(BreadcrumbMixin, ObjectDetailViewPermissionRequired):
-    """Card rows (a different pack from the catalog and the customers); sessions are a child list, one button away."""
+    """Upstream's accordion, first group open (#328); customers use `split-card`, products `tabs-vertical`.
+    Sessions are a child list, one button away."""
 
     cv_viewset = cv_lot
-    cv_object_detail_layout = "card-rows"
+    cv_object_detail_layout = "accordion"
     cv_context_actions = ["home", "update", "sessions", "delete"]
     cv_context_actions_inline = ["update", "sessions"]
     cv_property_display = [

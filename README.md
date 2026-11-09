@@ -72,7 +72,7 @@ The sidebar (or, in the top-bar layout, one dropdown per section) shows what the
 | | Subscriptions | `/subscriptions/` | nested and top-level lists, "Run subscriptions" (custom form without an object, own permission) |
 | Catalog | Products | `/product/` | polymorphic (beans / equipment / subscription), card view as the landing page plus a table, per-kind object detail |
 | | Categories | `/category/` | ordered (up/down) |
-| Roastery | Green lots | `/lot/` | object detail `card-rows`, nested cupping sessions with a score formset, delete preview |
+| Roastery | Green lots | `/lot/` | object detail `accordion`, nested cupping sessions with a score formset, delete preview |
 | | Roast batches | `/batch/` | M2M to orders, computed weight loss |
 | | Shipments | `/shipment/` | a `Resource` (no ORM) from a fake courier API |
 | Developer | Form showcase | `/showcase/` | every branch of the crispy pack on one form ([coverage](docs/crispy_tabler_coverage.md)) |

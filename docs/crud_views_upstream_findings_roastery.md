@@ -37,26 +37,26 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 1 | ["Show code" panel is example-only](#1-the-show-code-panel-is-example-only-upstream) | annoyance | own collector and lazy-loading panel in `example/config/` |
 | 2 | [Tooltip recipe says to replace `init`](#2-the-tooltip-recipe-still-says-to-replace-init) | annoyance | theme wraps `init` and calls the original |
 | 3 | [`Column1..12` hard-code `col-md-N`](#3-column1column12-hard-code-col-md-n) | cosmetic | nothing (Tabler uses the same grid) |
-| 4 | [Workflow badge is a solid Bootstrap pill](#4-workflow-badgeenum-values-are-bootstrap-colour-names-the-badge-is-a-solid-pill) | annoyance | resolved #319 upstream, not yet adopted; theme template override `crud_views_workflow/badge.html` |
-| 5 | [Workflow page has no card frame, history table not responsive](#5-the-workflow-page-is-not-framed-and-its-history-table-is-not-responsive) | cosmetic | resolved #319 upstream, not yet adopted; theme CSS lets the content scroll sideways around a bare table on phones; no frame |
-| 6 | [One permission gates every workflow transition](#6-workflowviewpermissionrequired-has-one-permission-for-every-transition) | annoyance | resolved #320 upstream, not yet adopted; `cv_permission = "view"` plus django-fsm `permission=` per step |
-| 7 | [No refusal message, `WorkflowForm.clean()` returns None, no transition helper](#7-workflow-no-refusal-with-message-hook-workflowformclean-returns-none-no-helper-outside-the-view) | annoyance | resolved #322 upstream, not yet adopted; form subclass; `sales/workflow.py:run_transition` copies the view |
-| 8 | [Card template has no block above the title](#8-the-card-template-has-no-block-above-the-title) | annoyance | resolved #325 upstream, not yet adopted; demo replaces the product card template outright |
-| 9 | [Card list as landing page needs `cv_key = "list"`](#9-a-card-list-as-the-landing-page-needs-cv_key--list) | cosmetic | resolved #325 upstream, not yet adopted; overrides `cv_key`/`cv_path`/`cv_home_key` on both list views |
+| 4 | [Workflow badge is a solid Bootstrap pill](#4-workflow-badgeenum-values-are-bootstrap-colour-names-the-badge-is-a-solid-pill) | annoyance | resolved #319: theme registers `workflow:badge-<colour>` as `badge bg-<colour>-lt`; override removed |
+| 5 | [Workflow page has no card frame, history table not responsive](#5-the-workflow-page-is-not-framed-and-its-history-table-is-not-responsive) | cosmetic | resolved #319: upstream frame and `.table-responsive`; theme CSS removed, `workflow:history-table` set |
+| 6 | [One permission gates every workflow transition](#6-workflowviewpermissionrequired-has-one-permission-for-every-transition) | annoyance | resolved #320: the order workflow follows upstream's documented per-transition recipe |
+| 7 | [No refusal message, `WorkflowForm.clean()` returns None, no transition helper](#7-workflow-no-refusal-with-message-hook-workflowformclean-returns-none-no-helper-outside-the-view) | annoyance | resolved #322: model hook, transition buttons and upstream `run_transition`; form subclass and helper deleted |
+| 8 | [Card template has no block above the title](#8-the-card-template-has-no-block-above-the-title) | annoyance | resolved #325: the theme card gains `card_root`/`card_header`; the product card extends it |
+| 9 | [Card list as landing page needs `cv_key = "list"`](#9-a-card-list-as-the-landing-page-needs-cv_key--list) | cosmetic | resolved #325: upstream documents the recipe; the demo keeps its `cv_key`/`cv_path`/`cv_home_key` overrides (no new API) |
 | 10 | [Polymorphic create-select shows lower-case type names](#10-polymorphic-create-select-shows-lower-case-type-names) | cosmetic | resolved #326: upstream labels; Continue/layout retained |
 | 11 | [Polymorphic detail cannot vary property groups per kind](#11-a-polymorphic-detail-view-cannot-give-each-kind-its-own-property-groups) | annoyance | resolved #326: direct model mapping; catalog/check verified |
 | 12 | [Object detail prints stored value of a `choices` field](#12-object-detail-prints-the-stored-value-of-a-field-with-choices) | annoyance | resolved #327: plain field names show the choice label |
 | 13 | [Object detail shows model `help_text` under values](#13-object-detail-shows-model-help_text-in-the-value-column) | cosmetic | resolved #327: help text back on the model, hidden on detail pages |
 | 14 | [Object detail renders a blank text field as an empty row](#14-object-detail-renders-a-blank-text-field-as-an-empty-row) | cosmetic | resolved #327: blank fields keep their row and show a dash |
-| 15 | [Accordion pack opens every panel closed](#15-the-accordion-detail-pack-opens-every-panel-closed) | annoyance | resolved #328 upstream, not yet adopted; accordion pack not used; card-rows, tabs, split-card instead |
+| 15 | [Accordion pack opens every panel closed](#15-the-accordion-detail-pack-opens-every-panel-closed) | annoyance | resolved #328: the green lot detail uses the accordion, first group open |
 | 16 | [`ObjectDetailMixin` + `ObjectDetailViewPermissionRequired` is an MRO error](#16-objectdetailmixin-plus-objectdetailviewpermissionrequired-is-an-mro-error) | cosmetic | documented upstream #327; permission-required class alone |
-| 17 | [`tabs.js` reads `globalThis.bootstrap`](#17-tabsjs-looks-up-globalthisbootstrap-directly) | annoyance | resolved #328 upstream, not yet adopted; nothing (Bootstrap's data API still switches tabs) |
+| 17 | [`tabs.js` reads `globalThis.bootstrap`](#17-tabsjs-looks-up-globalthisbootstrap-directly) | annoyance | resolved #328: tabs init through `cv.adapters.tab`; no theme code needed |
 | 18 | [Header icon is drawn beside a custom header template](#18-the-header-icon-is-drawn-beside-a-custom-header-template) | cosmetic | tracked in #329 (open); customer detail overrides `cv_get_header_icon()` to return None |
 | 19 | [Conditional groups toggle only on a checkbox](#19-conditional-groups-only-toggle-on-a-boolean-checkbox) | annoyance | transient `is_wholesale` checkbox drives `Customer.kind` |
 | 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | `clean()`/`save()` clear the fields; `sales.js` disables them per row |
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | theme CSS sizes `.cv-toggle-group > legend`, `.cv-formset-fieldset > legend` |
 | 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | labels on every row, `form-control-sm` inputs |
-| 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336), child tabs open; not yet adopted; `CustomerGrantMixin` on addresses; context buttons instead of tabs |
+| 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs open; context buttons instead of tabs |
 | 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | `Meta.permissions` entry + `cv_permission = "run"` |
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | table `__init__` passes the sequence; `Meta.exclude = ("actions",)` |
@@ -66,6 +66,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 30 | ext: [Datetimepicker assets on every page, need jQuery](#30-ext-the-datetimepicker-assets-load-on-every-page-and-need-jquery) | annoyance | project head include loads jQuery 3.7.1 |
 | 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | theme CSS maps `--bs-*` to Tabler's `--tblr-*` |
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
+| 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | nothing (all transitions are primary buttons without icon) |
 
 ---
 
@@ -123,7 +124,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Implemented upstream:** [issue #319](https://github.com/jacob-consulting/django-crud-views/issues/319)
   (closed 2026-11-05), [PR #323](https://github.com/jacob-consulting/django-crud-views/pull/323) (phase 06.12, merge
   `cb35b1aa`); not a claim about a published release. Themeable workflow state badges, shared with finding 5.
-- **Adopted here:** not yet; the workaround below is still in place.
+- **Adopted here:** in `c3a4e83`. The theme registers `workflow:badge-<colour>` → `badge bg-<colour>-lt` for every
+  `BadgeEnum` value in `src/crud_views_tabler/buttons.py` (only when `crud_views_workflow` is installed, see
+  `apps.py`); the `crud_views_workflow/badge.html` override is deleted. Tested in
+  `tests/crud_views_tabler/test_theme.py` (`test_all_state_colours_are_light_badges`).
 
 - **What happened:** `BadgeEnum` is documented as "Bootstrap contextual colours for state badges" (`primary`,
   `success`, `danger`, `light`, `dark`, ...), and `crud_views_workflow/badge.html` pastes the value into
@@ -133,9 +137,9 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Where:** `src/crud_views_workflow/lib/enums.py:10` (`BadgeEnum`),
   `src/crud_views_workflow/templates/crud_views_workflow/badge.html:1`, rendered by `WorkflowModelMixin.get_state_badge`
   (`src/crud_views_workflow/lib/mixins.py:37`).
-- **What we did:** a one-line theme override, `src/crud_views_tabler/templates/crud_views_workflow/badge.html`
-  (`badge bg-<colour>-lt`; every `BadgeEnum` value has a `-lt` class in Tabler 1.6.1). Tested in
-  `tests/crud_views_tabler/test_theme.py`.
+- **What we did before #319:** a one-line theme override, `src/crud_views_tabler/templates/crud_views_workflow/badge.html`
+  (`badge bg-<colour>-lt`; every `BadgeEnum` value has a `-lt` class in Tabler 1.6.1), tested in
+  `tests/crud_views_tabler/test_theme.py`. It is deleted now (see "Adopted here").
 - **Suggested upstream change:** a class key for the badge (`workflow:badge` → `badge rounded-pill text-bg-{colour}`),
   or let `STATE_BADGES` values be class strings.
 - **Severity:** annoyance.
@@ -145,7 +149,12 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Implemented upstream:** [issue #319](https://github.com/jacob-consulting/django-crud-views/issues/319)
   (closed 2026-11-05), [PR #323](https://github.com/jacob-consulting/django-crud-views/pull/323) (phase 06.12, merge
   `cb35b1aa`); not a claim about a published release. The action form uses the shared form frame and the history table is responsive, shared with finding 4.
-- **Adopted here:** not yet; the workaround below is still in place.
+- **Adopted here:** in `c3a4e83` the sideways-scroll CSS was removed from `crud_views_tabler.css`; upstream's
+  `.table-responsive` wrapper (`workflow:history-wrapper`) and the form frame (a card around the action form) now
+  apply, asserted in `test_theme.py` (`test_action_frame_history_order_and_error_ownership`). The rendered order
+  workflow page's history table was a bare `table` while the theme's list tables are `table table-vcenter card-table`,
+  so the theme now sets `workflow:history-table` to `table table-vcenter` (`buttons.py`; `card-table` left out
+  because the history is not inside a card), tested by `test_history_table_matches_the_theme_list_table`.
 
 - **What happened:** `view_workflow.content.html` renders the history and the form straight into the page, not
   through `crud_views/snippets/form_frame.html`, so under the theme the workflow page has no card while every
@@ -154,11 +163,12 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   sideways.
 - **Where:** `src/crud_views_workflow/templates/crud_views_workflow/view_workflow.content.html:3-5`,
   `view_workflow.history.html:6` (the table), `view_workflow.action.html:7` (the form).
-- **What we did:** theme CSS (`crud_views_tabler.css`): below 768 px the content container that holds such a table
-  (`.page-body > .container-xl:has(> table.table)`) gets `overflow-x: auto`, so it scrolls instead of the page; the
-  table stays a table, so a narrow one still spans the full width (`display: block` on the table would shrink it).
-  The scrollbar sits at the bottom of the content, not under the table. No frame: the order page has its own history and transition buttons; the workflow page is the
-  fallback for steps that need a comment.
+- **What we did before #319:** theme CSS (`crud_views_tabler.css`): below 768 px the content container that held such
+  a table (`.page-body > .container-xl:has(> table.table)`) got `overflow-x: auto`, so it scrolled instead of the
+  page; the table stayed a table, so a narrow one still spanned the full width (`display: block` on the table would
+  have shrunk it). The scrollbar sat at the bottom of the content, not under the table. There was no frame: the order
+  page has its own history and transition buttons; the workflow page was the fallback for steps that need a comment.
+  The CSS is removed now (see "Adopted here").
 - **Suggested upstream change:** use the form frame for the action form, wrap the history in `.table-responsive`
   (or a `workflow:history` class key).
 - **Severity:** cosmetic.
@@ -168,7 +178,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Implemented upstream:** [issue #320](https://github.com/jacob-consulting/django-crud-views/issues/320)
   (closed 2026-11-06), [PR #324](https://github.com/jacob-consulting/django-crud-views/pull/324) (phase 06.13, merge
   `d7c8e170`); not a claim about a published release. The opt-in per-transition permission recipe is documented and tested; the default `"change"` gate stays.
-- **Adopted here:** not yet; the workaround below is still in place.
+- **Adopted here:** the code was already upstream's documented opt-in recipe (`docs/reference/workflow_view.md`:
+  `cv_permission = "view"`, django-fsm `permission=` per transition, `cv_action_enabled` returning
+  `obj is None or obj.workflow_has_any_possible_transition(user)`), so it is unchanged; the `OrderWorkflowView` module
+  docstring (`example/sales/views/order_actions.py`) now points at that recipe.
 
 - **What happened:** the workflow view checks one `cv_permission` (`"change"`) before any transition is offered. The
   roastery's Roasters may take one step (confirmed → roasted) and otherwise only view orders. django-fsm's own
@@ -190,7 +203,14 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Implemented upstream:** [issue #322](https://github.com/jacob-consulting/django-crud-views/issues/322)
   (closed 2026-11-06), [PR #332](https://github.com/jacob-consulting/django-crud-views/pull/332) (phase 06.13.1, merge
   `fa7cc2d9`); not a claim about a published release. Model business-validation hook, opt-in transition buttons, `clean()` return fix and a reusable execution helper.
-- **Adopted here:** not yet; the workaround below is still in place.
+- **Adopted here:** `Order.workflow_check_transition` raises `ValidationError(confirm_problem())` for `wf_confirm`
+  (`example/sales/models.py`; the guard inside `wf_confirm` stays for direct calls); `OrderWorkflowView` uses
+  upstream's `WorkflowForm` with `cv_transition_presentation = "buttons"`, so Confirm shows disabled with its reason;
+  `get_initial` and the order page's `?transition=` query string are gone (a step needing a comment links to the
+  plain workflow page, where the user types the comment and clicks that step's button). The seed calls upstream's
+  `crud_views_workflow.lib.run_transition` and backdates the `WorkflowInfo` row (`example/sales/seed.py`).
+  `OrderWorkflowForm` and `example/sales/workflow.py` are deleted. Tested in `example/sales/tests/test_orders.py`
+  (`OrderWorkflowTests`, `SeedHistoryTests`).
 
 - **What happened:** (1) "Confirm only with at least one line" can be a django-fsm `conditions=[...]`, but then the
   step silently disappears and a posted confirm fails as "Select a valid choice". To show a reason the project has to
@@ -200,8 +220,9 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   `WorkflowView.cv_form_valid`.
 - **Where:** `src/crud_views_workflow/lib/forms.py:62` (`clean`), `src/crud_views_workflow/lib/views.py:85`
   (`cv_form_valid`).
-- **What we did:** `OrderWorkflowForm.clean()` adds the reason to the `transition` field (`example/sales/forms.py`);
-  `example/sales/workflow.py:run_transition` mirrors the view for the seed data.
+- **What we did before #322:** `OrderWorkflowForm.clean()` added the reason to the `transition` field
+  (`example/sales/forms.py`), and `example/sales/workflow.py:run_transition` mirrored the view for the seed data. Both
+  are deleted now (see "Adopted here").
 - **Suggested upstream change:** `clean()` returns `cleaned_data`; a `custom={"refuse": callable}` (or a model hook
   `workflow_check_transition(name) -> str | None`) shown as a form error; a public `run_transition(obj, name, user,
   comment)` used by the view itself.
@@ -214,7 +235,13 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Implemented upstream:** [issue #325](https://github.com/jacob-consulting/django-crud-views/issues/325)
   (closed 2026-11-06), [PR #330](https://github.com/jacob-consulting/django-crud-views/pull/330) (phase 06.14, merge
   `f693a38a`); not a claim about a published release. Empty `card_root` and `card_header` insertion blocks, shared with finding 9.
-- **Adopted here:** not yet; the workaround below is still in place.
+- **Adopted here:** the theme card (`src/crud_views_tabler/templates/crud_views/tags/card.html`) has the two new
+  blocks in upstream's positions (`card_root` first in the root `.card`, `card_header` first in `.card-body`), and
+  `example/catalog/templates/catalog/product_card.html` extends it: stripe in `card_root`, badge row in
+  `card_header`, link in `card_title`, price footer ahead of `{{ block.super }}` in `card_actions`. One visible
+  difference: the heading now takes the theme's `card:title` class (`card-title`, which Tabler gives a 1rem bottom
+  margin), so the old `mb-1` is restored by an example CSS rule, `[data-product-card] ~ .card-body .card-title` in
+  `example/static/acme/acme.css` (tested in `catalog.tests.ProductCardCssTests`). Theme tests: `CardThemeTests` (blocks empty by default, filled in place).
 
 - **What happened:** the product card (type badge row above the title, a `card-status-top` stripe as a direct child of
   `.card`) cannot be built by extending `crud_views/tags/card.html`: `card_content` renders below the title, and
@@ -222,7 +249,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   badge row into `card_title` would nest block elements in the heading.
 - **Where:** `src/crud_views/templates/crud_views/tags/card.html:4-8` (class keys `card:root`, `card:body`, blocks
   `card_title`, `card_content`, `card_actions`); `docs/reference/card-list-view.md:158` ("Custom Card Template").
-- **What we did:** `example/catalog/templates/catalog/product_card.html` replaces the card and renders the actions
+- **What we did before #325:** `example/catalog/templates/catalog/product_card.html` replaced the card and rendered the actions
   itself with `{% cv_card_action_group %}` and the `button/container.html` include, as the theme's card does.
 - **Suggested upstream change:** a `card_header` block before the title and a `card_root` block (first child of the
   root element), so projects extend the card instead of copying its action plumbing.
@@ -233,7 +260,9 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Implemented upstream:** [issue #325](https://github.com/jacob-consulting/django-crud-views/issues/325)
   (closed 2026-11-06), [PR #330](https://github.com/jacob-consulting/django-crud-views/pull/330) (phase 06.14, merge
   `f693a38a`); not a claim about a published release. The existing cards-first, table-secondary configuration is documented and tested, with no `cv_default_list` API; shared with finding 8.
-- **Adopted here:** not yet; the workaround below is still in place.
+- **Adopted here:** the recipe is upstream's documented one (`docs/reference/card-list-view.md`), so the overrides
+  stay as they are; `ProductCardListView` and `ProductTableListView` in `example/catalog/views.py` now point to it
+  in comments.
 
 - **What happened:** `CardListView` is `cv_key = "card"`, `cv_path = "card"`; "home", the cancel/success keys and the
   breadcrumbs all point at `list`. A ViewSet whose default list is the cards (with a table beside it) has to set
@@ -241,7 +270,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   `cv_home_key = "list"` on it. There is no semantic icon for a second list view either, so the table view uses
   `cv_icon_action = "tabler:table"`.
 - **Where:** `src/crud_views/lib/views/card.py:22-23`, `src/crud_views/lib/view/base.py:104` (`cv_home_key`).
-- **What we did:** the overrides above (`example/catalog/views.py`); they work.
+- **What we did before #325:** the overrides above (`example/catalog/views.py`); they work, and they are still what
+  upstream's recipe prescribes.
 - **Suggested upstream change:** a documented recipe for "two list views on one ViewSet" (or a `cv_default_list`).
 - **Severity:** cosmetic.
 
@@ -347,14 +377,17 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Implemented upstream:** [issue #328](https://github.com/jacob-consulting/django-crud-views/issues/328)
   (closed 2026-11-07), [PR #335](https://github.com/jacob-consulting/django-crud-views/pull/335) (phase 06.17, merge
   `be449c57`); not a claim about a published release. The accordion pack opens the first group initially; users can still close it. Shared with finding 17.
-- **Adopted here:** not yet; the workaround below is still in place.
+- **Adopted here:** `LotDetailView` (`example/roastery/views.py`) uses `cv_object_detail_layout = "accordion"`; its
+  first group, "Origin and producer", opens initially. `test_detail_is_an_accordion_with_the_first_group_open` pins it.
+- **Note:** upstream's count badge on each accordion header is the solid `text-bg-secondary`, not the theme's light
+  badges. Left as is; no theme CSS added.
 
 - **What happened:** with `cv_object_detail_layout = "accordion"` a detail page shows only the group titles and an
   "N properties" badge until each panel is clicked; the docs say "Accordions remain initially collapsed; the tab
   `selected` flag does not open them". For a page whose point is its facts that reads as an empty page.
 - **Where:** `src/crud_views_object_detail/templates/crud_views_object_detail/layouts/accordion/group.html:5`
   (`accordion-button collapsed`), `docs/reference/object_detail_layout_packs.md:130`.
-- **What we did:** the green lot detail uses `card-rows` instead (products use the project default `tabs-vertical`,
+- **What we did before #328:** the green lot detail used `card-rows` instead (products use the project default `tabs-vertical`,
   customers `split-card`).
 - **Suggested upstream change:** open the group flagged `selected` (or the first one), like the tab packs.
 - **Severity:** annoyance.
@@ -380,14 +413,16 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Implemented upstream:** [issue #328](https://github.com/jacob-consulting/django-crud-views/issues/328)
   (closed 2026-11-07), [PR #335](https://github.com/jacob-consulting/django-crud-views/pull/335) (phase 06.17, merge
   `be449c57`); not a claim about a published release. Object-detail tabs initialise through the theme adapters (`cv.adapters`) instead of `globalThis.bootstrap`. Shared with finding 15.
-- **Adopted here:** not yet; the workaround below is still in place.
+- **Adopted here:** no theme code needed: upstream's `cv.bootstrapAdapters` now includes `tab`, and
+  `tabler-adapters.js` assigns the whole set (`Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler))`).
+  `test_upstream_adapter_set_includes_tab_and_theme_takes_all_of_it` pins both halves. Not checked in a browser.
 
 - **What happened:** the object-detail tab initialiser calls `globalThis.bootstrap?.Tab`, bypassing `cv.adapters`.
   Tabler exposes Bootstrap only as `window.tabler`, so the init silently does nothing. The tabs still switch
   (Bootstrap's data API in Tabler's bundle handles `data-bs-toggle="pill"`), but the keyboard handling the init is
   for is lost.
 - **Where:** `src/crud_views_object_detail/static/crud_views_object_detail/js/tabs.js:29`, `:41`.
-- **What we did:** nothing; not worth a theme shim.
+- **What we did before #328:** nothing; not worth a theme shim.
 - **Suggested upstream change:** resolve `Tab` through an adapter like modal/tooltip/collapse.
 - **Severity:** annoyance.
 
@@ -474,8 +509,15 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   `cv_guardian_parent_*` fields and `_guardian_child_composition_error` are gone (breaking change, see
   `docs/migrating-1.0.md`). **Not addressed:** the tab/nav rendering of child viewsets on the parent detail page
   (`ChildContextButton` is still the only way).
-- **Adopted here:** not yet; `CustomerGrantMixin` is probably redundant now. Check it against the guard before
-  removing it, since the PR makes the breaking changes above.
+- **Adopted here:** the parent gate is upstream's ancestor guard; `CustomerGrantMixin` is removed from every
+  nested sales view. The customer viewset declares `AncestorPolicy(accept_global_perms=True)`
+  (`example/sales/views/customers.py`), so Owner and Roasters pass the gate with their model permissions. The
+  default Read and Write pairs cover the built-in views; three custom endpoints fell outside those families and
+  made `manage.py check` fail with `viewset.E268`, so each has an action pair: `address` `make_default`
+  (`nearest="change"`, `higher="view"`), `order` `duplicate` (`change`/`view`) and `order` `workflow`
+  (`view`/`view`). `sales/tests/test_access.py` (`AccessMatrixTests`) pins the nested access per role and passed
+  unchanged after the removal. Child tabs are still open: Orders, Subscriptions and Addresses remain context
+  buttons on the customer page.
 
 - **What happened:** `GuardianParentPermissionMixin` requires the child views to carry per-object Guardian grants on
   the child rows too, so a child with a plain `ViewSet` (addresses) is not covered by the parent's grants. Also, the
@@ -483,7 +525,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   gives buttons linking to the nested lists.
 - **Where:** `src/crud_views_guardian/lib/mixins.py:280` (`_guardian_child_composition_error`),
   `docs/reference/context_buttons.md:156` (`ChildContextButton`).
-- **What we did:** a 10-line `CustomerGrantMixin` that checks the URL's customer (view to read, change to write;
+- **What we did before #336:** a 10-line `CustomerGrantMixin` that checks the URL's customer (view to read, change to write;
   `example/sales/views/addresses.py`); Orders, Subscriptions and Addresses are context buttons on the customer page.
 - **Suggested upstream change:** a parent-only mode for Guardian child views (inherit the parent's grants), and a
   tab/nav rendering of child viewsets on the parent detail page.
@@ -621,14 +663,28 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   that themes can feed.
 - **Severity:** cosmetic.
 
+### 33. Workflow transition buttons ignore the transition's `variant` and `icon`
+
+- **What happened:** with `cv_transition_presentation = "buttons"` every transition is rendered as the same
+  `form:submit:label` button (`btn btn-primary` in the theme) with only its label. A transition's
+  `custom["variant"]` (the order's Cancel is `danger`) and `custom["icon"]` are not read, so Cancel is a primary
+  button without an icon next to Confirm.
+- **Where:** `src/crud_views_workflow/templates/crud_views_workflow/widgets/transitions.html:8`
+  (`{% cv_button_class 'form' 'submit' 'label' %}` for every action).
+- **What we did:** nothing; the demo keeps `variant`/`icon` in the transition's `custom` for the order page's own
+  buttons, and the workflow page shows uniform primary buttons.
+- **Suggested upstream change:** honour `custom["variant"]` and `custom["icon"]` in the widget, or offer a
+  per-transition class key (`workflow:transition-<name>`).
+- **Severity:** cosmetic.
+
 ---
 
 ## Not shown in the demo
 
 Features from the spec's feature map that were dropped or reduced, with the reason.
 
-- **Accordion object-detail pack:** not used; it opens every panel closed (#15). The demo shows `split-card`
-  (customers), `card-rows` (green lots) and the project default `tabs-vertical` (products and the rest).
+- **Object-detail packs:** the demo shows `split-card` (customers), `accordion` (green lots, first group open, #15)
+  and the project default `tabs-vertical` (products and the rest). `card-rows` is not used.
 - **`ConditionalFormSet`:** not used. The spec's "grind/bag size only for beans" needs a per-row toggle, which
   upstream does not have (#20); the demo clears the fields in `clean()`/`save()` and disables them with a small script.
   No other formset in the domain switches as a whole.

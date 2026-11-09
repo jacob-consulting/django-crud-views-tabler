@@ -73,6 +73,8 @@ class ProductFilterFormHelper(ListViewFilterFormHelper):
     layout = Layout(Row(Column4("type"), Column4("category"), Column3("is_active")))
 
 
+# Cards first, table second: upstream documents this recipe (docs/reference/card-list-view.md, #325). The card list
+# takes `cv_key = "list"` and `cv_path = ""`, the table gets its own key and `cv_home_key = "list"`; no new API.
 class ProductCardListView(BreadcrumbMixin, ListViewTableFilterMixin, CardListViewPermissionRequired):
     cv_viewset = cv_product
     cv_key = "list"  # the card list is the landing page; the table is `table`
@@ -106,6 +108,7 @@ class ProductTable(Table):
         return record.type_label
 
 
+# The table beside the cards: the other half of upstream's cards-first recipe (#325), see ProductCardListView.
 class ProductTableListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired):
     cv_viewset = cv_product
     cv_key = "table"

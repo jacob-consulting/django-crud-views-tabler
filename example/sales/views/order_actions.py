@@ -1,26 +1,30 @@
 """Order views beyond CRUD: the workflow step, the printable packing slip and "duplicate as a new draft".
 
-Permissions for the workflow: the view itself only needs ``view_order`` (Roasters hold no ``change_order``); which
-steps a user may take is decided per transition by django-fsm's ``permission=`` (``may_change_order`` /
-``may_roast_order`` in ``models.py``). The workflow action shows disabled when the user has no step left to take.
+Permissions for the workflow follow upstream's documented opt-in recipe (``docs/reference/workflow_view.md`` in
+django-crud-views): the view itself only needs ``view_order`` (Roasters hold no ``change_order``); which steps a user
+may take is decided per transition by django-fsm's ``permission=`` (``may_change_order`` / ``may_roast_order`` in
+``models.py``), and the workflow action shows disabled when the user has no step left to take. Each step is its own
+submit button (``cv_transition_presentation = "buttons"``); ``Order.workflow_check_transition`` disables Confirm,
+with the reason, while the order has no lines.
 """
 
 from crud_views.lib.crispy import CrispyViewMixin
 from crud_views.lib.views import DetailViewPermissionRequired, MessageMixin
 from crud_views.lib.views.form import CustomFormViewPermissionRequired
-from crud_views_workflow.lib import WorkflowViewPermissionRequired
+from crud_views_workflow.lib import WorkflowForm, WorkflowViewPermissionRequired
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from ..forms import OrderDuplicateForm, OrderWorkflowForm
+from ..forms import OrderDuplicateForm
 from ..models import Order, OrderLine
-from .addresses import BreadcrumbMixin, CustomerGrantMixin
+from .addresses import BreadcrumbMixin
 from .orders import ORDER_CONTEXT_ACTIONS, cv_order
 
 
-class OrderWorkflowView(CustomerGrantMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, WorkflowViewPermissionRequired):
+class OrderWorkflowView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, WorkflowViewPermissionRequired):
     cv_viewset = cv_order
-    form_class = OrderWorkflowForm
+    form_class = WorkflowForm
+    cv_transition_presentation = "buttons"
     cv_permission = "view"  # the per-transition permissions decide (see the module docstring)
     cv_inaccessible_actions = "disable"
     cv_success_key = "detail"
@@ -32,12 +36,8 @@ class OrderWorkflowView(CustomerGrantMixin, BreadcrumbMixin, CrispyViewMixin, Me
     def cv_action_enabled(cls, user, obj=None):
         return obj is None or obj.workflow_has_any_possible_transition(user)
 
-    def get_initial(self):
-        # the order page links here with ?transition=wf_cancel for steps that need a comment
-        return {**super().get_initial(), "transition": self.request.GET.get("transition")}
 
-
-class OrderPackingSlipView(CustomerGrantMixin, BreadcrumbMixin, DetailViewPermissionRequired):
+class OrderPackingSlipView(BreadcrumbMixin, DetailViewPermissionRequired):
     cv_viewset = cv_order
     cv_key = "packing_slip"
     cv_path = "packing-slip"
@@ -50,7 +50,7 @@ class OrderPackingSlipView(CustomerGrantMixin, BreadcrumbMixin, DetailViewPermis
     cv_context_actions = ["detail", "packing_slip"]
 
 
-class OrderDuplicateView(CustomerGrantMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, CustomFormViewPermissionRequired):
+class OrderDuplicateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, CustomFormViewPermissionRequired):
     """A new draft for the same customer with the same lines, at today's prices."""
 
     cv_viewset = cv_order

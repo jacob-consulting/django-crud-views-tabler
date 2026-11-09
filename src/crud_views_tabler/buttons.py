@@ -9,6 +9,8 @@ TABLER_BUTTON_CLASSES: dict[str, str] = {
     "workflow:badge-info": "badge bg-info-lt",
     "workflow:badge-light": "badge bg-light-lt",
     "workflow:badge-dark": "badge bg-dark-lt",
+    # The workflow history like the theme's list tables, minus card-table: the history sits on the page, not in a card.
+    "workflow:history-table": "table table-vcenter",
     "context:primary": "btn btn-primary",
     "context:secondary": "btn",
     "context:tertiary": "btn",

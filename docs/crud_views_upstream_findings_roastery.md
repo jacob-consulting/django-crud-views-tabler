@@ -12,7 +12,8 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 [#325](https://github.com/jacob-consulting/django-crud-views/issues/325), findings 10–11 in
 [#326](https://github.com/jacob-consulting/django-crud-views/issues/326), and findings 12–14 and 16 in
 [#327](https://github.com/jacob-consulting/django-crud-views/issues/327), findings 15 and 17 in
-[#328](https://github.com/jacob-consulting/django-crud-views/issues/328), and finding 18 in [#329](https://github.com/jacob-consulting/django-crud-views/issues/329) (open). The remaining findings are candidates to
+[#328](https://github.com/jacob-consulting/django-crud-views/issues/328), finding 18 in [#329](https://github.com/jacob-consulting/django-crud-views/issues/329) (open), and the first half of finding 23 in
+[PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (merged, no issue). The remaining findings are candidates to
 triage into issues for django-crud-views (and, where marked, django-crud-views-extensions).
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
@@ -55,7 +56,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | `clean()`/`save()` clear the fields; `sales.js` disables them per row |
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | theme CSS sizes `.cv-toggle-group > legend`, `.cv-formset-fieldset > legend` |
 | 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | labels on every row, `form-control-sm` inputs |
-| 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | `CustomerGrantMixin` on addresses; context buttons instead of tabs |
+| 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336), child tabs open; not yet adopted; `CustomerGrantMixin` on addresses; context buttons instead of tabs |
 | 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | `Meta.permissions` entry + `cv_permission = "run"` |
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | table `__init__` passes the sequence; `Meta.exclude = ("actions",)` |
@@ -464,6 +465,18 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 23. Child viewsets under a Guardian parent need their own gate; no page tabs for children
 
+- **Partly implemented upstream:** [PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (phase 06.18, merge
+  `fe9d5d2e`, merged 2026-11-09; no linked issue). Ancestor authorization: every nested request
+  resolves the ancestors in its URL and checks their permissions before the endpoint's own work, so "a plain child
+  view without a permission of its own is still protected by its ancestors" (`docs/reference/nested.md`). A child
+  view under a Guardian parent needs the parent's `view` (read) or `change` (write) object grant, which is the
+  suggested "inherit the parent's grants" mode. `GuardianParentPermissionMixin` still exists, but the
+  `cv_guardian_parent_*` fields and `_guardian_child_composition_error` are gone (breaking change, see
+  `docs/migrating-1.0.md`). **Not addressed:** the tab/nav rendering of child viewsets on the parent detail page
+  (`ChildContextButton` is still the only way).
+- **Adopted here:** not yet; `CustomerGrantMixin` is probably redundant now. Check it against the guard before
+  removing it, since the PR makes the breaking changes above.
+
 - **What happened:** `GuardianParentPermissionMixin` requires the child views to carry per-object Guardian grants on
   the child rows too, so a child with a plain `ViewSet` (addresses) is not covered by the parent's grants. Also, the
   mockup's tabs (Orders / Addresses / Subscriptions) on the parent detail have no equivalent: `ChildContextButton`
@@ -477,6 +490,11 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Severity:** annoyance.
 
 ### 24. A no-object custom form needs an undocumented recipe for its own permission
+
+- **Checked against #336, not addressed:** at `fe9d5d2e` `docs/reference/custom_form_view.md` still has no
+  `Meta.permissions` recipe for a custom form's own permission, and there is no system check that `cv_permission`
+  resolves. The new `viewset.E266`/`E267`/`E268` checks cover ancestry only; the only fail-closed change for a
+  missing permission key (plan 13) is for Guardian views.
 
 - **What happened:** "Run subscriptions" is not a CRUD action, and only the Owner may run it.
   `permission_required` looks `cv_permission` up in `ViewSet.permissions`, which is built from the model's
@@ -494,6 +512,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Severity:** annoyance.
 
 ### 25. Manage pages are open to every signed-in user while DEBUG is on
+
+- **Checked against #336, not addressed:** `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` still defaults to `"debug_only"`, and
+  `ManageView._cv_manage_public()` still admits everybody while `DEBUG` is on (`src/crud_views/lib/views/manage.py`).
+  The PR only adds the ancestor guard for nested manage pages and shows the ancestor policy on them.
 
 - **What happened:** `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` defaults to `"debug_only"`, which opens every manage page to
   any signed-in user while `DEBUG` is on, whatever their permissions. On a Guardian ViewSet that page lists every

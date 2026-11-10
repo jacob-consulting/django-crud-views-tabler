@@ -66,7 +66,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | resolved #337: tables declare `Meta.sequence` (the `__init__` workaround is gone); `Meta.exclude = ("actions",)` drops the column |
 | 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | tracked in #314 (open, backlog); `render_number` and `get_success_url` reverse the nested URLs |
 | 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | **DONE** — [PR #342](https://github.com/jacob-consulting/django-crud-views/pull/342) (#338); adopted in both subscription ViewSets; list-header overrides removed |
-| 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | **DONE** (2026-11-10, user confirmed); upstream #339 remains open |
+| 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | **DONE** upstream #339 (closed 2026-11-10); demo adoption pending |
 | 30 | ext: [Datetimepicker assets on every page, need jQuery](#30-ext-the-datetimepicker-assets-load-on-every-page-and-need-jquery) | annoyance | project head include loads jQuery 3.7.1 |
 | 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | theme CSS maps `--bs-*` to Tabler's `--tblr-*` |
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
@@ -657,7 +657,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 29. Snippet templates only see the object, not the view
 
-- **Status:** **DONE**, marked at the user's request on 2026-11-10. Upstream issue #339 remains open; this tracker update does not close it.
+- **Status:** **DONE** upstream; [#339](https://github.com/jacob-consulting/django-crud-views/issues/339) closed on
+  2026-11-10 at 10:36 UTC. Demo adoption remains separate.
 - **What happened:** header, paragraph and message template codes render with a context that has `object` but not
   `view`, so "Created {{ view.duplicate }} from {{ object }}" or "a draft for {{ view.cv_get_parent_object }}" render
   empty.
@@ -670,8 +671,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   for its own page: header, paragraph, filter header, success and error message. Class-level labels (action, short
   action, breadcrumb current-page label, buttons) keep their context on purpose: there `context.view` is the hosting
   page, not the labelled view. The issue carries the decisions and acceptance criteria for the upstream phase.
-- **Suggested upstream change:** the #339 keys, nothing more.
-- **When #339 lands:** the duplicate action's message becomes "Created {{ view.duplicate }} from {{ object }}" and the
+- **Upstream change:** #339 is closed; the requested scope is the snippet context keys described above.
+- **Demo adoption pending:** the duplicate action's message can become "Created {{ view.duplicate }} from {{ object }}" and the
   nested order create view can say "New order for {{ parent_object }}" (`example/sales/views/order_actions.py`,
   `orders.py`).
 - **Severity:** cosmetic.

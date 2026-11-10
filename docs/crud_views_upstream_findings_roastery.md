@@ -16,7 +16,7 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 [PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (merged, no issue), finding 26 in
 [#337](https://github.com/jacob-consulting/django-crud-views/issues/337) (closed), finding 27 in
 [#314](https://github.com/jacob-consulting/django-crud-views/issues/314) (open, backlog; supersedes #311), finding 28 in
-[#338](https://github.com/jacob-consulting/django-crud-views/issues/338) (open) and finding 29 in
+[#338](https://github.com/jacob-consulting/django-crud-views/issues/338) (closed; implemented in PR #342) and finding 29 in
 [#339](https://github.com/jacob-consulting/django-crud-views/issues/339) (open). The remaining findings are candidates to
 triage into issues for django-crud-views (and, where marked, django-crud-views-extensions).
 
@@ -65,7 +65,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | resolved #337: tables declare `Meta.sequence` (the `__init__` workaround is gone); `Meta.exclude = ("actions",)` drops the column |
 | 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | tracked in #314 (open, backlog); `render_number` and `get_success_url` reverse the nested URLs |
-| 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | tracked in #338 (open); `cv_header_template_code` on the lists; breadcrumb keeps the model name |
+| 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | resolved #338 (PR #342): both subscription ViewSets declare their names; list-header overrides removed |
 | 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | tracked in #339 (open); plainer message texts |
 | 30 | ext: [Datetimepicker assets on every page, need jQuery](#30-ext-the-datetimepicker-assets-load-on-every-page-and-need-jquery) | annoyance | project head include loads jQuery 3.7.1 |
 | 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | theme CSS maps `--bs-*` to Tabler's `--tblr-*` |
@@ -635,17 +635,21 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   (from `CustomerSubscription._meta.verbose_name`), also in the breadcrumb; only the page header can be changed per
   view (`cv_header_template_code`), the breadcrumb and create/update headers keep the model name.
 - **Where:** `src/crud_views/lib/viewset/__init__.py:478-487` (`get_meta`: `verbose_name` from the model's `_meta`).
-- **What we did:** `cv_header_template_code = "Subscriptions"` on the two lists; the breadcrumb keeps the model name.
-- **Tracked upstream:** filed as [#338](https://github.com/jacob-consulting/django-crud-views/issues/338) on
-  2026-11-09: `ViewSet(verbose_name=..., verbose_name_plural=...)` as two optional `LazyStr` fields that `get_meta()`
+- **Previous workaround:** `cv_header_template_code = "Subscriptions"` on the two lists; the breadcrumb kept the model name.
+- **Done upstream:** [#338](https://github.com/jacob-consulting/django-crud-views/issues/338) closed on
+  2026-11-10 after [PR #342](https://github.com/jacob-consulting/django-crud-views/pull/342) was squash-merged
+  (`59f85769`, Phase 06.20). Implemented `ViewSet(verbose_name=..., verbose_name_plural=...)` as two optional
+  `LazyStr` fields that `get_meta()`
   resolves independently (singular and plural each fall back to the model), so every default snippet, the breadcrumb
   container item, `LinkChildColumn` and `ChildContextButton` follow; per-view template codes still win. Model-centric
   texts (delete summaries, 404s) stay on the model. The issue carries the decisions and acceptance criteria for the
   upstream phase.
-- **Suggested upstream change:** the #338 fields, nothing more.
-- **When #338 lands:** `cv_subscription` and `cv_all_subscriptions` declare `verbose_name=_("subscription")`,
-  `verbose_name_plural=_("subscriptions")`; the two `cv_header_template_code` overrides go, and the breadcrumb and the
-  create/update/delete headers read "Subscription(s)" without further code.
+- **Upstream change:** complete; the #338 fields, with default-label propagation and regression coverage.
+- **Adopted here (2026-11-10):** `cv_subscription` and `cv_all_subscriptions` declare
+  `verbose_name=_("subscription")`, `verbose_name_plural=_("subscriptions")`; the two list
+  `cv_header_template_code` overrides are removed. Rendered-page tests cover "Subscriptions" in both list headings
+  and breadcrumbs, "Subscription" in create/update/delete headings (including the delete modal), and preservation of
+  the custom "Run subscriptions" heading. Model-centric delete text and custom success messages retain their wording.
 - **Severity:** cosmetic.
 
 ### 29. Snippet templates only see the object, not the view

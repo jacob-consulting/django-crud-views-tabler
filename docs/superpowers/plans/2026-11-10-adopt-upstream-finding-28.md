@@ -1,6 +1,6 @@
 # Adopt upstream finding 28 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Adopt upstream ViewSet names for consistent subscription labels and remove the list-header workaround.
 
@@ -38,17 +38,17 @@
 - Consumes: existing `ViewSet(verbose_name=..., verbose_name_plural=...)`, lazy `_`, and `SubscriptionTestCase.subscribe()` / `login()` fixtures.
 - Produces: unchanged subscription routes and behavior, with ViewSet names propagated through generated labels.
 
-- [ ] **Step 1: Add focused rendered-label tests to `SubscriptionViewTests`.** Log in as alex and create a subscription with `self.subscribe(self.mine)`. Add `test_subscription_lists_use_viewset_names` for `subscriptions-list` and `subscription-list` (the latter with `customer_pk=self.mine.pk`): assert HTTP 200, heading text `Subscriptions`, and a breadcrumb item with text `Subscriptions`, with no `Customer subscriptions` in that breadcrumb. Add `test_subscription_form_headers_use_viewset_name` for nested create/update/delete: assert HTTP 200 and exact heading text `Subscription` on each page (the upstream header snippets contain the name alone). Supply `customer_pk` for all three and the subscription `pk` for update/delete. Add `test_subscription_delete_modal_uses_viewset_name`: request delete with `headers={"X-CV-Modal": "true"}` and assert `.modal-title` text `Subscription`. Add `test_run_subscription_header_keeps_custom_label`: GET `subscriptions-run` and assert heading `Run subscriptions`. Extract rendered text from `.page-title`, `.modal-title`, and breadcrumb elements with Python's standard HTML parser or an existing available parser; normalize whitespace and ignore inline SVG contents. Do not assert against unrelated body text.
+- [x] **Step 1: Add focused rendered-label tests to `SubscriptionViewTests`.** Log in as alex and create a subscription with `self.subscribe(self.mine)`. Add `test_subscription_lists_use_viewset_names` for `subscriptions-list` and `subscription-list` (the latter with `customer_pk=self.mine.pk`): assert HTTP 200, heading text `Subscriptions`, and a breadcrumb item with text `Subscriptions`, with no `Customer subscriptions` in that breadcrumb. Add `test_subscription_form_headers_use_viewset_name` for nested create/update/delete: assert HTTP 200 and exact heading text `Subscription` on each page (the upstream header snippets contain the name alone). Supply `customer_pk` for all three and the subscription `pk` for update/delete. Add `test_subscription_delete_modal_uses_viewset_name`: request delete with `headers={"X-CV-Modal": "true"}` and assert `.modal-title` text `Subscription`. Add `test_run_subscription_header_keeps_custom_label`: GET `subscriptions-run` and assert heading `Run subscriptions`. Extract rendered text from `.page-title`, `.modal-title`, and breadcrumb elements with Python's standard HTML parser or an existing available parser; normalize whitespace and ignore inline SVG contents. Do not assert against unrelated body text.
 
-- [ ] **Step 2: Run the new tests before changing configuration.**
+- [x] **Step 2: Run the new tests before changing configuration.**
 
 Run: `uv run python example/manage.py test sales.tests.test_subscriptions.SubscriptionViewTests`
 
 Expected: naming assertions fail on model-derived headers/breadcrumbs; existing permission and custom run-page behavior passes.
 
-- [ ] **Step 3: Configure both ViewSets and remove redundant headers.** Add `verbose_name=_("subscription")` and `verbose_name_plural=_("subscriptions")` to `cv_subscription` and `cv_all_subscriptions`. Remove `cv_header_template_code` from `SubscriptionListView` and `AllSubscriptionsListView`, including the obsolete comment. Retain every other custom label/message declaration.
+- [x] **Step 3: Configure both ViewSets and remove redundant headers.** Add `verbose_name=_("subscription")` and `verbose_name_plural=_("subscriptions")` to `cv_subscription` and `cv_all_subscriptions`. Remove `cv_header_template_code` from `SubscriptionListView` and `AllSubscriptionsListView`, including the obsolete comment. Retain every other custom label/message declaration.
 
-- [ ] **Step 4: Verify the subscription suite and Django configuration.**
+- [x] **Step 4: Verify the subscription suite and Django configuration.**
 
 Run: `uv run python example/manage.py test sales.tests.test_subscriptions`
 
@@ -58,6 +58,6 @@ Run: `uv run python example/manage.py check --fail-level WARNING`
 
 Expected: no system-check issues.
 
-- [ ] **Step 5: Update finding 28.** Change its table row from adoption pending to resolved/adopted. Rewrite “What we did” as the historical workaround and replace “Demo adoption pending” with an adoption note describing both ViewSet declarations, removal of the two header overrides, and the verified generated labels. Preserve the user's upstream merge/status updates and every other finding.
+- [x] **Step 5: Update finding 28.** Change its table row from adoption pending to resolved/adopted. Rewrite “What we did” as the historical workaround and replace “Demo adoption pending” with an adoption note describing both ViewSet declarations, removal of the two header overrides, and the verified generated labels. Preserve the user's upstream merge/status updates and every other finding.
 
-- [ ] **Step 6: Review and commit the adoption.** Run `git diff --check` (expected: no whitespace errors) and review `git diff` for the three files. Confirm model metadata, permissions, custom messages, and custom run labels were not modified. Stage only these files and commit with `fix: adopt subscription ViewSet names from upstream finding 28`. Preserve the existing tracker edits in the same file; do not revert them or stage unrelated files.
+- [x] **Step 6: Review and commit the adoption.** Run `git diff --check` (expected: no whitespace errors) and review `git diff` for the three files. Confirm model metadata, permissions, custom messages, and custom run labels were not modified. Stage only these files and commit with `fix: adopt subscription ViewSet names from upstream finding 28`. Preserve the existing tracker edits in the same file; do not revert them or stage unrelated files.

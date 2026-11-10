@@ -38,11 +38,19 @@ from .addresses import BreadcrumbMixin
 cv_subscription = ViewSet(
     model=CustomerSubscription,
     name="subscription",
+    verbose_name=_("subscription"),
+    verbose_name_plural=_("subscriptions"),
     parent=ParentViewSet(name="customer"),
     icon_header="tabler:repeat",
 )
 
-cv_all_subscriptions = ViewSet(model=CustomerSubscription, name="subscriptions", icon_header="tabler:repeat")
+cv_all_subscriptions = ViewSet(
+    model=CustomerSubscription,
+    name="subscriptions",
+    verbose_name=_("subscription"),
+    verbose_name_plural=_("subscriptions"),
+    icon_header="tabler:repeat",
+)
 
 
 class SubscriptionTableBase(Table):
@@ -94,7 +102,6 @@ class SubscriptionListView(BreadcrumbMixin, ListViewTableMixin, ListViewPermissi
     table_class = SubscriptionTable
     cv_list_actions = ["update", "delete"]
     cv_list_actions_inline = ["update"]
-    cv_header_template_code = _("Subscriptions")  # the default header is the model's "Customer subscriptions"
 
     def get_queryset(self):
         return super().get_queryset().select_related("customer", "product")
@@ -133,7 +140,6 @@ class AllSubscriptionsListView(BreadcrumbMixin, ListViewTableMixin, ListViewTabl
     formhelper_class = SubscriptionFilterFormHelper
     cv_list_actions = []
     cv_context_actions = ["filter", "run"]
-    cv_header_template_code = _("Subscriptions")
     cv_paragraph_template_code = _("Standing deliveries of every customer you may see")
     paginate_by = 20
 

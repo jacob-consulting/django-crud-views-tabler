@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from html import escape
+from html.parser import HTMLParser
 
 from django.contrib.messages import get_messages
 from django.urls import reverse
@@ -11,6 +12,35 @@ from sales.services import run_subscriptions
 from .test_customers import SalesTestCase
 
 TODAY = date(2026, 11, 4)
+
+
+class LabelText(HTMLParser):
+    """Collect the text of headings or breadcrumb items, excluding their icons."""
+
+    def __init__(self, markup, css_class):
+        super().__init__()
+        self.labels = []
+        self.stack = []
+        self.css_class = css_class
+        self.feed(markup)
+
+    def handle_starttag(self, tag, attrs):
+        if self.css_class in dict(attrs).get("class", "").split():
+            self.labels.append("")
+        if tag not in {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}:
+            self.stack.append((tag, self.css_class in dict(attrs).get("class", "").split()))
+
+    def handle_endtag(self, tag):
+        if self.stack and self.stack[-1][0] == tag:
+            self.stack.pop()
+
+    def handle_data(self, data):
+        if any(selected for _, selected in self.stack) and not any(tag == "svg" for tag, _ in self.stack):
+            self.labels[-1] += data
+
+
+def label_text(response, css_class):
+    return [" ".join(text.split()) for text in LabelText(response.content.decode(), css_class).labels]
 
 
 class SubscriptionTestCase(SalesTestCase):
@@ -70,6 +100,47 @@ class RunSubscriptionsTests(SubscriptionTestCase):
 
 
 class SubscriptionViewTests(SubscriptionTestCase):
+    def test_subscription_lists_use_viewset_names(self):
+        self.subscribe(self.mine)
+        self.login()
+        for name, kwargs in (("subscriptions-list", {}), ("subscription-list", {"customer_pk": self.mine.pk})):
+            with self.subTest(name=name):
+                response = self.client.get(reverse(name, kwargs=kwargs))
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(label_text(response, "page-title"), ["Subscriptions"])
+                breadcrumbs = label_text(response, "breadcrumb-item")
+                self.assertIn("Subscriptions", breadcrumbs)
+                self.assertNotIn("Customer subscriptions", breadcrumbs)
+
+    def test_subscription_form_headers_use_viewset_name(self):
+        sub = self.subscribe(self.mine)
+        self.login()
+        for action in ("create", "update", "delete"):
+            with self.subTest(action=action):
+                kwargs = {"customer_pk": self.mine.pk}
+                if action != "create":
+                    kwargs["pk"] = sub.pk
+                response = self.client.get(reverse(f"subscription-{action}", kwargs=kwargs))
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(label_text(response, "page-title"), ["Subscription"])
+                breadcrumbs = label_text(response, "breadcrumb-item")
+                self.assertIn("Subscriptions", breadcrumbs)
+                self.assertNotIn("Customer subscriptions", breadcrumbs)
+
+    def test_subscription_delete_modal_uses_viewset_name(self):
+        sub = self.subscribe(self.mine)
+        self.login()
+        url = reverse("subscription-delete", kwargs={"customer_pk": self.mine.pk, "pk": sub.pk})
+        response = self.client.get(url, headers={"X-CV-Modal": "true"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(label_text(response, "modal-title"), ["Subscription"])
+
+    def test_run_subscription_header_keeps_custom_label(self):
+        self.login()
+        response = self.client.get(reverse("subscriptions-run"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(label_text(response, "page-title"), ["Run subscriptions"])
+
     def test_run_view_flashes_count(self):
         self.subscribe(self.mine, days=-1)
         self.subscribe(self.other, days=0)

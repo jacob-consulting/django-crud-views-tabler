@@ -61,12 +61,12 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | theme CSS sizes `.cv-toggle-group > legend`, `.cv-formset-fieldset > legend` |
 | 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | labels on every row, `form-control-sm` inputs |
 | 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs open; context buttons instead of tabs |
-| 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | **DONE** upstream #341 (PR #343 merged); documented recipe and database-free `viewset.E269` startup check |
+| 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | **DONE** upstream #341 (PR #343); existing demo permission recipe documented and verified; startup check clean |
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | resolved #337: tables declare `Meta.sequence` (the `__init__` workaround is gone); `Meta.exclude = ("actions",)` drops the column |
 | 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | tracked in #314 (open, backlog); `render_number` and `get_success_url` reverse the nested URLs |
 | 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | **DONE** — [PR #342](https://github.com/jacob-consulting/django-crud-views/pull/342) (#338); adopted in both subscription ViewSets; list-header overrides removed |
-| 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | **DONE** upstream #339 (closed 2026-11-10); demo adoption pending |
+| 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | **DONE** upstream #339 (closed 2026-11-10); adopted: duplicate message names the new draft; nested create heading names the customer |
 | 30 | ext: [Datetimepicker assets on every page, need jQuery](#30-ext-the-datetimepicker-assets-load-on-every-page-and-need-jquery) | annoyance | project head include loads jQuery 3.7.1 |
 | 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | theme CSS maps `--bs-*` to Tabler's `--tblr-*` |
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
@@ -544,12 +544,12 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   permission pairs after URL registration completes. It uses concrete-model metadata; migrations and user grants
   remain application responsibilities. Guardian/Resource ViewSets are excluded, and request-time backstops remain.
 
-- **What happened:** "Run subscriptions" is not a CRUD action, and only the Owner may run it.
+- **Original finding:** "Run subscriptions" is not a CRUD action, and only the Owner may run it.
   `permission_required` looks `cv_permission` up in `ViewSet.permissions`, which is built from the model's
   `Permission` rows by stripping `_<model>` from each codename. The working recipe is a `Meta.permissions` entry
-  `run_customersubscription` on the model plus `cv_permission = "run"` on the view; nothing in the docs or the
-  `custom_form` example says so (the examples reuse `view`). A `cv_permission` naming a permission that does not exist
-  fails at request time with an assert, not at check time.
+  `run_customersubscription` on the model plus `cv_permission = "run"` on the view; at the time, nothing in the docs or
+  the `custom_form` example explained it (the examples reused `view`). An undeclared `cv_permission` failed at request
+  time with an assert rather than being reported by a startup check.
 - **Where:** `src/crud_views/lib/view/base.py:1062` (`permission_required`),
   `src/crud_views/lib/viewset/__init__.py:437` (`default_permissions`),
   `src/crud_views/lib/views/form.py:72` (`CustomFormNoObjectViewPermissionRequired`).
@@ -558,6 +558,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Upstream change:** complete; the recipe is at
   [A permission of its own](https://github.com/jacob-consulting/django-crud-views/blob/main/docs/reference/custom_form_view.md#a-permission-of-its-own),
   with executable documentation coverage and startup diagnostics for core model permission declarations.
+- **Adopted here (2026-11-10):** the subscription module now references the upstream recipe alongside its existing
+  model permission and view key. The demo passes `check --fail-level WARNING`; existing request-level tests verify
+  Owner access and denial for Sam and Kim. The startup check validates declarations rather than database permission
+  rows or grants, so those access tests remain necessary. No permission behavior changed.
 - **Severity:** annoyance.
 
 ### 25. Manage pages are open to every signed-in user while DEBUG is on
@@ -658,23 +662,25 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 ### 29. Snippet templates only see the object, not the view
 
 - **Status:** **DONE** upstream; [#339](https://github.com/jacob-consulting/django-crud-views/issues/339) closed on
-  2026-11-10 at 10:36 UTC. Demo adoption remains separate.
-- **What happened:** header, paragraph and message template codes render with a context that has `object` but not
-  `view`, so "Created {{ view.duplicate }} from {{ object }}" or "a draft for {{ view.cv_get_parent_object }}" render
+  2026-11-10 at 10:36 UTC. Adopted in the demo on 2026-11-10 (below).
+- **Original finding:** header, paragraph and message template codes rendered with a context that had `object` but not
+  `view`, so "Created {{ view.duplicate }} from {{ object }}" or "a draft for {{ view.cv_get_parent_object }}" rendered
   empty.
 - **Where:** `src/crud_views/lib/view/base.py:436` (`render_snippet` builds its context from the caller's dict at
   `:442`).
-- **What we did:** plainer texts.
+- **Previous workaround:** plainer texts omitted the new draft's identity and the nested create page's customer.
 - **Tracked upstream:** filed as [#339](https://github.com/jacob-consulting/django-crud-views/issues/339) on
   2026-11-09: `cv_get_meta()` adds `view` (the instance) and, on child ViewSets, a lazy `parent_object` (absent on
   top-level ViewSets, reusing the parent the ancestor guard resolved, so no extra query) for the snippets a view renders
   for its own page: header, paragraph, filter header, success and error message. Class-level labels (action, short
-  action, breadcrumb current-page label, buttons) keep their context on purpose: there `context.view` is the hosting
-  page, not the labelled view. The issue carries the decisions and acceptance criteria for the upstream phase.
+  action, breadcrumb current-page label, buttons) intentionally omit `view` and `parent_object`: the hosting page's
+  view is not the labelled view. The issue carries the decisions and acceptance criteria for the upstream phase.
 - **Upstream change:** #339 is closed; the requested scope is the snippet context keys described above.
-- **Demo adoption pending:** the duplicate action's message can become "Created {{ view.duplicate }} from {{ object }}" and the
-  nested order create view can say "New order for {{ parent_object }}" (`example/sales/views/order_actions.py`,
-  `orders.py`).
+- **Adopted here (2026-11-10):** the duplicate action's message is "Created {{ view.duplicate }} from {{ object }}"
+  and the nested order create heading is "New order for {{ parent_object }}" (`example/sales/views/order_actions.py`,
+  `orders.py`). Rendered-output tests cover both order identities in the success message, its display after redirect,
+  and the safely escaped customer heading on GET and invalid form redisplay. The top-level create heading stays
+  "New order"; action and breadcrumb labels are unchanged.
 - **Severity:** cosmetic.
 
 ## django-crud-views-extensions

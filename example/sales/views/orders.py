@@ -168,7 +168,7 @@ class OrderCreateView(
     form_class = OrderForm
     cv_formsets = ORDER_FORMSETS
     cv_success_key = "detail"
-    cv_header_template_code = _("New order")
+    cv_header_template_code = _("New order for {{ parent_object }}")
     cv_paragraph_template_code = _("A draft order: add its line items and the delivery")
     cv_message_template_code = _("Created {{ object }}")
 

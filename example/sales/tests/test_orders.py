@@ -1,21 +1,29 @@
 import re
 from datetime import timedelta
-from html import escape
+from html import escape, unescape
 from decimal import Decimal
 
 from crud_views_widget_typeahead.lookups import get_lookup
 from crud_views_workflow.models import WorkflowInfo
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.messages import get_messages
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from catalog.models import Beans, Equipment, Origin
 from sales.models import Address, Customer, Order, OrderLine, OrderState
 from sales.permissions import grant_customer
 
 from .test_customers import SalesTestCase
+
+
+def page_heading(response):
+    return re.search(
+        r'<h[1-6]\b[^>]*class="page-title"[^>]*>(.*?)</h[1-6]>', response.content.decode(), re.S
+    ).group(1)
 
 
 def history(order):
@@ -59,6 +67,32 @@ class OrderTestCase(SalesTestCase):
 
 
 class OrderFormTests(OrderTestCase):
+    def test_nested_create_heading_names_customer(self):
+        self.tier_b.name = 'Roast <script>alert(1)</script> & Co'
+        self.tier_b.save(update_fields=["name"])
+        self.login()
+        response = self.client.get(reverse("order-create", kwargs={"customer_pk": self.tier_b.pk}))
+        self.assertEqual(response.status_code, 200)
+        heading = page_heading(response)
+        self.assertEqual(" ".join(unescape(strip_tags(heading)).split()), "New order for Roast <script>alert(1)</script> & Co")
+        self.assertIn(escape(self.tier_b.name), heading)
+        self.assertNotIn("<script>", heading)
+
+    def test_invalid_nested_create_keeps_customer_heading(self):
+        self.tier_b.name = 'Roast <script>alert(1)</script> & Co'
+        self.tier_b.save(update_fields=["name"])
+        self.login()
+        response = self.client.post(
+            reverse("order-create", kwargs={"customer_pk": self.tier_b.pk}),
+            self.order_post(self.tier_b, [], requested_roast_date="not-a-date"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("requested_roast_date", response.context["form"].errors)
+        heading = page_heading(response)
+        self.assertEqual(" ".join(unescape(strip_tags(heading)).split()), "New order for Roast <script>alert(1)</script> & Co")
+        self.assertIn(escape(self.tier_b.name), heading)
+        self.assertNotIn("<script>", heading)
+
     def test_line_formset_creates_lines_and_totals(self):
         self.login()
         url = reverse("order-create", kwargs={"customer_pk": self.tier_b.pk})
@@ -245,6 +279,12 @@ class SeedHistoryTests(OrderTestCase):
 
 
 class OrderPageTests(OrderTestCase):
+    def test_top_level_create_keeps_generic_heading(self):
+        self.login()
+        response = self.client.get(reverse("orders-create"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(" ".join(unescape(strip_tags(page_heading(response))).split()), "New order")
+
     def test_top_level_list_and_create(self):
         self.login()
         response = self.client.get(reverse("orders-list"), {"per_page": 100})
@@ -327,7 +367,10 @@ class OrderPageTests(OrderTestCase):
         response = self.client.post(url, {"requested_roast_date": ""})
         copy = Order.objects.latest("number")
         self.assertNotEqual(copy.pk, source.pk)
-        self.assertRedirects(response, reverse("order-detail", kwargs=self.order_kwargs(copy)))
+        self.assertEqual([str(message) for message in get_messages(response.wsgi_request)], [f"Created {copy} from {source}"])
+        destination = reverse("order-detail", kwargs=self.order_kwargs(copy))
+        self.assertRedirects(response, destination, fetch_redirect_response=False)
+        self.assertContains(self.client.get(destination), escape(f"Created {copy} from {source}"))
         self.assertEqual(copy.state, OrderState.DRAFT)
         self.assertEqual(copy.customer, source.customer)
         pick = lambda o: sorted(o.lines.values_list("product_id", "quantity", "grind", "bag_size"))  # noqa: E731

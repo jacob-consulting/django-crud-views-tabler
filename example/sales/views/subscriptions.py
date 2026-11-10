@@ -4,6 +4,10 @@ The nested views are gated on the URL's customer by upstream's ancestor guard, a
 list filters by the same Guardian grants. Running the subscriptions creates orders for *every* customer, so it has its
 own model permission (``run_customersubscription``, held by the Owner only); others see the button disabled and get
 403 on the URL.
+
+The custom permission follows django-crud-views' documented recipe
+(``docs/reference/custom_form_view.md#a-permission-of-its-own``): ``CustomerSubscription.Meta.permissions``
+declares ``run_customersubscription`` and ``RunSubscriptionsView.cv_permission = "run"`` selects its ViewSet key.
 """
 
 import django_filters

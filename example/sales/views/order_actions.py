@@ -63,7 +63,7 @@ class OrderDuplicateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, CustomF
     cv_action_short_label_template_code = _("Duplicate")
     cv_header_template_code = _("Duplicate {{ object }}")
     cv_paragraph_template_code = _("Start a new draft with the same line items")
-    cv_message_template_code = _("Created a new draft from {{ object }}")
+    cv_message_template_code = _("Created {{ view.duplicate }} from {{ object }}")
     cv_context_actions = ORDER_CONTEXT_ACTIONS
     cv_context_actions_inline = ["update", "packing_slip"]
 

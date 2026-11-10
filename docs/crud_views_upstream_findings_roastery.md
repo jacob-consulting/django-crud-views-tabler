@@ -12,7 +12,8 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 [#325](https://github.com/jacob-consulting/django-crud-views/issues/325), findings 10–11 in
 [#326](https://github.com/jacob-consulting/django-crud-views/issues/326), and findings 12–14 and 16 in
 [#327](https://github.com/jacob-consulting/django-crud-views/issues/327), findings 15 and 17 in
-[#328](https://github.com/jacob-consulting/django-crud-views/issues/328), finding 18 in [#329](https://github.com/jacob-consulting/django-crud-views/issues/329) (open), the first half of finding 23 in
+[#328](https://github.com/jacob-consulting/django-crud-views/issues/328), finding 18 in [#329](https://github.com/jacob-consulting/django-crud-views/issues/329)
+(closed; adopted from [PR #345](https://github.com/jacob-consulting/django-crud-views/pull/345)), the first half of finding 23 in
 [PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (merged, no issue), finding 26 in
 [#337](https://github.com/jacob-consulting/django-crud-views/issues/337) (closed), finding 27 in
 [#314](https://github.com/jacob-consulting/django-crud-views/issues/314) (open, backlog; supersedes #311), finding 28 in
@@ -55,7 +56,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 15 | [Accordion pack opens every panel closed](#15-the-accordion-detail-pack-opens-every-panel-closed) | annoyance | resolved #328: the green lot detail uses the accordion, first group open |
 | 16 | [`ObjectDetailMixin` + `ObjectDetailViewPermissionRequired` is an MRO error](#16-objectdetailmixin-plus-objectdetailviewpermissionrequired-is-an-mro-error) | cosmetic | documented upstream #327; permission-required class alone |
 | 17 | [`tabs.js` reads `globalThis.bootstrap`](#17-tabsjs-looks-up-globalthisbootstrap-directly) | annoyance | resolved #328: tabs init through `cv.adapters.tab`; no theme code needed |
-| 18 | [Header icon is drawn beside a custom header template](#18-the-header-icon-is-drawn-beside-a-custom-header-template) | cosmetic | tracked in #329 (open); customer detail overrides `cv_get_header_icon()` to return None |
+| 18 | [Header icon is drawn beside a custom header template](#18-the-header-icon-is-drawn-beside-a-custom-header-template) | cosmetic | resolved in #329 / PR #345; customer detail uses `cv_icon_header = Icon.NONE` |
 | 19 | [Conditional groups toggle only on a checkbox](#19-conditional-groups-only-toggle-on-a-boolean-checkbox) | annoyance | transient `is_wholesale` checkbox drives `Customer.kind` |
 | 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | `clean()`/`save()` clear the fields; `sales.js` disables them per row |
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | theme CSS sizes `.cv-toggle-group > legend`, `.cv-formset-fieldset > legend` |
@@ -432,19 +433,22 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 18. The header icon is drawn beside a custom header template
 
-- **Upstream tracking:** [django-crud-views #329](https://github.com/jacob-consulting/django-crud-views/issues/329) — explicit header-icon suppression with
-  `Icon` constants; agreed, not yet implemented (open).
-
-- **What happened:** `cv_header_template` replaces only the heading text; the viewset's header icon is still drawn
-  before it, so the customer page showed the shop icon and then the customer's avatar. `cv_icon_header = ""` does not
-  help (`view_icon or viewset.icon_header` falls back); overriding `cv_get_header_icon()` to return `None` works,
-  since `render_icon(None)` renders nothing, but that is not documented.
-- **Where:** `src/crud_views/lib/view/base.py:467` (`cv_get_header_icon`),
-  `src/crud_views/templatetags/crud_views.py:331` (`cv_header_icon`); the theme renders it in the `page_title` block
-  of `src/crud_views_tabler/templates/crud_views_tabler/page.html`.
-- **What we did:** `CustomerDetailView.cv_get_header_icon()` returns `None` (`example/sales/views/customers.py`).
-- **Suggested upstream change:** document that, or let `cv_icon_header = None` on a view mean "no icon".
-- **Severity:** cosmetic.
+- **Upstream tracking:** [django-crud-views #329](https://github.com/jacob-consulting/django-crud-views/issues/329) —
+  resolved by [PR #345](https://github.com/jacob-consulting/django-crud-views/pull/345), squash-merged as
+  `fe21953e` on 2026-11-10; adopted here.
+- **What happened:** `cv_header_template` replaces only the heading text; the ViewSet's header icon was still drawn
+  before it, so the customer page showed the shop icon and then the customer's avatar. Previously an empty string
+  fell back to the ViewSet icon, requiring a `cv_get_header_icon()` override returning `None`.
+- **Where:** upstream `CrudView.cv_get_header_icon()` in `src/crud_views/lib/view/base.py`; the theme renders it in
+  the `page_title` block of `src/crud_views_tabler/templates/crud_views_tabler/page.html`.
+- **What we did:** import `Icon` from `crud_views.lib.icons` and set `CustomerDetailView.cv_icon_header = Icon.NONE`
+  in `example/sales/views/customers.py`; remove the getter workaround. The existing customer-header regression
+  verifies that the avatar remains and the inherited SVG is absent. No theme template override is needed.
+- **Upstream contract:** `Icon.NONE` (empty string) suppresses; omitted values, `None` and `Icon.VIEWSET_DEFAULT`
+  inherit. Custom header content and dynamic getter overrides remain independent. Other empty-string declarations
+  that need inheritance must migrate to `None` or `Icon.VIEWSET_DEFAULT`.
+- **Validation:** all 26 customer tests pass with four workers; `manage.py check --fail-level WARNING` is clean.
+- **Severity:** cosmetic (resolved).
 
 ## Conditional groups and formsets
 

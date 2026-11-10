@@ -9,6 +9,7 @@ import django_tables2 as tables
 from crispy_forms.layout import Layout, Row
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
 from crud_views.lib.crispy import Column3, Column4, CrispyDeleteForm, CrispyViewMixin
+from crud_views.lib.icons import Icon
 from crud_views.lib.table import LinkDetailColumn, Table
 from crud_views.lib.view import ChildContextButton
 from crud_views.lib.views import ListViewTableFilterMixin, ListViewTableMixin, MessageMixin
@@ -149,6 +150,7 @@ class CustomerDetailView(GlobalPermsMixin, BreadcrumbMixin, ObjectDetailMixin, G
     cv_viewset = cv_customer
     cv_object_detail_layout = "split-card"
     cv_header_template = "sales/snippets/customer_header.html"
+    cv_icon_header = Icon.NONE  # the header template draws the customer's avatar
     cv_paragraph_template = "sales/snippets/customer_paragraph.html"
     cv_context_actions = ["home", "update", "orders", "subscriptions", "addresses", "delete"]
     cv_context_actions_inline = ["update", "orders", "subscriptions", "addresses"]
@@ -158,9 +160,6 @@ class CustomerDetailView(GlobalPermsMixin, BreadcrumbMixin, ObjectDetailMixin, G
     def property_display(self):
         # blank optional fields keep their row and show a dash
         return WHOLESALE_DISPLAY if self.object.is_wholesale else CONSUMER_DISPLAY
-
-    def cv_get_header_icon(self):
-        return None  # the header template draws the customer's avatar in its place
 
 
 # --------------------------------------------------------------------------- create / update / delete

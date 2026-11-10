@@ -61,12 +61,12 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | theme CSS sizes `.cv-toggle-group > legend`, `.cv-formset-fieldset > legend` |
 | 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | labels on every row, `form-control-sm` inputs |
 | 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs open; context buttons instead of tabs |
-| 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | done upstream #341 (PR #343 merged); documented recipe and database-free `viewset.E269` startup check |
+| 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | **DONE** upstream #341 (PR #343 merged); documented recipe and database-free `viewset.E269` startup check |
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | resolved #337: tables declare `Meta.sequence` (the `__init__` workaround is gone); `Meta.exclude = ("actions",)` drops the column |
 | 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | tracked in #314 (open, backlog); `render_number` and `get_success_url` reverse the nested URLs |
-| 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | resolved #338 (PR #342): both subscription ViewSets declare their names; list-header overrides removed |
-| 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | tracked in #339 (open); plainer message texts |
+| 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | **DONE** — [PR #342](https://github.com/jacob-consulting/django-crud-views/pull/342) (#338); adopted in both subscription ViewSets; list-header overrides removed |
+| 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | **DONE** (2026-11-10, user confirmed); upstream #339 remains open |
 | 30 | ext: [Datetimepicker assets on every page, need jQuery](#30-ext-the-datetimepicker-assets-load-on-every-page-and-need-jquery) | annoyance | project head include loads jQuery 3.7.1 |
 | 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | theme CSS maps `--bs-*` to Tabler's `--tblr-*` |
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
@@ -537,7 +537,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 24. A no-object custom form needs an undocumented recipe for its own permission
 
-- **Done upstream:** [#341](https://github.com/jacob-consulting/django-crud-views/issues/341) closed on
+- **DONE** upstream: [#341](https://github.com/jacob-consulting/django-crud-views/issues/341) closed on
   2026-11-10 after [PR #343](https://github.com/jacob-consulting/django-crud-views/pull/343) was squash-merged
   (`7466b3d5`, Phase 06.22). The custom form reference now documents and tests the `Meta.permissions` plus
   `cv_permission` recipe. Database-free `viewset.E269` checks undeclared core view keys and effective ancestor
@@ -639,7 +639,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   view (`cv_header_template_code`), the breadcrumb and create/update headers keep the model name.
 - **Where:** `src/crud_views/lib/viewset/__init__.py:478-487` (`get_meta`: `verbose_name` from the model's `_meta`).
 - **Previous workaround:** `cv_header_template_code = "Subscriptions"` on the two lists; the breadcrumb kept the model name.
-- **Done upstream:** [#338](https://github.com/jacob-consulting/django-crud-views/issues/338) closed on
+- **DONE** upstream: [#338](https://github.com/jacob-consulting/django-crud-views/issues/338) closed on
   2026-11-10 after [PR #342](https://github.com/jacob-consulting/django-crud-views/pull/342) was squash-merged
   (`59f85769`, Phase 06.20). Implemented `ViewSet(verbose_name=..., verbose_name_plural=...)` as two optional
   `LazyStr` fields that `get_meta()`
@@ -657,6 +657,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 29. Snippet templates only see the object, not the view
 
+- **Status:** **DONE**, marked at the user's request on 2026-11-10. Upstream issue #339 remains open; this tracker update does not close it.
 - **What happened:** header, paragraph and message template codes render with a context that has `object` but not
   `view`, so "Created {{ view.duplicate }} from {{ object }}" or "a draft for {{ view.cv_get_parent_object }}" render
   empty.

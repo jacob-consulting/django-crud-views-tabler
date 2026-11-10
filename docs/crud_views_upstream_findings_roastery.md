@@ -61,7 +61,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | theme CSS sizes `.cv-toggle-group > legend`, `.cv-formset-fieldset > legend` |
 | 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | labels on every row, `form-control-sm` inputs |
 | 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs open; context buttons instead of tabs |
-| 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | `Meta.permissions` entry + `cv_permission = "run"` |
+| 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | done upstream #341 (PR #343 merged); documented recipe and database-free `viewset.E269` startup check |
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | resolved #337: tables declare `Meta.sequence` (the `__init__` workaround is gone); `Meta.exclude = ("actions",)` drops the column |
 | 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | tracked in #314 (open, backlog); `render_number` and `get_success_url` reverse the nested URLs |
@@ -537,10 +537,12 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 24. A no-object custom form needs an undocumented recipe for its own permission
 
-- **Checked against #336, not addressed:** at `fe9d5d2e` `docs/reference/custom_form_view.md` still has no
-  `Meta.permissions` recipe for a custom form's own permission, and there is no system check that `cv_permission`
-  resolves. The new `viewset.E266`/`E267`/`E268` checks cover ancestry only; the only fail-closed change for a
-  missing permission key (plan 13) is for Guardian views.
+- **Done upstream:** [#341](https://github.com/jacob-consulting/django-crud-views/issues/341) closed on
+  2026-11-10 after [PR #343](https://github.com/jacob-consulting/django-crud-views/pull/343) was squash-merged
+  (`7466b3d5`, Phase 06.22). The custom form reference now documents and tests the `Meta.permissions` plus
+  `cv_permission` recipe. Database-free `viewset.E269` checks undeclared core view keys and effective ancestor
+  permission pairs after URL registration completes. It uses concrete-model metadata; migrations and user grants
+  remain application responsibilities. Guardian/Resource ViewSets are excluded, and request-time backstops remain.
 
 - **What happened:** "Run subscriptions" is not a CRUD action, and only the Owner may run it.
   `permission_required` looks `cv_permission` up in `ViewSet.permissions`, which is built from the model's
@@ -553,8 +555,9 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   `src/crud_views/lib/views/form.py:72` (`CustomFormNoObjectViewPermissionRequired`).
 - **What we did:** the model permission above; the button shows disabled (`cv_inaccessible_actions = "disable"`) and
   the URL answers 403 for everyone else.
-- **Suggested upstream change:** document the recipe next to `CustomFormNoObjectViewPermissionRequired`, and a system
-  check that `cv_permission` resolves to a permission of the viewset's model.
+- **Upstream change:** complete; the recipe is at
+  [A permission of its own](https://github.com/jacob-consulting/django-crud-views/blob/main/docs/reference/custom_form_view.md#a-permission-of-its-own),
+  with executable documentation coverage and startup diagnostics for core model permission declarations.
 - **Severity:** annoyance.
 
 ### 25. Manage pages are open to every signed-in user while DEBUG is on

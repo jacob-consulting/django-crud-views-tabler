@@ -58,6 +58,12 @@
   --bs-border-radius: var(--tblr-border-radius);
 }
 
+/* Compact headings and fields share a 1rem gutter; Tabler's .row reads its own variable. */
+.cv-formset-compact-headings,
+.cv-formset-compact-fields {
+  --tblr-gutter-x: 1rem;
+}
+
 /* django-crud-views-extensions' typeahead skins read Bootstrap's custom properties (--bs-body-bg, ...). Tabler names
    them --tblr-*, so the select popup had no background or border and the form buttons showed through it. Feed the
    components Tabler's values; plain CSS, the theme does not depend on the extensions package. */

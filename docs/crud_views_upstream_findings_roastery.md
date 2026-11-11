@@ -516,7 +516,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Adopted here (2026-11-11):** `CUPPING_FORMSETS["scores"]` uses `CompactLayout` with the same 3/1×7/2 grid
   spans. The classic row helper and repeated-label setting are removed. Upstream renders one desktop heading strip
   plus associated row labels that show on mobile. The Tabler theme maps the compact fieldset's Bootstrap surface
-  variables to Tabler tokens so its row cards follow dark mode. Create/update, invalid score and persistence tests
+  variables to Tabler tokens so its row cards follow dark mode, and gives heading/field grids the same 1rem Tabler
+  gutter that upstream requests via Bootstrap's variable. Create/update, invalid score and persistence tests
   pass; source inspection confirms upstream's 768 px heading/label switch. A browser screenshot check was not run.
 - **Related follow-up:** the order-line formset cannot adopt compact mode while its `ProductSelect` subclass supplies
   per-option `data-beans` attributes for the grind/bag-size script; see [finding 34](#34-compact-formsets-reject-custom-select-subclasses).

@@ -20,7 +20,8 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 [#314](https://github.com/jacob-consulting/django-crud-views/issues/314) (open, backlog; supersedes #311), finding 28 in
 [#338](https://github.com/jacob-consulting/django-crud-views/issues/338) (closed; implemented in PR #342) and finding 29 in
 [#339](https://github.com/jacob-consulting/django-crud-views/issues/339) (open). The remaining findings are candidates to
-triage into issues for django-crud-views (and, where marked, django-crud-views-extensions).
+triage into issues for django-crud-views (and, where marked, django-crud-views-extensions). Finding 34 is tracked in
+[#349](https://github.com/jacob-consulting/django-crud-views/issues/349) (open).
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
 @ `cf2bfc0f` ("Delete confirm checkbox spans the full row (#308) (#310)"; the demo was built from `b73337ce`, #309,
@@ -73,6 +74,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | theme CSS maps `--bs-*` to Tabler's `--tblr-*` |
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
 | 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | nothing (all transitions are primary buttons without icon) |
+| 34 | [Compact formsets reject custom `Select` subclasses](#34-compact-formsets-reject-custom-select-subclasses) | cosmetic | order lines keep their classic formset; upstream #349 asks for a bounded compatibility path |
 
 ---
 
@@ -511,6 +513,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   `src/crud_views/lib/formsets/inline_formset.py:56` (`get_helper`, one helper for every form).
 - **What we did:** `form_show_labels=True`, and `CuppingScoreForm` gives the inputs `form-control-sm`.
 - **Suggested upstream change:** labels on the first row only (or a header row above the formset) as an option.
+- **Related follow-up:** the order-line formset cannot adopt compact mode while its `ProductSelect` subclass supplies
+  per-option `data-beans` attributes for the grind/bag-size script; see [finding 34](#34-compact-formsets-reject-custom-select-subclasses).
 - **Severity:** cosmetic.
 
 ## Permissions (Guardian, custom forms, manage)
@@ -749,6 +753,25 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   buttons, and the workflow page shows uniform primary buttons.
 - **Suggested upstream change:** honour `custom["variant"]` and `custom["icon"]` in the widget, or offer a
   per-transition class key (`workflow:transition-<name>`).
+- **Severity:** cosmetic.
+
+### 34. Compact formsets reject custom `Select` subclasses
+
+- **Tracked upstream:** [issue #349](https://github.com/jacob-consulting/django-crud-views/issues/349) (open;
+  follow-up to compact formsets #347 / PR #348). The request is for a narrow compatibility rule, not blanket support
+  for arbitrary widget subclasses.
+- **What happened:** order lines use `ProductSelect(forms.Select)` to add `data-beans="1"` to coffee options. The
+  per-row `sales.js` handler reads that attribute to enable grind and bag-size fields only for coffee. Compact mode
+  rejects the `product` field before crispy rendering because its widget class is a subclass, even though this
+  subclass calls `super().create_option()` and keeps the stock select and option templates.
+- **Where:** `src/crud_views/lib/formsets/compact.py` (`_compact_schema` requires exact stock widget classes);
+  `example/sales/forms.py` (`ProductSelect` and `ORDER_FORMSETS`), `example/sales/static/sales/sales.js`.
+- **What we do:** keep the order-line formset classic, with its working product option metadata and row behavior.
+  Cupping scores can adopt compact mode independently because their widgets are supported stock classes (#22).
+- **Upstream ask:** allow an explicitly compatible single-select subclass to retain ordinary compact headings,
+  associated labels, mobile cards, errors, row controls and option attributes. Keep custom templates, multiple
+  selection and changed markup outside the supported boundary unless independently validated. The issue leaves
+  the precise opt-in contract to upstream.
 - **Severity:** cosmetic.
 
 ---

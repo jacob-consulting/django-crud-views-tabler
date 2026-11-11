@@ -13,7 +13,8 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 [#326](https://github.com/jacob-consulting/django-crud-views/issues/326), and findings 12–14 and 16 in
 [#327](https://github.com/jacob-consulting/django-crud-views/issues/327), findings 15 and 17 in
 [#328](https://github.com/jacob-consulting/django-crud-views/issues/328), finding 18 in [#329](https://github.com/jacob-consulting/django-crud-views/issues/329)
-(closed; adopted from [PR #345](https://github.com/jacob-consulting/django-crud-views/pull/345)), the first half of finding 23 in
+(closed; adopted from [PR #345](https://github.com/jacob-consulting/django-crud-views/pull/345)), finding 22 in [#347](https://github.com/jacob-consulting/django-crud-views/issues/347)
+(closed; implemented in [PR #348](https://github.com/jacob-consulting/django-crud-views/pull/348)), the first half of finding 23 in
 [PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (merged, no issue), finding 26 in
 [#337](https://github.com/jacob-consulting/django-crud-views/issues/337) (closed), finding 27 in
 [#314](https://github.com/jacob-consulting/django-crud-views/issues/314) (open, backlog; supersedes #311), finding 28 in
@@ -60,7 +61,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 19 | [Conditional groups toggle only on a checkbox](#19-conditional-groups-only-toggle-on-a-boolean-checkbox) | annoyance | transient `is_wholesale` checkbox drives `Customer.kind` |
 | 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | `clean()`/`save()` clear the fields; `sales.js` disables them per row |
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | theme CSS sizes `.cv-toggle-group > legend`, `.cv-formset-fieldset > legend` |
-| 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | labels on every row, `form-control-sm` inputs |
+| 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | **DONE upstream** #347 / PR #348: opt-in compact layouts; Tabler demo adoption remains follow-up |
 | 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs open; context buttons instead of tabs |
 | 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | **DONE** upstream #341 (PR #343); existing demo permission recipe documented and verified; startup check clean |
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
@@ -494,6 +495,14 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Severity:** cosmetic.
 
 ### 22. A compact, table-like formset repeats its labels on every row
+
+- **Status: DONE upstream** — [#347](https://github.com/jacob-consulting/django-crud-views/issues/347)
+  closed by [PR #348](https://github.com/jacob-consulting/django-crud-views/pull/348), squash merge
+  `99fd01e5` on 2026-11-11 (phase 06.24). Public `CompactLayout` / `CompactColumn` declarations opt each
+  `FormSet` into shared desktop headings and labelled mobile cards, with independent nested layouts and
+  classic/compact mixtures. The formset reference documents adoption and supported widget boundaries;
+  automated checks and human grouping/focus UAT passed. **Downstream adoption remains follow-up:** the
+  Tabler theme and cupping-score declarations have not been changed by this tracker update.
 
 - **What happened:** the cupping scores are one row per taster with seven narrow number columns.
   `FormSet(form_show_labels=...)` is all or nothing, so either every row carries its labels (what the demo does,

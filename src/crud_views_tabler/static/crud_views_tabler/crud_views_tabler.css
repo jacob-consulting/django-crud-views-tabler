@@ -51,6 +51,13 @@
   font-weight: var(--tblr-font-weight-bold, 600);
 }
 
+/* Upstream compact rows use Bootstrap surface variables. Supply Tabler's values so their cards follow dark mode. */
+.cv-formset-compact {
+  --bs-body-bg: var(--tblr-bg-surface);
+  --bs-border-color: var(--tblr-border-color);
+  --bs-border-radius: var(--tblr-border-radius);
+}
+
 /* django-crud-views-extensions' typeahead skins read Bootstrap's custom properties (--bs-body-bg, ...). Tabler names
    them --tblr-*, so the select popup had no background or border and the form buttons showed through it. Feed the
    components Tabler's values; plain CSS, the theme does not depend on the extensions package. */

@@ -62,7 +62,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 19 | [Conditional groups toggle only on a checkbox](#19-conditional-groups-only-toggle-on-a-boolean-checkbox) | annoyance | transient `is_wholesale` checkbox drives `Customer.kind` |
 | 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | `clean()`/`save()` clear the fields; `sales.js` disables them per row |
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | theme CSS sizes `.cv-toggle-group > legend`, `.cv-formset-fieldset > legend` |
-| 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | **DONE upstream** #347 / PR #348: opt-in compact layouts; Tabler demo adoption remains follow-up |
+| 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | **DONE** #347 / PR #348; cupping scores use shared headings and labelled mobile rows |
 | 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs open; context buttons instead of tabs |
 | 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | **DONE** upstream #341 (PR #343); existing demo permission recipe documented and verified; startup check clean |
 | 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
@@ -503,16 +503,21 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   `99fd01e5` on 2026-11-11 (phase 06.24). Public `CompactLayout` / `CompactColumn` declarations opt each
   `FormSet` into shared desktop headings and labelled mobile cards, with independent nested layouts and
   classic/compact mixtures. The formset reference documents adoption and supported widget boundaries;
-  automated checks and human grouping/focus UAT passed. **Downstream adoption remains follow-up:** the
-  Tabler theme and cupping-score declarations have not been changed by this tracker update.
+  automated checks and human grouping/focus UAT passed.
 
 - **What happened:** the cupping scores are one row per taster with seven narrow number columns.
   `FormSet(form_show_labels=...)` is all or nothing, so either every row carries its labels (what the demo does,
   about twice the height of a table) or none does and the columns have no header.
 - **Where:** `src/crud_views/lib/formsets/formsets.py:64` (`form_show_labels`),
   `src/crud_views/lib/formsets/inline_formset.py:56` (`get_helper`, one helper for every form).
-- **What we did:** `form_show_labels=True`, and `CuppingScoreForm` gives the inputs `form-control-sm`.
+- **Previous workaround:** `form_show_labels=True` repeated labels; `CuppingScoreForm` gave the inputs
+  `form-control-sm`, which remains useful with compact rows.
 - **Suggested upstream change:** labels on the first row only (or a header row above the formset) as an option.
+- **Adopted here (2026-11-11):** `CUPPING_FORMSETS["scores"]` uses `CompactLayout` with the same 3/1×7/2 grid
+  spans. The classic row helper and repeated-label setting are removed. Upstream renders one desktop heading strip
+  plus associated row labels that show on mobile. The Tabler theme maps the compact fieldset's Bootstrap surface
+  variables to Tabler tokens so its row cards follow dark mode. Create/update, invalid score and persistence tests
+  pass; source inspection confirms upstream's 768 px heading/label switch. A browser screenshot check was not run.
 - **Related follow-up:** the order-line formset cannot adopt compact mode while its `ProductSelect` subclass supplies
   per-option `data-beans` attributes for the grind/bag-size script; see [finding 34](#34-compact-formsets-reject-custom-select-subclasses).
 - **Severity:** cosmetic.
@@ -800,7 +805,6 @@ Features from the spec's feature map that were dropped or reduced, with the reas
 
 Left as they are, each more than a quick fix or outside this repo:
 
-- The cupping score formset repeats its labels on every row (#22).
 - The workflow page has no card frame, and the datetimepicker keeps its blue look (#5, #32).
 - *django_tabler gap, not crud_views:* Tabler's primary-colour themes (`data-bs-theme-primary`,
   `?theme-primary=green`) need Tabler's separate `tabler-themes.min.css`, which `django_tabler` does not load. With such a choice stored the brand's sienna steps

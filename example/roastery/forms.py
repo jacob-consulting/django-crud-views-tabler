@@ -1,8 +1,8 @@
 """Forms for the roastery: lots, cupping sessions with their score rows, roast batches."""
 
 from crispy_forms.layout import Div, Row
-from crud_views.lib.crispy import Column1, Column2, Column3, Column4, Column6, Column12, CrispyModelForm
-from crud_views.lib.formsets import FormSet, FormSets, Formsets, InlineFormSet
+from crud_views.lib.crispy import Column2, Column3, Column4, Column6, Column12, CrispyModelForm
+from crud_views.lib.formsets import CompactColumn, CompactLayout, FormSet, FormSets, Formsets, InlineFormSet
 from crud_views_widget_datetimepicker.widgets import DatePickerInput
 from django import forms
 from django.contrib.auth import get_user_model
@@ -73,15 +73,10 @@ class CuppingScoreForm(CrispyModelForm):
         )
 
 
-class CuppingScoreInlineFormSet(InlineFormSet):
-    def get_helper_layout_fields(self):
-        return [Row(Column3("taster"), *(Column1(name) for name in CuppingScore.ATTRIBUTES), self.form_control_col2)]
-
-
 CuppingScoreFormSet = inlineformset_factory(
     CuppingSession,
     CuppingScore,
-    formset=CuppingScoreInlineFormSet,
+    formset=InlineFormSet,
     form=CuppingScoreForm,
     fields=["taster", *CuppingScore.ATTRIBUTES],
     extra=2,
@@ -96,7 +91,11 @@ CUPPING_FORMSETS = FormSets(
             klass=CuppingScoreFormSet,
             fields=["taster", *CuppingScore.ATTRIBUTES],
             pk_field="id",
-            form_show_labels=True,
+            compact_layout=CompactLayout(
+                columns=[CompactColumn("taster", span=3),
+                         *(CompactColumn(name, span=1) for name in CuppingScore.ATTRIBUTES)],
+                controls_span=2,
+            ),
         )
     }
 )

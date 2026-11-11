@@ -66,6 +66,33 @@ class SeedTests(RoasteryTestCase):
 
 
 class CuppingTests(RoasteryTestCase):
+    def test_compact_score_rows_have_shared_headings_and_associated_labels(self):
+        self.login()
+        create_url = reverse("cupping-create", kwargs={"lot_pk": self.lot.pk})
+        create_html = self.client.get(create_url).content.decode()
+        self.assertEqual(create_html.count('class="row cv-formset-compact-headings"'), 1)
+        self.assertEqual(create_html.count("cv-formset-row-compact"), 2)
+        for label in ("Taster", *[name.title() for name in SCORE_FIELDS]):
+            self.assertIn(label, create_html)
+        for field in ("taster", "aroma"):
+            self.assertRegex(create_html, rf'<label[^>]+for="id_scores-None-0-0-{field}"')
+
+        session = CuppingSession.objects.create(lot=self.lot, held_on=date(2026, 11, 4))
+        CuppingScore.objects.create(
+            session=session, taster=self.users["alex"], **{field: Decimal("8") for field in SCORE_FIELDS}
+        )
+        update_url = reverse("cupping-update", kwargs={"lot_pk": self.lot.pk, "pk": session.pk})
+        update_html = self.client.get(update_url).content.decode()
+        self.assertEqual(update_html.count('class="row cv-formset-compact-headings"'), 1)
+        self.assertIn("cv-formset-row-compact", update_html)
+
+        invalid = {**self.score_row(self.users["kim"]), "aroma": "10.5"}
+        response = self.client.post(create_url, self.session_post([invalid]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "cv-formset-compact-headings")
+        self.assertContains(response, 'value="10.5"')
+        self.assertContains(response, "less than or equal to 10")
+
     def test_cupping_scores_formset(self):
         self.login()
         url = reverse("cupping-create", kwargs={"lot_pk": self.lot.pk})

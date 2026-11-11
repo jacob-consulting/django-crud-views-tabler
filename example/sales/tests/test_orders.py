@@ -67,6 +67,33 @@ class OrderTestCase(SalesTestCase):
 
 
 class OrderFormTests(OrderTestCase):
+    def test_order_lines_use_compact_layout_with_product_metadata(self):
+        self.login()
+        order = self.make_order()
+        urls = (
+            reverse("order-create", kwargs={"customer_pk": self.tier_b.pk}),
+            reverse("order-update", kwargs=self.order_kwargs(order)),
+        )
+        for url in urls:
+            with self.subTest(url=url):
+                html = self.client.get(url).content.decode()
+                self.assertEqual(html.count('class="row cv-formset-compact-headings"'), 1)
+                self.assertIn("cv-formset-row-compact", html)
+                for field in ("product", "quantity"):
+                    self.assertRegex(html, rf'<label[^>]*for="id_lines-[^"]+-{field}"')
+                self.assertRegex(html, rf'<option[^>]*value="{self.huila.pk}"[^>]*data-beans="1"')
+
+    def test_invalid_order_line_keeps_compact_row_and_error(self):
+        self.login()
+        url = reverse("order-create", kwargs={"customer_pk": self.tier_b.pk})
+        rows = [{"product": self.huila.pk, "quantity": "0"}]
+        response = self.client.post(url, self.order_post(self.tier_b, rows))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("cv-formset-row-compact", html)
+        self.assertRegex(html, r'name="lines-None-0-0-quantity" value="0"[^>]*aria-invalid="true"')
+        self.assertIn("Ensure this value is greater than or equal to 1.", html)
+
     def test_nested_create_heading_names_customer(self):
         self.tier_b.name = 'Roast <script>alert(1)</script> & Co'
         self.tier_b.save(update_fields=["name"])

@@ -8,7 +8,9 @@ choice, so the form carries a transient ``is_wholesale`` checkbox that decides t
 from crispy_forms.layout import HTML, Div, Row
 from crud_views.lib.conditional import ConditionalGroup, ConditionalGroupModelForm, ToggleGroup, UIFieldToggle
 from crud_views.lib.crispy import Column2, Column3, Column4, Column6, Column12, CrispyForm, CrispyModelForm
-from crud_views.lib.formsets import FormSet, FormSets, Formsets, InlineFormSet
+from crud_views.lib.formsets import (
+    CompactColumn, CompactLayout, CompactWidgetCompatible, FormSet, FormSets, Formsets, InlineFormSet,
+)
 from crud_views_widget_datetimepicker.widgets import DatePickerInput
 from crud_views_widget_typeahead.fields import TypeaheadField
 from crud_views_widget_typeahead.widgets import TypeaheadSelect
@@ -92,7 +94,7 @@ class AddressForm(CrispyModelForm):
 # --------------------------------------------------------------------------- orders
 
 
-class ProductSelect(forms.Select):
+class ProductSelect(CompactWidgetCompatible, forms.Select):
     """Marks each coffee option with ``data-beans``, so ``sales.js`` can switch grind and bag size off for the rest."""
 
     def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
@@ -139,12 +141,6 @@ class OrderLineInlineFormSet(InlineFormSet):
         if not kept:
             raise forms.ValidationError("A confirmed order needs at least one line item.")
 
-    def get_helper_layout_fields(self):
-        return [
-            Row(Column4("product"), Column2("grind"), Column2("bag_size"), Column2("quantity"), self.form_control_col2)
-        ]
-
-
 OrderLineFormSet = inlineformset_factory(
     Order,
     OrderLine,
@@ -163,7 +159,15 @@ ORDER_FORMSETS = FormSets(
             klass=OrderLineFormSet,
             fields=["product", "grind", "bag_size", "quantity"],
             pk_field="id",
-            form_show_labels=True,
+            compact_layout=CompactLayout(
+                columns=[
+                    CompactColumn("product", span=4),
+                    CompactColumn("grind", span=2),
+                    CompactColumn("bag_size", span=2),
+                    CompactColumn("quantity", span=2),
+                ],
+                controls_span=2,
+            ),
         )
     }
 )

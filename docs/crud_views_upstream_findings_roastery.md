@@ -21,7 +21,8 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 [#338](https://github.com/jacob-consulting/django-crud-views/issues/338) (closed; implemented in PR #342) and finding 29 in
 [#339](https://github.com/jacob-consulting/django-crud-views/issues/339) (open). The remaining findings are candidates to
 triage into issues for django-crud-views (and, where marked, django-crud-views-extensions). Finding 34 is tracked in
-[#349](https://github.com/jacob-consulting/django-crud-views/issues/349) (closed by PR #350).
+[#349](https://github.com/jacob-consulting/django-crud-views/issues/349) (closed by PR #350). Finding 21 is tracked in
+[#346](https://github.com/jacob-consulting/django-crud-views/issues/346) (closed by PR #352; adopted here).
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
 @ `cf2bfc0f` ("Delete confirm checkbox spans the full row (#308) (#310)"; the demo was built from `b73337ce`, #309,
@@ -61,7 +62,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 18 | [Header icon is drawn beside a custom header template](#18-the-header-icon-is-drawn-beside-a-custom-header-template) | cosmetic | resolved in #329 / PR #345; customer detail uses `cv_icon_header = Icon.NONE` |
 | 19 | [Conditional groups toggle only on a checkbox](#19-conditional-groups-only-toggle-on-a-boolean-checkbox) | annoyance | transient `is_wholesale` checkbox drives `Customer.kind` |
 | 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | `clean()`/`save()` clear the fields; `sales.js` disables them per row |
-| 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | theme CSS sizes `.cv-toggle-group > legend`, `.cv-formset-fieldset > legend` |
+| 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | **DONE** #346 / PR #352; both legend hooks use the theme's `cv-tabler-section-legend` class |
 | 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | **DONE** #347 / PR #348; cupping scores use shared headings and labelled mobile rows |
 | 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs open; context buttons instead of tabs |
 | 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | **DONE** upstream #341 (PR #343); existing demo permission recipe documented and verified; startup check clean |
@@ -487,11 +488,20 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 21. Toggle groups and formsets render a bare `<legend>`
 
+- **Status: DONE upstream** — [issue #346](https://github.com/jacob-consulting/django-crud-views/issues/346)
+  closed by [PR #352](https://github.com/jacob-consulting/django-crud-views/pull/352), merged as `7df2c569`
+  on 2026-11-12. Independent `conditional:legend` and `formset:legend` class keys have empty core defaults;
+  full nested formsets use the formset hook too. Row-only fragments omit their outer legend as before.
+- **Adopted here (2026-11-12):** the theme registers both keys as `cv-tabler-section-legend` in `buttons.py`.
+  The existing float, width, spacing, size and weight rules now target that class in `crud_views_tabler.css`,
+  replacing the structural selectors. Projects can replace or clear either key through
+  `CRUD_VIEWS_BUTTON_CLASSES`. Rendered customer toggle-group and order create/update formset tests verify
+  that the class reaches the legends. No template override is needed.
 - **What happened:** `ToggleGroup(legend=...)` and the formset title render a bare `<fieldset><legend>`, which
   browsers and Bootstrap size like a heading (about 1.5rem, floated), larger than the page's card titles.
 - **Where:** `src/crud_views/templates/crud_views/conditional/toggle_group.html:6`,
   `src/crud_views/templates/crud_views/formsets/formset.html:18`.
-- **What we did:** theme CSS (`crud_views_tabler.css`): `.cv-toggle-group > legend, .cv-formset-fieldset > legend` are
+- **Previous workaround:** theme CSS (`crud_views_tabler.css`): `.cv-toggle-group > legend, .cv-formset-fieldset > legend` are
   not floated, 1rem, bold.
 - **Suggested upstream change:** a class key on each legend (`conditional:legend`, `formset:legend`).
 - **Severity:** cosmetic.

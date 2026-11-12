@@ -79,6 +79,7 @@ class OrderFormTests(OrderTestCase):
                 html = self.client.get(url).content.decode()
                 self.assertEqual(html.count('class="row cv-formset-compact-headings"'), 1)
                 self.assertIn("cv-formset-row-compact", html)
+                self.assertIn('<legend class="cv-tabler-section-legend">', html)
                 for field in ("product", "quantity"):
                     self.assertRegex(html, rf'<label[^>]*for="id_lines-[^"]+-{field}"')
                 self.assertRegex(html, rf'<option[^>]*value="{self.huila.pk}"[^>]*data-beans="1"')

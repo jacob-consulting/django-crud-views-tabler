@@ -51,6 +51,7 @@ class CustomerFormTests(SalesTestCase):
         for field in ("company", "vat_id", "price_tier", "payment_terms"):
             self.assertIn(f'name="{field}"', group)
         self.assertIn('cv-data-toggle-field="is_wholesale"', html)
+        self.assertIn('<legend class="cv-tabler-section-legend">Wholesale terms</legend>', html)
 
         # a consumer with the wholesale fields filled saves them empty
         response = self.client.post(reverse("customer-create"), {**CONSUMER_POST, **WHOLESALE_FIELDS})

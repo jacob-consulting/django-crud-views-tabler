@@ -55,4 +55,6 @@ TABLER_BUTTON_CLASSES: dict[str, str] = {
     "card-order:container": "btn-group",
     "formset:control": "btn btn-icon",
     "formset:control-danger": "btn btn-icon btn-danger",
+    "conditional:legend": "cv-tabler-section-legend",
+    "formset:legend": "cv-tabler-section-legend",
 }

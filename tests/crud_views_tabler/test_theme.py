@@ -144,6 +144,8 @@ class ButtonClassTests(SimpleTestCase):
             "card-order:container": "btn-group",
             "formset:control": "btn btn-icon",
             "formset:control-danger": "btn btn-icon btn-danger",
+            "conditional:legend": "cv-tabler-section-legend",
+            "formset:legend": "cv-tabler-section-legend",
             **{f"workflow:badge-{colour}": f"badge bg-{colour}-lt" for colour in
                ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")},
             "workflow:history-table": "table table-vcenter",

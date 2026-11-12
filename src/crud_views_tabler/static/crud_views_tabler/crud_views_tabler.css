@@ -39,11 +39,8 @@
   color: var(--tblr-dropdown-item-icon-color);
 }
 
-/* crud_views' ToggleGroup(legend=...) and the formset title (crud_views/formsets/formset.html) render a bare
-   <fieldset><legend>; browsers and Bootstrap size the legend like a heading. Make it a section label like Tabler's
-   .card-title. */
-.cv-toggle-group > legend,
-.cv-formset-fieldset > legend {
+/* Registered for conditional:legend and formset:legend: section labels like Tabler's .card-title. */
+.cv-tabler-section-legend {
   float: none;
   width: auto;
   margin-bottom: 0.75rem;

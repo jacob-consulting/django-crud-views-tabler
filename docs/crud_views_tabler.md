@@ -305,8 +305,9 @@ static/crud_views_tabler/
 ```
 
 The CSS rules added for the roastery demo each have a finding in
-[crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md): the bare `<legend>` of toggle
-groups and formsets (#21), the typeahead skins reading Bootstrap's `--bs-*` properties (#31, plain CSS, the theme
+[crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md): section labels for toggle
+groups and formsets (#21: `conditional:legend` and `formset:legend` register `cv-tabler-section-legend`),
+the typeahead skins reading Bootstrap's `--bs-*` properties (#31, plain CSS, the theme
 does not import the extensions package). The workflow history's sideways-scroll rule (#5) went with upstream's
 `.table-responsive` wrapper.
 

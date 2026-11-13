@@ -91,12 +91,29 @@ def acme_menu(context) -> dict:
     return {"dashboard": _link(DASHBOARD, url_name, current), "sections": sections}
 
 
+CUSTOMER_SECTIONS = {
+    "customer-detail": "Details",
+    "order-list": "Orders",
+    "order-detail": "Orders",
+    "order-create": "Orders",
+    "order-update": "Orders",
+    "order-workflow": "Orders",
+    "address-list": "Addresses",
+    "address-detail": "Addresses",
+    "address-create": "Addresses",
+    "address-update": "Addresses",
+    "subscription-list": "Subscriptions",
+    "subscription-create": "Subscriptions",
+    "subscription-update": "Subscriptions",
+}
+
+
 @register.simple_tag(takes_context=True)
 def customer_navigation(context):
     """Private full-page customer navigation; endpoint authorization stays in the views."""
     request = context["request"]
     match = request.resolver_match
-    if match is None or match.url_name != "customer-detail":
+    if request.headers.get("X-CV-Modal") == "true" or match is None or match.url_name not in CUSTOMER_SECTIONS:
         return None
 
     # Local imports keep the menu library independent of view registration at startup.
@@ -106,17 +123,21 @@ def customer_navigation(context):
     from sales.views.orders import OrderListView
     from sales.views.subscriptions import SubscriptionListView
 
-    customer = context["view"].object
+    section = CUSTOMER_SECTIONS[match.url_name]
+    view = context["view"]
+    customer = view.object if match.url_name == "customer-detail" else view.cv_get_parent_object()
     user = request.user
     can_read_customer = can_on_customer(user, "view", customer)
     links = []
     if CustomerDetailView.cv_has_access(user, customer):
-        links.append({"title": "Details", "url": reverse("customer-detail", kwargs={"pk": customer.pk}), "active": True})
+        links.append({"title": "Details", "url": reverse("customer-detail", kwargs={"pk": customer.pk}),
+                      "active": section == "Details"})
     for title, name, destination in (
         ("Orders", "order-list", OrderListView),
         ("Addresses", "address-list", AddressListView),
         ("Subscriptions", "subscription-list", SubscriptionListView),
     ):
         if can_read_customer and destination.cv_has_access(user, None):
-            links.append({"title": title, "url": reverse(name, kwargs={"customer_pk": customer.pk}), "active": False})
-    return {"customer": customer, "section": "Details", "links": links}
+            links.append({"title": title, "url": reverse(name, kwargs={"customer_pk": customer.pk}),
+                          "active": section == title})
+    return {"customer": customer, "section": section, "links": links}

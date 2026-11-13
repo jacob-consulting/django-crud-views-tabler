@@ -258,6 +258,20 @@ class OrderWorkflowTests(OrderTestCase):
         self.assertNotIn('type="radio"', html)
         self.assertIn('value="wf_cancel"', html)
 
+    def test_transition_buttons_use_variant_and_icon(self):
+        # upstream #362: button mode reads the transition's custom["variant"] and custom["icon"]
+        self.login()
+        html = self.client.get(reverse("order-workflow", kwargs=self.order_kwargs(self.make_order()))).content.decode()
+        buttons = dict(re.findall(r'<button[^>]*value="(wf_\w+)"[^>]*>(.*?)</button>', html, re.S))
+        tags = {name: tag for tag, name in re.findall(r'(<button[^>]*value="(wf_\w+)"[^>]*>)', html)}
+        self.assertIn('class="btn btn-success', tags["wf_confirm"])
+        self.assertIn("<svg", buttons["wf_confirm"])
+        self.assertIn("Confirm", buttons["wf_confirm"])
+        self.assertIn('class="btn btn-danger', tags["wf_cancel"])
+        self.assertIn("<svg", buttons["wf_cancel"])
+        self.assertIn("Cancel order", buttons["wf_cancel"])
+        self.assertIn('<span aria-hidden="true">*</span>', buttons["wf_cancel"])  # comment required
+
     def test_model_hook_refuses_confirm_without_lines(self):
         with self.assertRaisesMessage(ValidationError, "Add at least one line item"):
             self.make_order(lines=False).workflow_check_transition("wf_confirm", user=self.sam)

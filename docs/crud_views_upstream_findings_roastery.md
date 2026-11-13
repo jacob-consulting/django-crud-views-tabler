@@ -79,7 +79,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 30 | ext: [Datetimepicker assets on every page, need jQuery](#30-ext-the-datetimepicker-assets-load-on-every-page-and-need-jquery) | annoyance | project head include loads jQuery 3.7.1 |
 | 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | theme CSS maps `--bs-*` to Tabler's `--tblr-*` |
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
-| 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | nothing (all transitions are primary buttons without icon) |
+| 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | **DONE** upstream #362 / PR #364; order transitions show their variant and icon, no theme keys needed |
 | 34 | [Compact formsets reject custom `Select` subclasses](#34-compact-formsets-reject-custom-select-subclasses) | cosmetic | **DONE** upstream #349 / PR #350; order lines use compact mode with the marked `ProductSelect` |
 
 ---
@@ -791,13 +791,22 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 33. Workflow transition buttons ignore the transition's `variant` and `icon`
 
+- **Status: DONE upstream** — [issue #362](https://github.com/jacob-consulting/django-crud-views/issues/362)
+  closed by [PR #364](https://github.com/jacob-consulting/django-crud-views/pull/364), merged as `b21370e3`
+  on 2026-11-13. In button presentation each transition's `custom["variant"]` (one of the eight Bootstrap colours)
+  resolves through the class key `workflow:transition-<variant>` (default `btn btn-<variant>`), and `custom["icon"]`
+  is drawn before the label; missing or unknown variants keep `form:submit:label`.
+- **Adopted here (2026-11-13):** nothing to change in the demo: the order transitions already declared both, so the
+  workflow page now shows Confirm green with a check and Cancel order red with a circle-x (comment marker kept).
+  The upstream defaults are valid Tabler classes and look right in light and dark mode, so the theme registers no
+  `workflow:transition-*` keys and adds no CSS. Test: `sales.tests.test_orders.OrderWorkflowTests.test_transition_buttons_use_variant_and_icon`.
 - **What happened:** with `cv_transition_presentation = "buttons"` every transition is rendered as the same
   `form:submit:label` button (`btn btn-primary` in the theme) with only its label. A transition's
   `custom["variant"]` (the order's Cancel is `danger`) and `custom["icon"]` are not read, so Cancel is a primary
   button without an icon next to Confirm.
 - **Where:** `src/crud_views_workflow/templates/crud_views_workflow/widgets/transitions.html:8`
   (`{% cv_button_class 'form' 'submit' 'label' %}` for every action).
-- **What we did:** nothing; the demo keeps `variant`/`icon` in the transition's `custom` for the order page's own
+- **What we did before #362:** nothing; the demo keeps `variant`/`icon` in the transition's `custom` for the order page's own
   buttons, and the workflow page shows uniform primary buttons.
 - **Suggested upstream change:** honour `custom["variant"]` and `custom["icon"]` in the widget, or offer a
   per-transition class key (`workflow:transition-<name>`).

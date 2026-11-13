@@ -84,7 +84,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 30 | ext: [Datetimepicker assets on every page, need jQuery](#30-ext-the-datetimepicker-assets-load-on-every-page-and-need-jquery) | annoyance | project head include loads jQuery 3.7.1 |
 | 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | theme CSS maps `--bs-*` to Tabler's `--tblr-*` |
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
-| 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | **DONE** upstream #362 / PR #364; order transitions show their variant and icon, no theme keys needed |
+| 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | **DONE** upstream #362 / PR #364; order transitions show their variant and icon; theme registers `workflow:transition-<variant>` |
 | 34 | [Compact formsets reject custom `Select` subclasses](#34-compact-formsets-reject-custom-select-subclasses) | cosmetic | **DONE** upstream #349 / PR #350; order lines use compact mode with the marked `ProductSelect` |
 
 ---
@@ -830,8 +830,9 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
   is drawn before the label; missing or unknown variants keep `form:submit:label`.
 - **Adopted here (2026-11-13):** nothing to change in the demo: the order transitions already declared both, so the
   workflow page now shows Confirm green with a check and Cancel order red with a circle-x (comment marker kept).
-  The upstream defaults are valid Tabler classes and look right in light and dark mode, so the theme registers no
-  `workflow:transition-*` keys and adds no CSS. Test: `sales.tests.test_orders.OrderWorkflowTests.test_transition_buttons_use_variant_and_icon`.
+  The upstream defaults are valid Tabler classes and look right in light and dark mode; the theme still registers
+  the eight `workflow:transition-<variant>` keys explicitly as `btn btn-<variant>` (`buttons.TABLER_BUTTON_CLASSES`),
+  so the Tabler choice is visible and does not depend on upstream's defaults. No CSS. Test: `sales.tests.test_orders.OrderWorkflowTests.test_transition_buttons_use_variant_and_icon`.
 - **What happened:** with `cv_transition_presentation = "buttons"` every transition is rendered as the same
   `form:submit:label` button (`btn btn-primary` in the theme) with only its label. A transition's
   `custom["variant"]` (the order's Cancel is `danger`) and `custom["icon"]` are not read, so Cancel is a primary

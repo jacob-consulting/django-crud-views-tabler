@@ -9,6 +9,16 @@ TABLER_BUTTON_CLASSES: dict[str, str] = {
     "workflow:badge-info": "badge bg-info-lt",
     "workflow:badge-light": "badge bg-light-lt",
     "workflow:badge-dark": "badge bg-dark-lt",
+    # Workflow transition buttons (button presentation) by the transition's custom["variant"] (upstream #362). The
+    # values match upstream's Bootstrap defaults; declared here so the Tabler look is explicit and project-visible.
+    "workflow:transition-primary": "btn btn-primary",
+    "workflow:transition-secondary": "btn btn-secondary",
+    "workflow:transition-success": "btn btn-success",
+    "workflow:transition-danger": "btn btn-danger",
+    "workflow:transition-warning": "btn btn-warning",
+    "workflow:transition-info": "btn btn-info",
+    "workflow:transition-light": "btn btn-light",
+    "workflow:transition-dark": "btn btn-dark",
     # The workflow history like the theme's list tables, minus card-table: the history sits on the page, not in a card.
     "workflow:history-table": "table table-vcenter",
     "context:primary": "btn btn-primary",

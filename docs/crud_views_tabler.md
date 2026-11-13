@@ -132,7 +132,7 @@ pagination markup, so the theme no longer overrides it. Both paginations take th
 names `page-previous` / `page-next`, which the theme maps to Tabler's chevrons at the standard icon size, as in
 Tabler's examples (the old override used `icon-sm`). A project changes them with `CRUD_VIEWS_ICONS`.
 
-## Workflow state badges and history
+## Workflow state badges, transition buttons and history
 
 `crud_views_workflow` renders every state badge (`WorkflowModelMixin.state_badge`, the history table) with the class
 key `workflow:badge-<colour>` (upstream #319). The theme registers each `BadgeEnum` value (`primary`, `secondary`,
@@ -140,7 +140,11 @@ key `workflow:badge-<colour>` (upstream #319). The theme registers each `BadgeEn
 `buttons.TABLER_BUTTON_CLASSES`; a project overrides any of them with `CRUD_VIEWS_BUTTON_CLASSES`. The workflow page
 puts its action form in the shared form frame (a card) and the history table in `workflow:history-wrapper`
 (`table-responsive` upstream); the theme sets `workflow:history-table` to `table table-vcenter`, the list tables'
-classes without `card-table`, because the history is not inside a card. The theme overrides no workflow template and
+classes without `card-table`, because the history is not inside a card. With `cv_transition_presentation = "buttons"`
+each transition's `custom["variant"]` picks the class key `workflow:transition-<variant>` (upstream #362; unknown or
+missing variants keep `form:submit:label`) and its `custom["icon"]` is drawn before the label; the theme registers the
+eight variants explicitly as `btn btn-<variant>`, the same values as upstream's defaults, so the Tabler choice is
+visible in `TABLER_BUTTON_CLASSES`. The theme overrides no workflow template and
 adds no workflow CSS. The `workflow:*` keys are registered only when `crud_views_workflow` is installed.
 
 ## Card views

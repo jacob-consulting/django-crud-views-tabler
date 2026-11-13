@@ -148,6 +148,8 @@ class ButtonClassTests(SimpleTestCase):
             "formset:legend": "cv-tabler-section-legend",
             **{f"workflow:badge-{colour}": f"badge bg-{colour}-lt" for colour in
                ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")},
+            **{f"workflow:transition-{colour}": f"btn btn-{colour}" for colour in
+               ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")},
             "workflow:history-table": "table table-vcenter",
         }
         self.assertEqual(TABLER_BUTTON_CLASSES, expected)

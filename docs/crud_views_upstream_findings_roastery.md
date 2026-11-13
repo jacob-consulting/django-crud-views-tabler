@@ -28,6 +28,11 @@ Findings 2, 3 and 19 are **DONE upstream** as of 2026-11-12: [#355](https://gith
 [#354](https://github.com/jacob-consulting/django-crud-views/issues/354) (PR #357), respectively. Adopted here on
 2026-11-13 against the editable sibling checkout at `52ae423e`: the customer form now uses `ValueToggle` directly
 on `kind`, the tooltip wrapper already matches upstream, and numbered columns keep the matching Bootstrap defaults.
+Findings 33 and 25 (its access half) are **DONE upstream** as of 2026-11-13:
+[#362](https://github.com/jacob-consulting/django-crud-views/issues/362) (PR #364) and
+[#361](https://github.com/jacob-consulting/django-crud-views/issues/361) (PR #365). Adopted here against the sibling
+checkout at `4510cee9`: workflow transition buttons show their variant and icon, and the manage pages are on for the
+manage group, whose only member is alex; the manage tables' overflow is still open upstream and handled by theme CSS.
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
 @ `cf2bfc0f` ("Delete confirm checkbox spans the full row (#308) (#310)"; the demo was built from `b73337ce`, #309,

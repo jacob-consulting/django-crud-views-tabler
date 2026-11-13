@@ -1,12 +1,11 @@
 """Forms for customers, addresses and orders.
 
-The wholesale-only fields sit in a conditional group. Upstream's toggles are boolean, and ``Customer.kind`` is a
-choice, so the form carries a transient ``is_wholesale`` checkbox that decides the group and is then stored as
-``kind`` (see the roastery findings).
+The wholesale-only fields follow ``Customer.kind`` through a shared ``ValueToggle`` in the server-side
+conditional group and the crispy layout. Upstream infers native empty values when the group is inactive.
 """
 
 from crispy_forms.layout import HTML, Div, Row
-from crud_views.lib.conditional import ConditionalGroup, ConditionalGroupModelForm, ToggleGroup, UIFieldToggle
+from crud_views.lib.conditional import ConditionalGroup, ConditionalGroupModelForm, ToggleGroup, ValueToggle
 from crud_views.lib.crispy import Column2, Column3, Column4, Column6, Column12, CrispyForm, CrispyModelForm
 from crud_views.lib.formsets import (
     CompactColumn, CompactLayout, CompactWidgetCompatible, FormSet, FormSets, Formsets, InlineFormSet,
@@ -26,47 +25,38 @@ from .models import Address, Customer, CustomerSubscription, Order, OrderLine, O
 from .permissions import can_on_customer
 
 WHOLESALE_FIELDS = ["company", "vat_id", "price_tier", "payment_terms"]
+WHOLESALE_TOGGLE = ValueToggle("kind", values=[Customer.Kind.WHOLESALE])
 
 
 class CustomerForm(ConditionalGroupModelForm):
     submit_label = "Save"
-    is_wholesale = forms.BooleanField(required=False, label="Wholesale customer")
-
     cv_conditional_groups = [
         ConditionalGroup(
-            toggle=UIFieldToggle("is_wholesale"),
+            toggle=WHOLESALE_TOGGLE,
             fields=WHOLESALE_FIELDS,
             required=["company", "price_tier", "payment_terms"],
-            empty_values={"company": "", "vat_id": "", "price_tier": None, "payment_terms": None},
         )
     ]
 
     class Meta:
         model = Customer
         fields = [
-            "name", "contact_name", "email", "phone", "city", "country", "owner", *WHOLESALE_FIELDS, "notes",
+            "name", "kind", "contact_name", "email", "phone", "city", "country", "owner", *WHOLESALE_FIELDS, "notes",
         ]
         widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # a model-declared form field would be redeclared by the mixin; keep the declared one, seed it from the row
-        self.fields["is_wholesale"].initial = self.instance.is_wholesale
         self.fields["owner"].empty_label = "Unassigned"
-
-    def clean(self):
-        cleaned = super().clean()
-        self.instance.kind = Customer.Kind.WHOLESALE if cleaned.get("is_wholesale") else Customer.Kind.CONSUMER
-        return cleaned
 
     def get_layout_fields(self):
         return [
             Row(Column6("name"), Column6("contact_name")),
             Row(Column4("email"), Column3("phone"), Column3("city"), Column2("country")),
             Row(Column4("owner")),
-            Row(Column12("is_wholesale")),
+            Row(Column4("kind")),
             ToggleGroup(
-                "is_wholesale",
+                WHOLESALE_TOGGLE,
                 Row(Column6("company"), Column6("vat_id")),
                 Row(Column4("price_tier"), Column4("payment_terms")),
                 legend="Wholesale terms",

@@ -23,6 +23,11 @@ or awkwardness found on the way. Findings 4–5 are tracked in
 triage into issues for django-crud-views (and, where marked, django-crud-views-extensions). Finding 34 is tracked in
 [#349](https://github.com/jacob-consulting/django-crud-views/issues/349) (closed by PR #350). Finding 21 is tracked in
 [#346](https://github.com/jacob-consulting/django-crud-views/issues/346) (closed by PR #352; adopted here).
+Findings 2, 3 and 19 are **DONE upstream** as of 2026-11-12: [#355](https://github.com/jacob-consulting/django-crud-views/issues/355)
+(PR #358), [#356](https://github.com/jacob-consulting/django-crud-views/issues/356) (PR #359), and
+[#354](https://github.com/jacob-consulting/django-crud-views/issues/354) (PR #357), respectively. Adopted here on
+2026-11-13 against the editable sibling checkout at `52ae423e`: the customer form now uses `ValueToggle` directly
+on `kind`, the tooltip wrapper already matches upstream, and numbered columns keep the matching Bootstrap defaults.
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
 @ `cf2bfc0f` ("Delete confirm checkbox spans the full row (#308) (#310)"; the demo was built from `b73337ce`, #309,
@@ -43,8 +48,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | # | Finding | Severity | What the theme / example does today |
 |---|---|---|---|
 | 1 | ["Show code" panel is example-only](#1-the-show-code-panel-is-example-only-upstream) | annoyance | own collector and lazy-loading panel in `example/config/` |
-| 2 | [Tooltip recipe says to replace `init`](#2-the-tooltip-recipe-still-says-to-replace-init) | annoyance | theme wraps `init` and calls the original |
-| 3 | [`Column1..12` hard-code `col-md-N`](#3-column1column12-hard-code-col-md-n) | cosmetic | nothing (Tabler uses the same grid) |
+| 2 | [Tooltip recipe says to replace `init`](#2-the-tooltip-recipe-still-says-to-replace-init) | annoyance | **DONE** upstream #355 / PR #358; corrected recipe matches the theme's existing wrapper |
+| 3 | [`Column1..12` hard-code `col-md-N`](#3-column1column12-hard-code-col-md-n) | cosmetic | **DONE** upstream #356 / PR #359; `form:column-N` registry keys; Tabler keeps the matching Bootstrap defaults |
 | 4 | [Workflow badge is a solid Bootstrap pill](#4-workflow-badgeenum-values-are-bootstrap-colour-names-the-badge-is-a-solid-pill) | annoyance | resolved #319: theme registers `workflow:badge-<colour>` as `badge bg-<colour>-lt`; override removed |
 | 5 | [Workflow page has no card frame, history table not responsive](#5-the-workflow-page-is-not-framed-and-its-history-table-is-not-responsive) | cosmetic | resolved #319: upstream frame and `.table-responsive`; theme CSS removed, `workflow:history-table` set |
 | 6 | [One permission gates every workflow transition](#6-workflowviewpermissionrequired-has-one-permission-for-every-transition) | annoyance | resolved #320: the order workflow follows upstream's documented per-transition recipe |
@@ -60,7 +65,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 16 | [`ObjectDetailMixin` + `ObjectDetailViewPermissionRequired` is an MRO error](#16-objectdetailmixin-plus-objectdetailviewpermissionrequired-is-an-mro-error) | cosmetic | documented upstream #327; permission-required class alone |
 | 17 | [`tabs.js` reads `globalThis.bootstrap`](#17-tabsjs-looks-up-globalthisbootstrap-directly) | annoyance | resolved #328: tabs init through `cv.adapters.tab`; no theme code needed |
 | 18 | [Header icon is drawn beside a custom header template](#18-the-header-icon-is-drawn-beside-a-custom-header-template) | cosmetic | resolved in #329 / PR #345; customer detail uses `cv_icon_header = Icon.NONE` |
-| 19 | [Conditional groups toggle only on a checkbox](#19-conditional-groups-only-toggle-on-a-boolean-checkbox) | annoyance | transient `is_wholesale` checkbox drives `Customer.kind` |
+| 19 | [Conditional groups toggle only on a checkbox](#19-conditional-groups-only-toggle-on-a-boolean-checkbox) | annoyance | **DONE** upstream #354 / PR #357; adopted: `ValueToggle` on `Customer.kind`, native choice clearing; checkbox workaround removed |
 | 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | `clean()`/`save()` clear the fields; `sales.js` disables them per row |
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | **DONE** #346 / PR #352; both legend hooks use the theme's `cv-tabler-section-legend` class |
 | 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | **DONE** #347 / PR #348; cupping scores use shared headings and labelled mobile rows |
@@ -106,6 +111,13 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 2. The tooltip recipe still says to replace `init`
 
+- **Status: DONE upstream** — [issue #355](https://github.com/jacob-consulting/django-crud-views/issues/355)
+  closed by [PR #358](https://github.com/jacob-consulting/django-crud-views/pull/358), merged as `2c84307e`
+  on 2026-11-12. The corrected recipe sets a context-toolbar placement default and delegates to the original
+  initializer, preserving explicit placement and lifecycle safeguards. A regression test executes the documented
+  snippet; production JavaScript is unchanged.
+- **Local status:** the theme already uses this wrapper in `tabler-adapters.js`; no local code change is needed.
+
 - **What happened:** the documented way to add per-location tooltip configuration is to assign
   `cv.adapters.tooltip.init = ...`. That drops upstream's Bootstrap transition guard in the original `init`; the
   tooltip object also carries `hide`/`dispose`, so replacing the whole object (the other example) is worse.
@@ -117,6 +129,13 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Severity:** annoyance.
 
 ### 3. `Column1..Column12` hard-code `col-md-N`
+
+- **Status: DONE upstream** — [issue #356](https://github.com/jacob-consulting/django-crud-views/issues/356)
+  closed by [PR #359](https://github.com/jacob-consulting/django-crud-views/pull/359), merged as `52ae423e`
+  on 2026-11-12. The helpers resolve `form:column-1` through `form:column-12` from the existing class registry
+  at render time, preserving `col-md-N` defaults and additive caller classes. Theme and project overrides can
+  supply complete class strings or suppress them with an empty string or `None`.
+- **Local status:** no override is needed for Tabler, which uses the same grid.
 
 - **What happened:** the crispy layout helpers `Column1` ... `Column12` set `css_class = "col-md-N"`. Right for
   Tabler (same grid as Bootstrap 5), but a theme on another grid cannot change the breakpoint or the class prefix
@@ -458,6 +477,19 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 19. Conditional groups only toggle on a boolean checkbox
 
+- **Status: DONE upstream** — [issue #354](https://github.com/jacob-consulting/django-crud-views/issues/354)
+  closed by [PR #357](https://github.com/jacob-consulting/django-crud-views/pull/357), merged as `6c106ccd`
+  on 2026-11-12. `ValueToggle(name, values)` supports native single-select and radio controllers, including
+  several groups sharing a controller and groups matching multiple values. Bounded choice-field clearing
+  inference preserves explicit `empty_values` overrides and trusted server-disabled values.
+- **Adopted here:** `CustomerForm` exposes the model's `kind` select and shares one
+  `ValueToggle("kind", values=[Customer.Kind.WHOLESALE])` between `ConditionalGroup` and `ToggleGroup`.
+  The transient `is_wholesale` field, initial-value seeding, `clean()` mapping and explicit `empty_values` are
+  removed. Upstream clears inactive text fields to `""` and nullable choice fields to `None`. Tests in
+  `example/sales/tests/test_customers.py` cover create/edit selection, required wholesale terms, switching kinds,
+  stale or invalid inactive choices, and refusal of missing/invalid kinds without changing the stored customer.
+  Per-row formset conditions (finding 20) remain a separate request.
+
 - **What happened:** `ConditionalGroup` takes a `ToggleSource` that reads a boolean (`ModelFieldToggle` /
   `UIFieldToggle`), and `toggle.js` binds to a *checkbox*. The roastery's `Customer.kind` is a two-value choice
   (wholesale / consumer), so it cannot drive the group. The group also refuses fields whose form field is not a plain
@@ -465,8 +497,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Where:** `src/crud_views/lib/conditional/toggle.py:24` (`ToggleSource.is_on`),
   `src/crud_views/lib/conditional/group.py:13` (`resolve_conditional_empty_value`),
   `src/crud_views/static/crud_views/js/toggle.js:23` (`findCheckboxes`).
-- **What we did:** the customer form declares a transient `is_wholesale` checkbox (`UIFieldToggle`), derives
-  `Customer.kind` from it in `clean()`, seeds it from the stored kind when editing, and passes `empty_values` for the
+- **What we did before #354:** the customer form declared a transient `is_wholesale` checkbox (`UIFieldToggle`), derived
+  `Customer.kind` from it in `clean()`, seeded it from the stored kind when editing, and passed `empty_values` for the
   choice fields (`example/sales/forms.py`).
 - **Suggested upstream change:** a toggle source that compares a field to a value (`ValueToggle("kind", "wholesale")`),
   with the JS reading a select/radio, and choice fields supported by the empty-value resolver.
@@ -475,8 +507,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 ### 20. Formsets have no per-row conditional fields
 
 - **What happened:** an order line's grind and bag size only apply when the row's product is coffee. Conditional
-  groups toggle on a checkbox of the main form, and `ConditionalFormSet` switches a whole first-level formset; neither
-  can follow a select inside each formset row.
+  groups follow a controller on the main form (now including selects/radios after #354), and `ConditionalFormSet`
+  switches a whole first-level formset; neither can follow a select inside each formset row.
 - **Where:** `src/crud_views/lib/conditional/group.py:80` (`ConditionalGroup`),
   `src/crud_views/lib/conditional/formset.py:10` (`ConditionalFormSet`).
 - **What we did:** `OrderLineForm.clean()` and `OrderLine.save()` clear the two fields for non-coffee products;

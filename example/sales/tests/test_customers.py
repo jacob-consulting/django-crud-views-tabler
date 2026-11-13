@@ -10,7 +10,7 @@ from sales.models import Address, Customer
 from sales.permissions import grant_customer
 from sales.seed import seed as seed_sales
 
-CONSUMER_POST = {"name": "Test Person", "country": "DE", "city": "Bonn"}
+CONSUMER_POST = {"name": "Test Person", "kind": "consumer", "country": "DE", "city": "Bonn"}
 WHOLESALE_FIELDS = {"company": "Acme GmbH", "vat_id": "DE123", "price_tier": "A", "payment_terms": "net_30"}
 
 
@@ -50,7 +50,11 @@ class CustomerFormTests(SalesTestCase):
         group = html[html.index("cv-data-toggle-group") :]
         for field in ("company", "vat_id", "price_tier", "payment_terms"):
             self.assertIn(f'name="{field}"', group)
-        self.assertIn('cv-data-toggle-field="is_wholesale"', html)
+        self.assertIn('cv-data-toggle-field="kind"', html)
+        self.assertIn('cv-data-toggle-values="[&quot;wholesale&quot;]"', html)
+        self.assertIn('<select name="kind"', html)
+        self.assertNotIn('name="is_wholesale"', html)
+        self.assertIn('<option value="consumer" selected>Consumer</option>', html)
         self.assertIn('<legend class="cv-tabler-section-legend">Wholesale terms</legend>', html)
 
         # a consumer with the wholesale fields filled saves them empty
@@ -63,14 +67,14 @@ class CustomerFormTests(SalesTestCase):
         # wholesale without a company is refused
         response = self.client.post(
             reverse("customer-create"),
-            {**CONSUMER_POST, **WHOLESALE_FIELDS, "name": "Shop", "is_wholesale": "on", "company": ""},
+            {**CONSUMER_POST, **WHOLESALE_FIELDS, "name": "Shop", "kind": "wholesale", "company": ""},
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("company", response.context["form"].errors)
         self.assertFalse(Customer.objects.filter(name="Shop").exists())
 
         response = self.client.post(
-            reverse("customer-create"), {**CONSUMER_POST, **WHOLESALE_FIELDS, "name": "Shop", "is_wholesale": "on"}
+            reverse("customer-create"), {**CONSUMER_POST, **WHOLESALE_FIELDS, "name": "Shop", "kind": "wholesale"}
         )
         self.assertEqual(response.status_code, 302)
         shop = Customer.objects.get(name="Shop")
@@ -78,9 +82,71 @@ class CustomerFormTests(SalesTestCase):
 
     def test_edit_form_starts_with_the_stored_kind(self):
         self.login()
-        wholesale = Customer.objects.filter(kind="wholesale").first()
-        html = self.client.get(reverse("customer-update", kwargs={"pk": wholesale.pk})).content.decode()
-        self.assertRegex(html, r'name="is_wholesale"[^>]*checked|checked[^>]*name="is_wholesale"')
+        for kind, label in Customer.Kind.choices:
+            with self.subTest(kind=kind):
+                customer = Customer.objects.filter(kind=kind).first()
+                html = self.client.get(reverse("customer-update", kwargs={"pk": customer.pk})).content.decode()
+                self.assertIn(f'<option value="{kind}" selected>{label}</option>', html)
+
+    def test_switching_to_consumer_clears_wholesale_terms(self):
+        self.login()
+        customer = Customer.objects.filter(kind="wholesale").first()
+        response = self.client.post(
+            reverse("customer-update", kwargs={"pk": customer.pk}),
+            {**CONSUMER_POST, **WHOLESALE_FIELDS, "price_tier": "invalid", "payment_terms": "invalid"},
+        )
+        self.assertEqual(response.status_code, 302)
+        customer.refresh_from_db()
+        self.assertEqual(customer.kind, "consumer")
+        self.assertEqual((customer.company, customer.vat_id, customer.price_tier, customer.payment_terms), ("", "", None, None))
+
+    def test_switching_to_wholesale_saves_terms(self):
+        self.login()
+        customer = Customer.objects.filter(kind="consumer").first()
+        response = self.client.post(
+            reverse("customer-update", kwargs={"pk": customer.pk}),
+            {**CONSUMER_POST, **WHOLESALE_FIELDS, "kind": "wholesale"},
+        )
+        self.assertEqual(response.status_code, 302)
+        customer.refresh_from_db()
+        self.assertEqual(customer.kind, "wholesale")
+        self.assertEqual(
+            (customer.company, customer.vat_id, customer.price_tier, customer.payment_terms),
+            ("Acme GmbH", "DE123", "A", "net_30"),
+        )
+
+    def test_wholesale_requires_all_terms_except_vat_id(self):
+        self.login()
+        for field in ("company", "price_tier", "payment_terms"):
+            with self.subTest(field=field):
+                response = self.client.post(
+                    reverse("customer-create"),
+                    {**CONSUMER_POST, **WHOLESALE_FIELDS, "kind": "wholesale", field: ""},
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(field, response.context["form"].errors)
+        response = self.client.post(
+            reverse("customer-create"),
+            {**CONSUMER_POST, **WHOLESALE_FIELDS, "kind": "wholesale", "vat_id": ""},
+        )
+        self.assertEqual(response.status_code, 302)
+
+    def test_missing_or_invalid_kind_does_not_update_customer(self):
+        self.login()
+        customer = Customer.objects.filter(kind="wholesale").first()
+        original = (customer.kind, customer.company, customer.vat_id, customer.price_tier, customer.payment_terms)
+        for kind in ("", "invalid"):
+            with self.subTest(kind=kind):
+                response = self.client.post(
+                    reverse("customer-update", kwargs={"pk": customer.pk}),
+                    {**CONSUMER_POST, "kind": kind},
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("kind", response.context["form"].errors)
+                customer.refresh_from_db()
+                self.assertEqual(
+                    (customer.kind, customer.company, customer.vat_id, customer.price_tier, customer.payment_terms), original
+                )
 
     def test_creator_gets_a_grant(self):
         self.login("sam")
@@ -266,10 +332,10 @@ class AddressTests(SalesTestCase):
 
 class OwnerGrantTests(SalesTestCase):
     def update_post(self, customer, owner):
-        data = {"name": customer.name, "country": customer.country or "DE", "city": customer.city,
+        data = {"name": customer.name, "kind": customer.kind, "country": customer.country or "DE", "city": customer.city,
                 "owner": str(owner.pk) if owner else ""}
         if customer.is_wholesale:
-            data.update(is_wholesale="on", company=customer.company, price_tier=customer.price_tier,
+            data.update(company=customer.company, price_tier=customer.price_tier,
                         payment_terms=customer.payment_terms)
         return self.client.post(reverse("customer-update", kwargs={"pk": customer.pk}), data)
 

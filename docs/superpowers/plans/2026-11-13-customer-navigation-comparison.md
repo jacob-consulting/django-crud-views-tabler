@@ -1,5 +1,72 @@
 # Customer navigation comparison — Phase 06.33
 
+## Current checkpoint — Plan 05, 2026-11-13 12:44 UTC
+
+Both placements were inspected with real cached Chromium 149.0.7827.55 at 1280×900 and 375×900 on all
+thirteen participating routes, plus 320px wrapping. The **header default is restored and served** at
+http://127.0.0.1:9000/customer/4/detail/ . Original baseline remains independently available at
+http://localhost:8633/customer/4/detail/ . Login reference: this repository's CLAUDE.md, Conventions.
+Actual maintainer feedback, preferred layout and keep/propose/discard outcome remain pending.
+
+Product revision for both layouts: `1f85d3f5dd56a298c3361543bb6eb79f8f4d19cb`; baseline:
+`4f8d0326d63d7974029b7243b1ddbe63cadb625a`. This runbook-only update changes no product source.
+Fresh focused navigation/layout/access/orders: **100 passed, 33.707s**; broad demo: **285 passed, 64.380s**;
+both used `--parallel 2` and `uv run --no-sync`. System checks clean. Plan 04's shared-theme 83 and crispy-pack
+34 passes are reused: `git diff 1f85d3f HEAD -- src tests/crud_views_tabler tests/crispy_tabler pyproject.toml uv.lock`
+and the corresponding working-tree comparison were empty. The exact fresh check commands and evidence
+are in upstream 06.33-EVALUATION.md / 06.33-VALIDATION.md; no upstream product files changed.
+After exact header restoration, the standalone layout suite also passed **37 tests in20.336s** (21.52s wall).
+
+Owned runtime records remain local in each checkout's `.local/customer-navigation-06-33/server.json`.
+Baseline PID **1517988**, start ticks **424418163**, was rechecked and left unchanged. Experiment PID
+**1710334**, start ticks **425361517**, serves the restored header after the verified restart at 12:44:24 UTC.
+The historical PID1556992 record was stale: an identified separate development listener PID1633465 had
+occupied 9000. Under the maintainer's existing explicit instruction to replace anything on that port,
+its cwd/command/start identity was checked before stopping only that listener. No other port was affected.
+Experiment was started direct Python as PID1705435, switched to card through PID1708531, then restored
+through PID1710334. Each later restart checked recorded PID/cwd/cmdline/start ticks/listener first.
+Fresh browser checks confirmed the served variant after each switch, including restored header identity,
+navigation, Show code and order title/actions/CSRF. Rediscover identity on resume; these numbers can become stale.
+
+The exact one-line switch is still the literal `header.html` → `card.html` extends change documented below.
+No Python, URL or environment switch exists. The agent can assist live on port9000: preserve selector bytes,
+make that one-line edit, verify ownership, restart the owned direct-python server, confirm a real page has
+`data-customer-navigation-card`, and update server.json. Restore the saved header bytes and repeat the
+owned restart/browser check after comparison. Temporary selector changes were not committed.
+Local `05-switch.py` is a disposable, guarded helper for these two selections; inspect its identity checks
+before reuse. It is excluded from git along with runtime/browser records, captures and credentials.
+
+Current intentional synthetic data differences: experiment has addresses `Plan 05 header browser check`
+and `Plan 05 card browser check` in addition to the earlier `Phase 06.33 browser check`. Header workflow
+inspection advanced order50 Shipped→Delivered; card inspection advanced order72 Confirmed→Roasted.
+Both submitted enabled transitions through the browser. Baseline order50 remains Shipped and order72 Draft;
+none of the experiment-only addresses appears there. No reset/reseed occurred. The full route matrix,
+including order72's editable form, was checked **before** its Roast transition; that edit URL now correctly
+returns403. Use address/subscription forms or order Create to inspect current forms, and order72 workflow
+as Alex for its remaining permitted transition. Kim cannot access that now-Roasted workflow screen.
+
+Desktop/narrow placement and wrapping, same-customer links/current section, keyboard Tab/Enter, Show code,
+filters, live top-level page2, form validation/save, granted/denied roles and workflow, modal open/Cancel and
+excluded pages were observed. Card puts navigation after heading/actions and before filters/content;
+header puts it above heading/actions. At375px Details content begins at y420 with header versus y479 with
+card (baseline y348); card therefore uses59px more vertical space than header in this measured page.
+At320px both wrap into two lines; card wraps after Orders, header after Addresses. No document overflow.
+The pre-existing crowded order progress labels remain in both versions; native focus is visible but faint.
+Only Chromium emulation was checked; physical devices, other engines and formal accessibility audit were not.
+
+Local evidence files use the `05-` prefix. `05-card-before-transition.json` contains the successful full
+route/viewport matrix and interaction records before the state mutation. Its final harness assertion expected
+Kim's workflow GET to stay200 while the concurrent Roast mutation made it403. Follow-up `05-card-final.json`
+and `05-card-mutations.json` confirm the actual denial and unchanged forbidden-transition state; no product
+fix was needed. A redundant full rerun then correctly hit403 on order72 edit. Historical `05-card.json`
+contains that stopped attempt, not the canonical full matrix. A standalone layout-suite attempt while the
+temporary card selector was active failed the explicit committed-header assertion; run automated default
+restoration checks after returning the selector to header. No packages or tests were changed to hide these facts.
+
+Maintainer review remains a blocking human step. Compare orientation, section switching, template control,
+narrow-screen height/wrapping, retained actions/modal behavior and ongoing maintenance. The agent can switch
+the live layout on request. Record actual reservations and outcome preference before any issue publication.
+
 ## Two template placements — Plan 04 handoff
 
 Plan 04 adds two compositions, selected **only** by the literal extends target in

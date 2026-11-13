@@ -73,19 +73,20 @@ database is `<checkout>/example/db.sqlite3`, and media root is `<checkout>/examp
 Thus environments, product imports, databases and media are distinct; both dependency direct_url values
 resolve to the exact sibling paths in the table. No settings or dependency declaration was edited.
 
-## Restart and compare
+## Restart and compare — verified 2026-11-13
 
-Both endpoints were available at the socket-bind probe on 2026-11-13: baseline
-http://localhost:8633 and experiment http://127.0.0.1:8634. This is an availability observation,
-not a running-server claim or an exclusive reservation. Check again before starting; if occupied,
-choose and record another loopback port without stopping someone else's process.
+Both independently owned servers are running after tested stop/restart cycles. Compare
+baseline http://localhost:8633/customer/4/detail/ with experiment
+http://127.0.0.1:8634/customer/4/detail/ (Café Rue Mouffe). Sign in separately on both hosts using
+the demo accounts documented in CLAUDE.md: alex (Owner), sam (Account managers), kim (Roasters),
+password `demo`. These are synthetic demo credentials. Maintainer feedback remains pending.
 
 Start baseline in its own terminal:
 
 ```bash
 cd /home/alex/projects/workspaces/customer-navigation-06-33/tabler-test-baseline
 unset UV_PROJECT_ENVIRONMENT PYTHONPATH DJANGO_SETTINGS_MODULE
-uv run python example/manage.py runserver localhost:8633 --noreload
+.venv/bin/python example/manage.py runserver localhost:8633 --noreload
 ```
 
 Start experiment in another terminal:
@@ -93,19 +94,73 @@ Start experiment in another terminal:
 ```bash
 cd /home/alex/projects/workspaces/customer-navigation-06-33/tabler-test
 unset UV_PROJECT_ENVIRONMENT PYTHONPATH DJANGO_SETTINGS_MODULE
-uv run python example/manage.py runserver 127.0.0.1:8634 --noreload
+.venv/bin/python example/manage.py runserver 127.0.0.1:8634 --noreload
 ```
 
-Restart by stopping only that terminal's server with Ctrl-C and repeating its command.
-Plan 03 records actual process identities/logs and tests one restart of each before human comparison.
-Do not reset data to restart. Record the experiment's `git rev-parse HEAD` when evaluating;
-baseline remains at the starting revision in the table.
+The direct executable was launched with its own cwd and environment, stdout/stderr appended to
+`<checkout>/.local/customer-navigation-06-33/server.log`. Process records are in the adjacent
+`server.json`; local evidence is excluded through the repository's local Git exclude file.
+No uv wrapper or autoreloader owns the listener. Commands above are reproducible foreground alternatives.
+
+| Server | Previous PID | Current PID | /proc start ticks | Restart UTC | Bound socket |
+| --- | --- | --- | --- | --- | --- |
+| Baseline | 1516658 | 1517988 | 424418163 | 2026-11-13 10:07:10 | 127.0.0.1:8633 |
+| Experiment | 1516674 | 1518019 | 424418328 | 2026-11-13 10:07:11 | 127.0.0.1:8634 |
+
+Before stopping a process, rediscover the listener with `ss -ltnp '( sport = :8633 or sport = :8634 )'`.
+Match its PID to `server.json`, `/proc/<pid>/cwd`, `/proc/<pid>/cmdline` (the absolute checkout's
+`.venv/bin/python`, `example/manage.py`, `runserver`, exact bind, `--noreload`) and field 22 of
+`/proc/<pid>/stat` (start ticks). A matching old PID alone is insufficient. If anything conflicts, stop
+and report; never signal an unknown port occupant. Only after all identities match, send SIGTERM to
+that PID. Verify its listener disappears, then run the corresponding command above. For detached
+operation, use the same direct command with stdout/stderr appended to the same log and record the
+new PID/start identity in `server.json`. Check the listener belongs to it and GET the login page.
+If a server has disappeared, start it only after the same port-free check. Do not reset or reseed data.
+
+Both recorded processes were verified against cwd/cmdline/start ticks and their actual `ss` listeners,
+stopped one at a time, restarted and checked by HTTP. A first bind probe encountered TCP TIME_WAIT;
+checking for no listener and using SO_REUSEADDR for the probe resolved that harness issue without
+signalling any other process. Baseline presentation and distinct data remained available after restart.
+Leave both live for the human checkpoint; after evaluation stop only these verified owned processes
+unless the maintainer asks to retain them. Preserve all worktrees, environments and data.
 
 Use the repository's documented demo logins in CLAUDE.md. Keep baseline on localhost and experiment
 on 127.0.0.1, or use separate browser profiles: different ports alone do not isolate cookies.
 Before evaluation, sign in as different roles simultaneously and confirm each page's current user;
 logging out of one must leave the other signed in. Then compare the same named customer and role.
-These browser/session checks remain pending Plan 03; setup assertions do not prove them.
+Actual Chromium verification at 10:10:28 UTC signed baseline in as Sam and experiment as Alex in the
+same browser context, logged baseline out and switched it to Alex, and confirmed experiment remained
+Alex. The separate host cookies, not merely the ports, provide isolation.
+
+## Plan 03 comparison evidence
+
+Compared product revisions: experiment `a31c96baf63f4131704ce3578a547dbbd7216503`, baseline
+`4f8d0326d63d7974029b7243b1ddbe63cadb625a`. Later runbook-only commits do not change that product.
+Both started from seed 633 on 2026-11-13. At 10:11 UTC browser checks created one experiment-only
+address named `Phase 06.33 browser check` for customer 4 and confirmed Order #1072 (PK 72).
+Baseline still has no such address and Order #1072 remains Draft. This intentional synthetic data
+difference proves independence; compare layout with that status difference in mind.
+
+Broad example command: `uv run --no-sync python example/manage.py test django_tabler dashboard sales catalog roastery shipping showcase --parallel 2`
+passed 240 tests in 45.819s (47.09s wall), exit 0. System check with `--fail-level WARNING` passed in
+0.57s wall. Focused navigation command with `--parallel 2` passed 17 tests in 7.543s (8.68s wall), exit 0.
+`--no-sync` preserves the verified existing environment; no package installation was performed.
+Shared theme 83 / crispy pack 34 passing results from Plan 01 were reused: `git diff 22dbdcc a31c96b -- src tests/crud_views_tabler tests/crispy_tabler pyproject.toml uv.lock`
+was empty, and no relevant unresolved regression remained.
+
+Cached Playwright/Chromium 149.0.7827.55 rendered all 13 approved routes on both hosts at 1280×900 and
+375×900. Experiment identity/bar precedes heading/actions; all four links are visible, have the correct
+current marker, and wrap at y=184/224 at 375px, with no page or navigation horizontal overflow. At
+320px the detail bar also wraps and page width remains 320. Normal clicks and keyboard Tab/Enter
+retain customer 4. Show code loads, order badge/actions remain, and real delete modals exclude repeated
+identity/nav while keeping the underlying page. Filter, pagination, form save, workflow and Alex/Sam/Kim
+role/grant checks were exercised. Written route/timestamp observations and limits are in the upstream
+`06.33-EVALUATION.md`; temporary browser files are local, not committed assets.
+
+Suggested flow: compare Details → Orders → Order #1072 → edit/workflow → Addresses → delete/Cancel →
+Subscriptions, then narrow to 375px. Sam can access customer 4 but receives 403 for customer 16; Kim
+can read both but cannot create an address. Existing narrow order progress labels are cramped equally
+in baseline and experiment; the bar does not introduce that presentation limitation.
 
 ## Verification commands
 
@@ -128,12 +183,11 @@ test failed before removal on the old action arrays. These are test-first checks
 
 ## Boundaries
 
-This plan supplies customer detail only. The next plan extends the approved existing nested pages;
-no subscription detail route exists. Customer create/update, top-level collections, full-page delete,
+The implemented experiment covers all 13 approved full-page routes; no subscription detail route exists.
+Customer create/update, top-level collections, full-page delete,
 modal contents and unrelated custom actions are excluded. No new routes, dependencies, schema,
 generic navigation API, AJAX, embedded children, counts or unsaved-change warning.
 Existing full detail properties/summary and document title are preserved. The three replacement actions
 are removed only from CustomerDetailView's two action arrays; ViewSet button definitions remain.
 No source reset, dependency edits, main merge or upstream product changes are authorized.
 Keep this branch and baseline even after favorable feedback. User comparison remains a separate gate.
-

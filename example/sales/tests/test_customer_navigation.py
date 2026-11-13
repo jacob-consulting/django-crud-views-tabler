@@ -5,14 +5,16 @@ from html import escape, unescape
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
 from catalog.models import Subscription
 from config.templatetags.acme_nav import customer_navigation
-from sales.models import CustomerSubscription, OrderState
-from sales.permissions import grant_customer
+from sales.models import Address, Customer, CustomerSubscription, OrderState
+from sales.permissions import can_on_customer, grant_customer
 from .test_customers import SalesTestCase
 from .test_orders import OrderTestCase
 
@@ -153,6 +155,204 @@ class PageCoverageTests(NavigationAssertions, OrderTestCase):
             response = self.client.get(reverse(name, kwargs=kwargs))
             self.navigation(response, self.mine, active=section)
             self.assertNotIn(self.mine.name, response.content.decode())
+
+class NavigationAccessTests(NavigationAssertions, OrderTestCase):
+    def actor(self, name, permissions, customer=None, actions=("view",)):
+        user = get_user_model().objects.create_user(username=name)
+        user.user_permissions.add(*Permission.objects.filter(content_type__app_label="sales", codename__in=permissions))
+        if customer is not None:
+            grant_customer(user, customer, actions=actions)
+        self.client.force_login(user)
+        return user
+
+    def test_seeded_roles_and_ungranted_customer(self):
+        for username in ("alex", "sam", "kim"):
+            self.login(username)
+            for customer in (self.mine, self.other):
+                with self.subTest(actor=username, customer=customer.pk):
+                    response = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk}))
+                    if username == "sam" and customer == self.other:
+                        self.assertEqual(response.status_code, 403)
+                        self.no_navigation(response)
+                        self.assertNotIn(escape(customer.name), response.content.decode())
+                        for name in ("order-list", "address-list", "subscription-list"):
+                            denied = self.client.get(reverse(name, kwargs={"customer_pk": customer.pk}))
+                            self.assertEqual(denied.status_code, 403)
+                            self.no_navigation(denied)
+                    else:
+                        for url, title in self.navigation(response, customer, active="Details"):
+                            self.navigation(self.client.get(url), customer, active=title)
+
+    def test_each_missing_child_read_permission_hides_only_that_section(self):
+        sections = [("view_order", "Orders", "order-list"),
+                    ("view_address", "Addresses", "address-list"),
+                    ("view_customersubscription", "Subscriptions", "subscription-list")]
+        for missing, hidden, route in sections:
+            with self.subTest(missing=missing):
+                user = self.actor(missing, [perm for perm, _, _ in sections if perm != missing], self.mine)
+                self.assertFalse(user.has_perm(f"sales.{missing}"))
+                response = self.client.get(reverse("customer-detail", kwargs={"pk": self.mine.pk}))
+                visible = [title for title in ("Details", "Orders", "Addresses", "Subscriptions") if title != hidden]
+                for url, title in self.navigation(response, self.mine, active="Details", titles=visible):
+                    self.navigation(self.client.get(url), self.mine, active=title, titles=visible)
+                denied = self.client.get(reverse(route, kwargs={"customer_pk": self.mine.pk}))
+                self.assertEqual(denied.status_code, 403)
+                self.no_navigation(denied)
+
+    def test_empty_authorized_customer_keeps_all_collection_links(self):
+        customer = Customer.objects.create(name="Empty navigation customer", kind="consumer")
+        self.actor("empty-reader", ["view_order", "view_address", "view_customersubscription"], customer)
+        response = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk}))
+        for url, title in self.navigation(response, customer, active="Details"):
+            destination = self.client.get(url)
+            self.navigation(destination, customer, active=title)
+            if title != "Details":
+                self.assertEqual(len(destination.context["table"].data), 0)
+
+    def test_change_only_forms_keep_identity_without_empty_navigation(self):
+        actor = self.actor("change-only", ["add_address", "change_address"], self.mine, actions=("change",))
+        self.assertTrue(can_on_customer(actor, "change", self.mine))
+        self.assertFalse(can_on_customer(actor, "view", self.mine))
+        for name, kwargs in (
+            ("address-create", {"customer_pk": self.mine.pk}),
+            ("address-update", {"customer_pk": self.mine.pk, "pk": self.mine.addresses.first().pk}),
+        ):
+            response = self.client.get(reverse(name, kwargs=kwargs))
+            self.navigation(response, self.mine, titles=[])
+            self.assertNotContains(response, 'aria-label="Customer sections"')
+        for name, kwargs in [("customer-detail", {"pk": self.mine.pk})] + [
+            (name, {"customer_pk": self.mine.pk}) for name in ("order-list", "address-list", "subscription-list")
+        ]:
+            denied = self.client.get(reverse(name, kwargs=kwargs))
+            self.assertEqual(denied.status_code, 403)
+            self.no_navigation(denied)
+
+    def test_inaccessible_owning_section_is_not_fabricated(self):
+        self.actor("address-writer", ["add_address"], self.mine, actions=("view", "change"))
+        response = self.client.get(reverse("address-create", kwargs={"customer_pk": self.mine.pk}))
+        self.navigation(response, self.mine, titles=["Details"])
+        self.assertEqual(self.client.get(reverse("address-list", kwargs={"customer_pk": self.mine.pk})).status_code, 403)
+
+    def test_mismatched_child_and_ungranted_customer_do_not_leak(self):
+        self.login("sam")
+        order = self.make_order(customer=self.other)
+        subscription = CustomerSubscription.objects.create(
+            customer=self.other, product=Subscription.objects.first(), next_delivery=timezone.localdate()
+        )
+        cases = [("order-detail", order), ("order-update", order), ("order-workflow", order),
+                 ("address-detail", self.other.addresses.first()), ("subscription-update", subscription)]
+        for name, obj in cases:
+            for customer, status in ((self.other, 403), (self.mine, 404)):
+                with self.subTest(route=name, status=status):
+                    response = self.client.get(reverse(name, kwargs={"customer_pk": customer.pk, "pk": obj.pk}))
+                    self.assertEqual(response.status_code, status)
+                    self.no_navigation(response)
+                    self.assertNotIn(escape(self.other.name), response.content.decode())
+                    self.assertNotIn(escape(str(obj)), response.content.decode())
+
+
+class NavigationPreservationTests(NavigationAssertions, OrderTestCase):
+    def test_filtered_paginated_orders_keep_rows_actions_and_section_switching(self):
+        self.login("sam")
+        for _ in range(25):
+            self.make_order(customer=self.mine)
+        foreign = self.make_order(customer=self.other)
+        self.make_order(customer=self.mine, state=OrderState.SHIPPED)
+        url = reverse("order-list", kwargs={"customer_pk": self.mine.pk})
+        response = self.client.get(url, {"state": "draft", "page": 2})
+        links = dict((title, url) for url, title in self.navigation(response, self.mine, active="Orders"))
+        table = response.context["table"]
+        self.assertEqual(table.page.number, 2)
+        self.assertEqual(len(table.page.object_list), 10)
+        self.assertTrue(table.page.has_previous())
+        records = [row.record for row in table.page.object_list]
+        self.assertTrue(all(row.customer_id == self.mine.pk and row.state == "draft" for row in records))
+        self.assertNotIn(foreign.pk, [row.pk for row in table.data])
+        self.assertTrue(all(row.customer_id == self.mine.pk and row.state == "draft" for row in table.data))
+        for record in records:
+            for name in ("order-detail", "order-update"):
+                self.assertContains(response, reverse(name, kwargs=self.order_kwargs(record)))
+        self.assertEqual(response.context["filter"].form.cleaned_data["state"], "draft")
+        self.assertNotIn("?", links["Addresses"])
+        self.navigation(self.client.get(links["Addresses"]), self.mine, active="Addresses")
+
+    def test_child_create_update_validation_save_and_redirect(self):
+        self.login("sam")
+        create_url = reverse("address-create", kwargs={"customer_pk": self.mine.pk})
+        invalid = self.client.post(create_url, {})
+        self.navigation(invalid, self.mine, active="Addresses")
+        self.assertTrue(invalid.context["form"].errors)
+        data = {"label": "Navigation depot", "street": "Hafenweg 3", "zip_code": "20457",
+                "city": "Hamburg", "country": "DE"}
+        response = self.client.post(create_url, data)
+        address = Address.objects.get(label=data["label"])
+        self.assertEqual(address.customer_id, self.mine.pk)
+        self.assertEqual(response.status_code, 302)
+        self.navigation(self.client.get(response.url), self.mine, active="Addresses")
+        update_url = reverse("address-update", kwargs={"customer_pk": self.mine.pk, "pk": address.pk})
+        invalid = self.client.post(update_url, {**data, "street": ""})
+        self.navigation(invalid, self.mine, active="Addresses")
+        self.assertIn("street", invalid.context["form"].errors)
+        response = self.client.post(update_url, {**data, "label": "Updated navigation depot"})
+        self.assertEqual(response.status_code, 302)
+        address.refresh_from_db()
+        self.assertEqual(address.label, "Updated navigation depot")
+        self.navigation(self.client.get(response.url), self.mine, active="Addresses")
+
+    def test_editable_order_update_and_locked_order_denial(self):
+        self.login("sam")
+        order = self.make_order(customer=self.mine)
+        self.assertTrue(order.is_editable)
+        prefix = f"lines-{order.pk}-0"
+        line = order.lines.get()
+        data = {**self.order_post(self.mine, [], notes="Navigation edit"),
+                **self.lines_post(prefix, [{"id": line.pk, "product": self.huila.pk,
+                                           "quantity": "3", "grind": "whole", "bag_size": "1kg"}], initial=1)}
+        url = reverse("order-update", kwargs=self.order_kwargs(order))
+        invalid = self.client.post(url, {**data, f"{prefix}-0-quantity": "0"})
+        self.navigation(invalid, self.mine, active="Orders")
+        self.assertContains(invalid, "Ensure this value is greater than or equal to 1.")
+        response = self.client.post(url, data)
+        self.assertRedirects(response, reverse("order-detail", kwargs=self.order_kwargs(order)))
+        order.refresh_from_db()
+        self.assertEqual(order.notes, "Navigation edit")
+        self.assertEqual(order.lines.get().quantity, 3)
+        locked = self.make_order(customer=self.mine, state=OrderState.SHIPPED)
+        self.assertFalse(locked.is_editable)
+        for method in (self.client.get, self.client.post):
+            denied = method(reverse("order-update", kwargs=self.order_kwargs(locked)), data)
+            self.assertEqual(denied.status_code, 403)
+            self.no_navigation(denied)
+
+    def test_authorized_and_denied_workflow_transitions(self):
+        self.login("sam")
+        order = self.make_order(customer=self.mine)
+        self.assertIn("wf_confirm", [t.name for t in order.get_available_user_state_transitions(self.sam)])
+        order.workflow_check_transition("wf_confirm", user=self.sam)
+        url = reverse("order-workflow", kwargs=self.order_kwargs(order))
+        self.navigation(self.client.get(url), self.mine, active="Orders")
+        response = self.client.post(url, {"transition": "wf_confirm"})
+        self.assertRedirects(response, reverse("order-detail", kwargs=self.order_kwargs(order)))
+        order.refresh_from_db()
+        self.assertEqual(order.state, OrderState.CONFIRMED)
+        self.login("kim")
+        kim = self.world["users"]["kim"]
+        self.assertNotIn("wf_cancel", [t.name for t in order.get_available_user_state_transitions(kim)])
+        self.navigation(self.client.post(url, {"transition": "wf_cancel", "comment": "Denied"}),
+                        self.mine, active="Orders")
+        order.refresh_from_db()
+        self.assertEqual(order.state, OrderState.CONFIRMED)
+        self.assertIn("wf_roast", [t.name for t in order.get_available_user_state_transitions(kim)])
+        order.workflow_check_transition("wf_roast", user=kim)
+        self.assertEqual(self.client.post(url, {"transition": "wf_roast"}).status_code, 302)
+        order.refresh_from_db()
+        self.assertEqual(order.state, OrderState.ROASTED)
+        draft = self.make_order(customer=self.mine)
+        self.assertFalse(draft.workflow_has_any_possible_transition(kim))
+        denied = self.client.get(reverse("order-workflow", kwargs=self.order_kwargs(draft)))
+        self.assertEqual(denied.status_code, 403)
+        self.no_navigation(denied)
+
 
 class CustomerNavigationTests(SalesTestCase):
     def test_detail_links_follow_same_customer(self):

@@ -191,3 +191,17 @@ Existing full detail properties/summary and document title are preserved. The th
 are removed only from CustomerDetailView's two action arrays; ViewSet button definitions remain.
 No source reset, dependency edits, main merge or upstream product changes are authorized.
 Keep this branch and baseline even after favorable feedback. User comparison remains a separate gate.
+
+## Live port update — 2026-11-13 10:34 UTC
+
+At the maintainer's request, the experiment moved from 8634 to **9000**:
+http://127.0.0.1:9000/customer/4/detail/ . Baseline remains on localhost:8633.
+The prior source-checkout port-9000 runserver family was explicitly stopped, as
+authorized, and the owned experiment PID1518019 was stopped before moving it.
+New owned PID1556992 serves `127.0.0.1:9000 --noreload` from the same experiment
+cwd/venv/database. Exact current start ticks/command are in the experiment's
+`.local/customer-navigation-06-33/server.json`. Listener identity matched; login
+GET returned200 and unauthenticated customer GET returned302. Restart using the
+recorded direct-python command with port9000. Earlier browser evidence remains
+historical evidence at8634; no product or database changes accompany this move.
+Maintainer feedback/outcome remains pending.

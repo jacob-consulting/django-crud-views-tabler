@@ -55,3 +55,27 @@ class CustomerNavigationTests(SalesTestCase):
         for preserved in ("Price tier", customer.get_price_tier_display(), "Payment terms", "Wholesale", "Show code"):
             self.assertIn(preserved, html)
 
+    def test_detail_replaces_section_actions_and_preserves_other_actions(self):
+        from sales.views.customers import CustomerDetailView, cv_customer
+
+        self.assertEqual(CustomerDetailView.cv_context_actions, ["home", "update", "delete"])
+        self.assertEqual(CustomerDetailView.cv_context_actions_inline, ["update"])
+        self.assertTrue({"orders", "addresses", "subscriptions"} <= {button.key for button in cv_customer.context_buttons})
+        self.login("alex")
+        customer = self.granted.filter(kind="wholesale").first()
+        response = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk}))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        header = html.split('<div class="page-header d-print-none">', 1)[1].split('<main ', 1)[0]
+        actions = header.split('class="btn-list"', 1)[1]
+        for name in ("order-list", "address-list", "subscription-list"):
+            url = reverse(name, kwargs={"customer_pk": customer.pk})
+            self.assertNotIn(url, actions)
+            self.assertEqual(header.count(f'href="{url}"'), 1)
+        for name in ("customer-update", "customer-delete"):
+            self.assertIn(reverse(name, kwargs={"pk": customer.pk}), actions)
+        self.assertIn(reverse("customer-list"), actions)
+        self.assertIn("Show code", actions)
+        for preserved in ("Price tier", "Payment terms", "Wholesale", customer.get_price_tier_display()):
+            self.assertIn(preserved, html)
+

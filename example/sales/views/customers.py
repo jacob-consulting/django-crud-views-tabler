@@ -152,8 +152,8 @@ class CustomerDetailView(GlobalPermsMixin, BreadcrumbMixin, ObjectDetailMixin, G
     cv_header_template = "sales/snippets/customer_header.html"
     cv_icon_header = Icon.NONE  # the header template draws the customer's avatar
     cv_paragraph_template = "sales/snippets/customer_paragraph.html"
-    cv_context_actions = ["home", "update", "orders", "subscriptions", "addresses", "delete"]
-    cv_context_actions_inline = ["update", "orders", "subscriptions", "addresses"]
+    cv_context_actions = ["home", "update", "delete"]
+    cv_context_actions_inline = ["update"]
     cv_property_display = WHOLESALE_DISPLAY
 
     @property

@@ -73,3 +73,67 @@ database is `<checkout>/example/db.sqlite3`, and media root is `<checkout>/examp
 Thus environments, product imports, databases and media are distinct; both dependency direct_url values
 resolve to the exact sibling paths in the table. No settings or dependency declaration was edited.
 
+## Restart and compare
+
+Both endpoints were available at the socket-bind probe on 2026-11-13: baseline
+http://localhost:8633 and experiment http://127.0.0.1:8634. This is an availability observation,
+not a running-server claim or an exclusive reservation. Check again before starting; if occupied,
+choose and record another loopback port without stopping someone else's process.
+
+Start baseline in its own terminal:
+
+```bash
+cd /home/alex/projects/workspaces/customer-navigation-06-33/tabler-test-baseline
+unset UV_PROJECT_ENVIRONMENT PYTHONPATH DJANGO_SETTINGS_MODULE
+uv run python example/manage.py runserver localhost:8633 --noreload
+```
+
+Start experiment in another terminal:
+
+```bash
+cd /home/alex/projects/workspaces/customer-navigation-06-33/tabler-test
+unset UV_PROJECT_ENVIRONMENT PYTHONPATH DJANGO_SETTINGS_MODULE
+uv run python example/manage.py runserver 127.0.0.1:8634 --noreload
+```
+
+Restart by stopping only that terminal's server with Ctrl-C and repeating its command.
+Plan 03 records actual process identities/logs and tests one restart of each before human comparison.
+Do not reset data to restart. Record the experiment's `git rev-parse HEAD` when evaluating;
+baseline remains at the starting revision in the table.
+
+Use the repository's documented demo logins in CLAUDE.md. Keep baseline on localhost and experiment
+on 127.0.0.1, or use separate browser profiles: different ports alone do not isolate cookies.
+Before evaluation, sign in as different roles simultaneously and confirm each page's current user;
+logging out of one must leave the other signed in. Then compare the same named customer and role.
+These browser/session checks remain pending Plan 03; setup assertions do not prove them.
+
+## Verification commands
+
+Run from the experiment checkout, with the environment unsets above:
+
+```bash
+uv run python example/manage.py check --fail-level WARNING
+uv run python example/manage.py test sales.tests.test_customer_navigation.CustomerNavigationTests.test_detail_links_follow_same_customer --verbosity 2
+uv run python example/manage.py test sales.tests.test_customer_navigation sales.tests.test_customers --parallel 2
+uv run --group test pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
+uv run --group test pytest tests/crispy_tabler
+```
+
+The detail tracer passed in 1.461s, then passed its post-commit feedback gate in 1.544s.
+Shared theme: 83 passed in 3.62s; crispy pack: 34 passed in 0.17s. All exit 0.
+After duplicate-action removal, navigation plus customer regressions: 32 passed in 9.590s with two workers, exit 0.
+The existing locked pytest runner is serial (no xdist dependency); Django broad checks use two workers.
+The expected preimplementation tracer failed only because the new wrapper was absent; the duplicate-action
+test failed before removal on the old action arrays. These are test-first checks, not outstanding defects.
+
+## Boundaries
+
+This plan supplies customer detail only. The next plan extends the approved existing nested pages;
+no subscription detail route exists. Customer create/update, top-level collections, full-page delete,
+modal contents and unrelated custom actions are excluded. No new routes, dependencies, schema,
+generic navigation API, AJAX, embedded children, counts or unsaved-change warning.
+Existing full detail properties/summary and document title are preserved. The three replacement actions
+are removed only from CustomerDetailView's two action arrays; ViewSet button definitions remain.
+No source reset, dependency edits, main merge or upstream product changes are authorized.
+Keep this branch and baseline even after favorable feedback. User comparison remains a separate gate.
+

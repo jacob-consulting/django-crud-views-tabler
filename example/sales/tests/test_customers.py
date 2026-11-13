@@ -198,9 +198,13 @@ class CustomerViewTests(SalesTestCase):
         self.login()
         customer = Customer.objects.first()
         html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
+        identity = html.split("data-customer-identity", 1)[1].split("</div>", 1)[0]
+        self.assertIn(f">{customer.initials}<", identity)
+        self.assertNotIn("<svg", identity)
         heading = html[html.index('class="page-title"'):]
         heading = heading[:heading.index("</h2>")]
-        self.assertIn(f">{customer.initials}<", heading)
+        self.assertIn(">Details", heading)
+        self.assertNotIn("avatar", heading)
         self.assertNotIn("<svg", heading)
 
     def test_consumer_detail_has_no_wholesale_terms(self):

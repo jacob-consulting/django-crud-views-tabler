@@ -1,5 +1,26 @@
 # Customer navigation comparison — Phase 06.33
 
+## Accepted comparison and outcome — 2026-11-13
+
+The maintainer's exact responses were **"pass"**, then **"keep downstream"**. Task05-02 is accepted
+with no requested correction or additional evidence. No preferred placement or personal device/browser
+inspection was stated. Keep the existing header selection and isolated experiment branch; this outcome
+does not authorize an upstream API, merge, push, deletion or issue closure. Earlier pending-review text
+below is retained as the historical checkpoint record.
+
+Continuation verified both local server records against PID/cwd/full command/start ticks and listeners:
+experiment1710334/start425361517 on9000; baseline1517988/start424418163 on8633. Both matched and stayed
+running. Actual Chromium at13:33:49–50UTC confirmed customer4 Details200 on both hosts, served header
+identity/navigation before heading in the experiment, and no experimental markers on baseline.
+The selector remains byte-identical to committed header. No restart or product/data changes were needed.
+The checkpoint command `uv run --no-sync python example/manage.py test sales.tests.test_customer_navigation_layouts --parallel 2`
+passed37 tests in20.407s with clean system checks. Previous full evidence remains at product1f85d3f;
+this continuation adds only live availability/selection and the required layout regression check.
+
+Theme-controlled composition remains useful downstream, with the explicit route/access helper retained
+for the demonstrated pinned sibling-permission mismatch. Both layouts and the documented comparison
+procedure stay available. The outcome supplies no new reusable upstream API requirement.
+
 ## Current checkpoint — Plan 05, 2026-11-13 12:44 UTC
 
 Both placements were inspected with real cached Chromium 149.0.7827.55 at 1280×900 and 375×900 on all

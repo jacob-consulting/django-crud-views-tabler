@@ -859,6 +859,28 @@ Features from the spec's feature map that were dropped or reduced, with the reas
 
 ## Known rough edges
 
+### Experimental customer navigation: pinned button contract (2026-11-13)
+
+The experiment retains its private data-only `customer_navigation` helper. Actual requests against pinned core
+`1133591a8aad7202f6f95c6a6a7fd777809de604` disprove full equivalence with sibling context buttons: a user with
+customer **change only**, `add_address`, and `view_order` reaches the address-create page (200). A
+`SiblingContextButton(sibling_name="order")` there returns `cv_access=True` and renders the customer's order-list
+link, but that destination returns 403 because customer read is missing. The helper returns no links and retains
+identity. Parent detail buttons correctly deny that actor. No destination authorization or button registration changed.
+
+Real child/parent candidate rendering agrees with reachable destinations for Alex, Sam, Kim, separately missing
+child read permissions and empty authorized collections; ungranted customer requests remain denied. The focused
+tests use real request/view objects and `ViewContext`. The supported override is each button's `template` or
+`template_code`: `cv_context_actions` resolves the action group, the container calls `cv_render_button`, and the
+context renderer applies that override. Both override forms were rendered through the actual container; no
+`item_template` argument is assumed. Test-only instance overrides leave global action arrays untouched.
+
+On order detail/update/workflow, list-button `cv_is_active` is false because it compares the exact route. The
+private thirteen-route section map correctly keeps Orders active. Replacing it with route equality would regress
+the experiment. This is a bounded reason to preserve the helper, not a proposal for a new adapter or upstream API.
+The initial equivalence probe failed on the rendered denied link; the committed characterization and focused
+22-test suite pass. These are request/rendering checks; refreshed browser evaluation remains separate.
+
 Left as they are, each more than a quick fix or outside this repo:
 
 - The workflow page has no card frame, and the datetimepicker keeps its blue look (#5, #32).

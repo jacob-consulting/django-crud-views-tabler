@@ -1,13 +1,15 @@
 """Integration checks for the private customer section navigation experiment."""
 
 import re
+from copy import deepcopy
 from html import escape, unescape
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from django.test import RequestFactory
+from django.conf import settings
+from django.test import RequestFactory, override_settings
 from django.template import Context, Template
 from django.urls import reverse
 from django.utils import timezone
@@ -36,7 +38,7 @@ class ContextButtonContractTests(OrderTestCase):
         ) if data["cv_access"] else ""
         return data, rendered
 
-    def test_sibling_candidate_matches_change_only_destination_access(self):
+    def test_sibling_candidate_does_not_replace_customer_read_check(self):
         user = get_user_model().objects.create_user(username="button-change-only")
         user.user_permissions.add(*Permission.objects.filter(
             content_type__app_label="sales", codename__in=("add_address", "view_order")))
@@ -53,7 +55,47 @@ class ContextButtonContractTests(OrderTestCase):
             key="customer", key_target="detail", template_code=self.item))
         self.assertFalse(parent["cv_access"])
         self.assertEqual(parent_html, "")
-        self.assertEqual(rendered, "")
+        # The candidate checks child permission only; the real destination also requires customer read.
+        self.assertTrue(data["cv_access"])
+        self.assertIn(f'href="{data["cv_url"]}"', rendered)
+
+    def test_per_button_templates_flow_through_real_action_container(self):
+        self.login("sam")
+        response = self.client.get(reverse("customer-detail", kwargs={"pk": self.mine.pk}))
+        view = response.context["view"]
+        templates = deepcopy(settings.TEMPLATES)
+        templates[0]["APP_DIRS"] = False
+        templates[0]["OPTIONS"]["loaders"] = [
+            ("django.template.loaders.locmem.Loader", {"candidate-item.html": self.item}),
+            "django.template.loaders.filesystem.Loader", "django.template.loaders.app_directories.Loader",
+        ]
+        with override_settings(TEMPLATES=templates):
+            for override in ({"template": "candidate-item.html"}, {"template_code": self.item}):
+                button = ChildContextButton(key="candidate", child_name="order", **override)
+                with patch.object(view, "cv_context_buttons", [button]), patch.object(
+                    view, "cv_context_actions", ["candidate"]
+                ):
+                    group = view.cv_get_context_action_group(view.object)
+                    self.assertEqual(len(group.inline), 1)
+                    self.assertEqual(group.menu, [])
+                    html = Template("{% load crud_views %}{% cv_context_actions object %}").render(
+                        Context({"view": view, "request": view.request, "object": view.object}))
+                    self.assertEqual(html.count("data-candidate"), 1)
+                    self.assertIn(reverse("order-list", kwargs={"customer_pk": self.mine.pk}), html)
+
+    def test_empty_collection_candidate_stays_reachable(self):
+        customer = Customer.objects.create(name="Empty button customer", kind="consumer")
+        grant_customer(self.sam, customer, actions=("view",))
+        self.login("sam")
+        response = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk}))
+        for child in ("order", "address", "subscription"):
+            data, rendered = self.candidate(response, ChildContextButton(
+                key=child, child_name=child, template_code=self.item))
+            self.assertTrue(data["cv_access"])
+            self.assertIn(data["cv_url"], rendered)
+            destination = self.client.get(data["cv_url"])
+            self.assertEqual(destination.status_code, 200)
+            self.assertEqual(len(destination.context["table"].data), 0)
 
     def test_child_and_parent_candidates_match_granted_roles_and_missing_reads(self):
         cases = [(name, self.world["users"][name]) for name in ("alex", "sam", "kim")]

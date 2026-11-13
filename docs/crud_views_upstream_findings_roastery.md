@@ -86,6 +86,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
 | 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | **DONE** upstream #362 / PR #364; order transitions show their variant and icon; theme registers `workflow:transition-<variant>` |
 | 34 | [Compact formsets reject custom `Select` subclasses](#34-compact-formsets-reject-custom-select-subclasses) | cosmetic | **DONE** upstream #349 / PR #350; order lines use compact mode with the marked `ProductSelect` |
+| 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | open upstream [#366](https://github.com/jacob-consulting/django-crud-views/issues/366) (design approved, gsd-handover D-01–D-16); nothing downstream yet |
 
 ---
 
@@ -862,6 +863,31 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
   Create/update and invalid-quantity rendered-page tests pass, as do the existing save and equipment-cleaning tests.
   In a browser, desktop headings align, mobile cards show labels, and a dynamically added row retains `data-beans`;
   coffee enables grind and bag size while equipment disables them. No additional theme CSS was needed.
+- **Severity:** cosmetic.
+
+### 35. The manage page is one flat column of tables
+
+- **Status: open upstream** — [issue #366](https://github.com/jacob-consulting/django-crud-views/issues/366),
+  filed 2026-11-13 from a design session; its `gsd-handover` section records the approved decisions (D-01–D-16) and
+  the first comment carries the approved full-page mockup.
+- **What happened:** `/customer/manage/` (as alex, after #361) is about 10,800 px tall with 216 table rows: one
+  `<h3>`, twelve `<h4>`, every section a striped table, separated by `<br><hr><br>`. Most of it is the per-view
+  key/value dump, where most rows are `None` or the library's stock value. Values print as raw Python. Who holds which
+  permission is split over three tables, and a view's `cv_permission` is not shown. Two defects: the `class` row
+  shows `CrudViewMetaClass` for every view (`get_view_data()` stringifies `view.__class__` of a view *class*), and
+  user-level Guardian grants are invisible (sam's `view_customer`/`change_customer` on 4 customers), because
+  `GuardianManageView.get_permission_holders()` only counts group object grants.
+- **Where:** `src/crud_views/lib/views/manage.py` (`get_view_data`, `get_permission_holders`),
+  `src/crud_views/templates/crud_views/view_manage.html`, `src/crud_views_guardian/lib/views.py`,
+  `src/crud_views_guardian/templates/crud_views/view_guardian_manage.html`.
+- **Asked upstream:** one page of Bootstrap 5 cards: a holder × permission matrix (groups, plus users behind
+  `CRUD_VIEWS_MANAGE_SHOW_USERS`, incl. user object grants), a collapsible views list with a summary line (URL,
+  class, required permission, Guardian policy) and one key/value table per view whose default rows (anything not set
+  on a project class) are dimmed and hidden by one switch; small ViewSet facts in a side column. The view prepares
+  the data; badge colours go through class-registry keys.
+- **What we do now:** nothing; the theme's finding-25 rule still scrolls the manage content below 768 px.
+- **Downstream after upstream lands:** register Tabler classes (`bg-*-lt`) for the new `manage:*` keys in
+  `crud_views_tabler` and drop the finding-25 overflow rule once the tables sit in `.table-responsive`.
 - **Severity:** cosmetic.
 
 ---

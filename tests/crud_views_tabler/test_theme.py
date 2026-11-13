@@ -707,6 +707,16 @@ class BareTableTests(SimpleTestCase):
         self.assertIn("--bs-body-bg: var(--tblr-bg-surface)", css)
         self.assertNotRegex(css, r"table\.table \{\s*display: block")
 
+    def test_manage_page_content_scrolls_below_768px(self):
+        # Finding 25: the manage pages render bare tables (no .table-responsive, no class key); at 390 px they pushed
+        # the page to ~610 px. Scoped through upstream's #cv-ancestor-policy, which every manage page renders.
+        css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
+        self.assertRegex(
+            css,
+            r"@media \(max-width: 767\.98px\) \{\s*"
+            r"\.page-body > \.container-xl:has\(> #cv-ancestor-policy\) \{\s*overflow-x: auto;",
+        )
+
 
 class ThemeAdoptionTests(TestCase):
     """Native form floor, exact registrations and real action rendering contracts."""

@@ -181,10 +181,10 @@ CRUD_VIEWS_EXTENDS = 'project/crud_views.html'
 CRUD_VIEWS_BREADCRUMB_PREFIX = [{'title': 'Home', 'url_name': 'dashboard:index'}]
 CRUD_VIEWS_DATETIMEPICKER = {'DEFAULTS': {'dayOfWeekStart': 1}}
 DJANGO_TABLES2_TEMPLATE = 'crud_views/table/bootstrap5.html'
-# The manage pages list every view's permissions and who holds them. Upstream's default "debug_only" opens them to
-# every signed-in user while DEBUG is on, which is this file's default, and the demo is served publicly, so they stay
-# off unless the environment says otherwise ("yes" or "debug_only").
-CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'no')
+# The manage pages list every view's permissions and who holds them. Since upstream #361 only active members of
+# CRUD_VIEWS_MANAGE_GROUP (default "CRUD_VIEWS_MANAGE"; the seed adds alex) may open them, whatever DEBUG says.
+# Set the environment variable to "no" to close them for everyone, or "debug_only" to require DEBUG as well.
+CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'yes')
 
 # crud_views_object_detail: the layout of the detail pages' property groups
 CRUD_VIEWS_OBJECT_DETAIL_TEMPLATE_PACK_LAYOUT = 'tabs-vertical'

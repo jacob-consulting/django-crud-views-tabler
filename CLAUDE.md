@@ -115,11 +115,13 @@ shows Tabler's base blue; the switch offers no colour choice.
 
 - All pages require login (`LoginRequiredMiddleware`); the login view is the exception.
 - Settings from env: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` (`1`/`0`), `DJANGO_ALLOWED_HOSTS`,
-  `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` (default `no`: manage pages list permission holders, and upstream's
-  `debug_only` would open them to everyone under the default DEBUG). The default allowed hosts
+  `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` (default `yes`: since upstream #361 only active members of the
+  `CRUD_VIEWS_MANAGE` group may open the manage pages, whatever DEBUG says; `no` closes them for everyone,
+  `debug_only` also requires DEBUG). The default allowed hosts
   include `cv.jacob-consulting.org`, where the demo is served through a Cloudflare tunnel that terminates HTTPS;
   hence `CSRF_TRUSTED_ORIGINS = ['https://cv.jacob-consulting.org']` in `example/config/settings.py`.
-- Demo accounts: `alex` (Owner), `sam` (Account managers; Guardian grants on his customers), `kim` (Roasters);
+- Demo accounts: `alex` (Owner; the only member of the `CRUD_VIEWS_MANAGE` group, so the only account that opens
+  the manage pages), `sam` (Account managers; Guardian grants on their own customers), `kim` (Roasters);
   password `demo`. Brand "Acme Roasters", primary colour sienna `#a0522d` (`example/static/acme/acme.css`).
 - Theme fix order: an upstream hook (class keys, settings, blocks), then CSS in `crud_views_tabler.css`, then a new
   override template as a last resort. Every theme CSS rule or override, and every upstream bug or awkwardness, gets

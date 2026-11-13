@@ -7,6 +7,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
 
+from crud_views.lib.settings import crud_views_settings
+
 GROUPS = ("Owner", "Account managers", "Roasters")
 
 # The Owner group gets every permission of these apps. Later apps append theirs (roles are refined per app).
@@ -18,6 +20,9 @@ ACCOUNTS = {
     "sam": ("Sam", "Sellers", "Account managers", 180),
     "kim": ("Kim", "Kettle", "Roasters", 90),
 }
+
+# Members of the crud_views manage group may open the manage pages (upstream #361); only the Owner is one.
+MANAGE_MEMBERS = ("alex",)
 
 
 def seed(rng: random.Random, world: dict) -> None:
@@ -38,4 +43,6 @@ def seed(rng: random.Random, world: dict) -> None:
         user.save()
         user.groups.add(groups[group])
         users[username] = user
+    manage_group = Group.objects.get_or_create(name=crud_views_settings.manage_group)[0]
+    manage_group.user_set.add(*(users[name] for name in MANAGE_MEMBERS))
     world["users"] = users

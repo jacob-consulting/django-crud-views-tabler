@@ -82,3 +82,13 @@
 .cv-typeahead-select .dropdown-item {
   display: block;
 }
+
+/* Finding 25: the manage pages (core and Guardian) render their tables bare, with no .table-responsive and no class
+   key, so on a phone they pushed the whole page sideways. Below 768 px the content container scrolls instead. Scoped
+   to manage pages by upstream's #cv-ancestor-policy table, which every one of them renders; the table stays a table,
+   so narrow ones still span the full width. */
+@media (max-width: 767.98px) {
+  .page-body > .container-xl:has(> #cv-ancestor-policy) {
+    overflow-x: auto;
+  }
+}

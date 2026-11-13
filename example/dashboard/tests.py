@@ -659,21 +659,51 @@ class FaviconTests(TestCase):
 
 
 class ManageViewsTests(TestCase):
-    # DEBUG defaults to on and the demo is served publicly; upstream's "debug_only" would let Sam read every view's
-    # permission holders. Opt in with the environment variable of the same name.
+    # Upstream #361: manage pages need an active member of CRUD_VIEWS_MANAGE_GROUP in every mode, DEBUG grants
+    # nothing, and "no" closes them for everyone. The seed makes alex the only member.
 
-    def test_settings_default_to_no_without_the_environment_variable(self):
+    def setUp(self):
+        call_command("seed_demo", stdout=StringIO())
+        self.users = {name: User.objects.get(username=name) for name in ("alex", "sam", "kim")}
+
+    def get(self, username, url):
+        self.client.force_login(self.users[username])
+        return self.client.get(url)
+
+    def test_settings_default_to_yes_without_the_environment_variable(self):
         source = (Path(settings.BASE_DIR) / "config" / "settings.py").read_text()
-        self.assertIn("CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'no')", source)
+        self.assertIn("CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'yes')", source)
 
-    @override_settings(DEBUG=True)
-    def test_no_closes_the_manage_pages_even_under_debug(self):
+    def test_alex_opens_the_manage_page(self):
+        self.assertEqual(self.get("alex", "/customer/manage/").status_code, 200)
+        self.assertContains(self.client.get("/customer/"), 'href="/customer/manage/"')
+        from sales.models import Customer
+
+        customer = Customer.objects.first()
+        nested = reverse("address-manage", kwargs={"customer_pk": customer.pk})
+        self.assertEqual(self.client.get(nested).status_code, 200)
+
+    def test_sam_and_kim_are_refused(self):
+        for username in ("sam", "kim"):
+            with self.subTest(username):
+                self.assertEqual(self.get(username, "/customer/manage/").status_code, 403)
+        self.client.force_login(self.users["sam"])
+        self.assertNotContains(self.client.get("/customer/"), 'href="/customer/manage/"')
+
+    def test_superuser_outside_the_group_is_refused(self):
+        self.client.force_login(User.objects.create_superuser("root", password="x"))
+        self.assertEqual(self.client.get("/customer/manage/").status_code, 403)
+
+    def test_no_mode_refuses_alex(self):
         # crud_views reads its settings once at import, so the value is patched on its settings object.
         from crud_views.lib.settings import crud_views_settings
 
-        self.client.force_login(User.objects.create_superuser("root", password="x"))
-        with mock.patch.object(crud_views_settings, "manage_views_enabled", "debug_only"):
-            self.assertEqual(self.client.get("/customer/manage/").status_code, 200)
         with mock.patch.object(crud_views_settings, "manage_views_enabled", "no"):
-            # the URL stays registered; ManageView.has_permission refuses: 403, even for a superuser
-            self.assertEqual(self.client.get("/customer/manage/").status_code, 403)
+            self.assertEqual(self.get("alex", "/customer/manage/").status_code, 403)
+
+    def test_reset_keeps_alex_in_the_manage_group(self):
+        from crud_views.lib.settings import crud_views_settings
+
+        call_command("seed_demo", "--reset", stdout=StringIO())
+        alex = User.objects.get(username="alex")
+        self.assertTrue(alex.groups.filter(name=crud_views_settings.manage_group).exists())

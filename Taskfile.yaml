@@ -33,9 +33,10 @@ tasks:
       - uv sync
 
   migrate:
-    desc: Apply database migrations
+    desc: Apply database migrations and ensure the crud_views manage group exists
     cmds:
       - "{{.MANAGE}} migrate"
+      - "{{.MANAGE}} cv_manage_group"
 
   superuser:
     desc: Create the superuser {{.ADMIN_USER}} unless it exists

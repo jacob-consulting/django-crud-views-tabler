@@ -71,7 +71,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | **DONE** #347 / PR #348; cupping scores use shared headings and labelled mobile rows |
 | 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs open; context buttons instead of tabs |
 | 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | **DONE** upstream #341 (PR #343); existing demo permission recipe documented and verified; startup check clean |
-| 25 | [Manage pages are open to every user under DEBUG](#25-manage-pages-are-open-to-every-signed-in-user-while-debug-is-on) | annoyance | `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"` by default in the demo |
+| 25 | [Manage pages were open to every user under DEBUG](#25-manage-pages-were-open-to-every-signed-in-user-while-debug-was-on) | annoyance | **DONE** upstream #361 / PR #365 (access); alex is the only manage-group member; table overflow still open upstream, theme CSS scrolls the manage content below 768 px |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | resolved #337: tables declare `Meta.sequence` (the `__init__` workaround is gone); `Meta.exclude = ("actions",)` drops the column |
 | 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | tracked in #314 (open, backlog); `render_number` and `get_success_url` reverse the nested URLs |
 | 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | **DONE** — [PR #342](https://github.com/jacob-consulting/django-crud-views/pull/342) (#338); adopted in both subscription ViewSets; list-header overrides removed |
@@ -629,8 +629,29 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   rows or grants, so those access tests remain necessary. No permission behavior changed.
 - **Severity:** annoyance.
 
-### 25. Manage pages are open to every signed-in user while DEBUG is on
+### 25. Manage pages were open to every signed-in user while DEBUG was on
 
+- **Status: DONE upstream (access)** — [issue #361](https://github.com/jacob-consulting/django-crud-views/issues/361)
+  closed by [PR #365](https://github.com/jacob-consulting/django-crud-views/pull/365), merged as `4510cee9`
+  on 2026-11-13. Every core and Guardian manage page now requires an active, authenticated member of
+  `CRUD_VIEWS_MANAGE_GROUP` (default `CRUD_VIEWS_MANAGE`); staff and superusers need membership too, and DEBUG grants
+  nothing. Modes: `"yes"` (new default) = members; `"debug_only"` = members and `DEBUG`; `"no"` = nobody. Denied
+  users see no manage action, even where denied actions are otherwise disabled. `python manage.py cv_manage_group`
+  creates the group (idempotent, no memberships or grants).
+- **Adopted here (2026-11-13):** `example/config/settings.py` falls back to `'yes'` (the environment variable still
+  closes them with `no`); `dashboard/seed.py` creates the group and makes `alex` its only member (`MANAGE_MEMBERS`),
+  so `seed_demo --reset` restores it; the Taskfile's `migrate` task runs `cv_manage_group`. Tests
+  (`dashboard.tests.ManageViewsTests`): alex opens `/customer/manage/` and a nested address manage page and sees the
+  manage action; sam and kim get 403 and no action; a superuser outside the group gets 403; `no` refuses alex;
+  `--reset` keeps alex in the group.
+- **Tables (still open upstream):** #361 left `.table-responsive` out on purpose. With the pages on, the problem
+  showed again: at 390 px `/customer/manage/` was 612 px wide. The manage templates render bare tables with no class
+  key or wrapper, so the theme adds CSS (`crud_views_tabler.css`): below 768 px the content container of a page that
+  holds upstream's `#cv-ancestor-policy` table (every core and Guardian manage page) gets `overflow-x: auto`. The page
+  is 390 px wide again and the content scrolls on its own; as with the retired workflow rule of finding 5, the
+  scrollbar sits at the bottom of the content, not under each table. Test:
+  `tests/crud_views_tabler/test_theme.py::BareTableTests::test_manage_page_content_scrolls_below_768px`. The
+  suggested upstream change below (wrap the manage tables in `.table-responsive`) would let this rule go.
 - **Checked against #336, not addressed:** `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` still defaults to `"debug_only"`, and
   `ManageView._cv_manage_public()` still admits everybody while `DEBUG` is on (`src/crud_views/lib/views/manage.py`).
   The PR only adds the ancestor guard for nested manage pages and shows the ancestor policy on them.
@@ -642,7 +663,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   `.table-responsive` wrapper; at 390 px they push the page to about 610 px.
 - **Where:** `src/crud_views/lib/settings.py:27` (default), `src/crud_views/lib/views/manage.py:35`
   (`has_permission`); `src/crud_views/lib/viewset/__init__.py:323` adds the "manage" context action.
-- **What we did:** `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'no')` in
+- **What we did before #361:** `CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'no')` in
   `example/config/settings.py` (tested in `example/dashboard/tests.py`). The manage URLs stay registered and answer
   403 (`ManageView.has_permission`), even for a superuser, and the toolbar has no manage button unless the
   environment opts in. No CSS for the tables, since the pages are off.

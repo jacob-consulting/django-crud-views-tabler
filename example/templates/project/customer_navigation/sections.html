@@ -1,0 +1,7 @@
+{% if customer_nav.links %}
+<nav data-customer-navigation aria-label="Customer sections" class="nav nav-pills flex-wrap gap-1 mb-3">
+  {% for link in customer_nav.links %}
+  <a class="nav-link{% if link.active %} active{% endif %}" href="{{ link.url }}"{% if link.active %} aria-current="page"{% endif %}>{{ link.title }}</a>
+  {% endfor %}
+</nav>
+{% endif %}

@@ -1,0 +1,6 @@
+{% if customer_nav %}
+<div data-customer-identity class="d-flex align-items-center gap-2 mb-3">
+  <span class="avatar avatar-sm bg-{{ customer_nav.customer.avatar_color }}-lt">{{ customer_nav.customer.initials }}</span>
+  <span class="h3 mb-0">{{ customer_nav.customer.name }}</span>
+</div>
+{% endif %}

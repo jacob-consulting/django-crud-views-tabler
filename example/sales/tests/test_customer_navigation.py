@@ -249,6 +249,13 @@ class PageCoverageTests(NavigationAssertions, OrderTestCase):
         self.assertIn('data-transition="wf_confirm"', html)
         self.assertIn('name="csrfmiddlewaretoken"', html)
         self.assertIn(f'action="{reverse("order-workflow", kwargs=self.order_kwargs(self.order))}"', html)
+        self.assertEqual(html.count('data-transition="wf_confirm"'), 1)
+        self.assertEqual(html.count("Show code</a>"), 1)
+        self.assertEqual(len(re.findall(r'class="page-title"[^>]*>.*?badge bg-secondary-lt', html)), 1)
+        transitions = re.findall(r'<form\b[^>]*method="post"[^>]*>(.*?)</form>', html, re.S)
+        confirm = [form for form in transitions if 'data-transition="wf_confirm"' in form]
+        self.assertEqual(len(confirm), 1)
+        self.assertEqual(confirm[0].count('name="csrfmiddlewaretoken"'), 1)
         shipped = self.make_order(customer=self.mine, state=OrderState.SHIPPED)
         response = self.client.get(reverse("order-detail", kwargs=self.order_kwargs(shipped)))
         self.navigation(response, self.mine, active="Orders")

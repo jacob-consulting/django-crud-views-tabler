@@ -8,6 +8,7 @@ from unittest.mock import Mock
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.test import RequestFactory
+from django.template import Context, Template
 from django.urls import reverse
 from django.utils import timezone
 
@@ -17,6 +18,87 @@ from sales.models import Address, Customer, CustomerSubscription, OrderState
 from sales.permissions import can_on_customer, grant_customer
 from .test_customers import SalesTestCase
 from .test_orders import OrderTestCase
+
+from crud_views.lib.view.buttons import ChildContextButton, ParentContextButton, SiblingContextButton
+from crud_views.lib.view.context import ViewContext
+
+
+class ContextButtonContractTests(OrderTestCase):
+    """Characterize the pinned candidate on real reached views, without changing registration."""
+
+    item = '<a data-candidate href="{{ cv_url }}">{{ cv_action_label }}</a>'
+
+    def candidate(self, response, button):
+        view = response.context["view"]
+        data = button.get_context(ViewContext(view=view, object=getattr(view, "object", None)))
+        rendered = Template("{% load crud_views %}{% cv_render_context_action candidate %}").render(
+            Context({"view": view, "request": view.request, "candidate": data})
+        ) if data["cv_access"] else ""
+        return data, rendered
+
+    def test_sibling_candidate_matches_change_only_destination_access(self):
+        user = get_user_model().objects.create_user(username="button-change-only")
+        user.user_permissions.add(*Permission.objects.filter(
+            content_type__app_label="sales", codename__in=("add_address", "view_order")))
+        grant_customer(user, self.mine, actions=("change",))
+        self.client.force_login(user)
+        response = self.client.get(reverse("address-create", kwargs={"customer_pk": self.mine.pk}))
+        self.assertEqual(response.status_code, 200)
+        data, rendered = self.candidate(response, SiblingContextButton(
+            key="orders", sibling_name="order", template_code=self.item))
+        denied = self.client.get(data["cv_url"])
+        self.assertEqual(denied.status_code, 403)
+        self.assertEqual(customer_navigation(response.context)["links"], [])
+        parent, parent_html = self.candidate(response, ParentContextButton(
+            key="customer", key_target="detail", template_code=self.item))
+        self.assertFalse(parent["cv_access"])
+        self.assertEqual(parent_html, "")
+        self.assertEqual(rendered, "")
+
+    def test_child_and_parent_candidates_match_granted_roles_and_missing_reads(self):
+        cases = [(name, self.world["users"][name]) for name in ("alex", "sam", "kim")]
+        permissions = ("view_order", "view_address", "view_customersubscription")
+        for missing in permissions:
+            user = get_user_model().objects.create_user(username=f"button-{missing}")
+            user.user_permissions.add(*Permission.objects.filter(
+                content_type__app_label="sales", codename__in=[p for p in permissions if p != missing]))
+            grant_customer(user, self.mine, actions=("view",))
+            cases.append((missing, user))
+        for actor, user in cases:
+            self.client.force_login(user)
+            for customer in (self.mine, self.other):
+                with self.subTest(actor=actor, customer=customer.pk):
+                    response = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk}))
+                    if response.status_code == 403:
+                        self.assertNotContains(response, "data-customer-navigation", status_code=403)
+                        continue
+                    self.assertEqual(response.status_code, 200)
+                    links = {link["url"] for link in customer_navigation(response.context)["links"]}
+                    for child in ("order", "address", "subscription"):
+                        data, rendered = self.candidate(response, ChildContextButton(
+                            key=child, child_name=child, template_code=self.item))
+                        self.assertEqual(data["cv_access"], data["cv_url"] in links)
+                        self.assertEqual(bool(rendered), data["cv_access"])
+                        destination = self.client.get(data["cv_url"])
+                        self.assertEqual(destination.status_code, 200 if data["cv_access"] else 403)
+                        if data["cv_access"]:
+                            parent, html = self.candidate(destination, ParentContextButton(
+                                key="customer", key_target="detail", template_code=self.item))
+                            self.assertTrue(parent["cv_access"])
+                            self.assertIn(reverse("customer-detail", kwargs={"pk": customer.pk}), html)
+
+    def test_exact_route_activity_is_not_section_activity(self):
+        self.login()
+        order = self.make_order(customer=self.mine)
+        for action in ("detail", "update", "workflow"):
+            response = self.client.get(reverse(f"order-{action}", kwargs=self.order_kwargs(order)))
+            self.assertEqual(response.status_code, 200)
+            data, rendered = self.candidate(response, SiblingContextButton(
+                key="orders", sibling_name="order", template_code=self.item))
+            self.assertFalse(data["cv_is_active"])
+            self.assertIn(data["cv_url"], rendered)
+            link = next(link for link in customer_navigation(response.context)["links"] if link["title"] == "Orders")
+            self.assertTrue(link["active"])
 
 
 class NavigationAssertions:

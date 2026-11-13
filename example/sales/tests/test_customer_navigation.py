@@ -11,6 +11,7 @@ from django.contrib.auth.models import Permission
 from django.conf import settings
 from django.test import RequestFactory, override_settings
 from django.template import Context, Template
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
@@ -146,17 +147,20 @@ class ContextButtonContractTests(OrderTestCase):
 class NavigationAssertions:
     """Assertions scoped to the added body region, independent of document titles."""
 
+    navigation_layout = "header"
+
     def navigation(self, response, customer, active=None, titles=None):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         header = html.split('<div class="page-header d-print-none">', 1)[1].split('<main ', 1)[0]
-        match = re.search(r'<section\b[^>]*data-customer-navigation[^>]*>(.*?)</section>', header, re.S)
-        self.assertIsNotNone(match)
-        body = match.group(1)
-        self.assertEqual(body.count("data-customer-identity"), 1)
-        self.assertIn(escape(customer.name), body)
-        self.assertIn(f">{escape(customer.initials)}</span>", body)
-        self.assertLess(header.index("</section>"), header.index('class="row g-2 align-items-center"'))
+        self.assertEqual(html.count("data-customer-identity"), 1)
+        identity = re.search(r'<div\b[^>]*data-customer-identity[^>]*>(.*?)</div>', header, re.S)
+        self.assertIsNotNone(identity)
+        self.assertIn(escape(customer.name), identity.group(1))
+        self.assertIn(f">{escape(customer.initials)}</span>", identity.group(1))
+        self.assertLess(identity.end(), header.index('class="row g-2 align-items-center"'))
+        match = re.search(r'<nav\b[^>]*data-customer-navigation[^>]*>(.*?)</nav>', html, re.S)
+        body = match.group(1) if match else ""
         links = [(unescape(url), title) for url, title in
                  re.findall(r'<a\b[^>]*href="([^"]+)"[^>]*>([^<]+)</a>', body)]
         destinations = {
@@ -166,14 +170,31 @@ class NavigationAssertions:
             "Subscriptions": reverse("subscription-list", kwargs={"customer_pk": customer.pk}),
         }
         titles = list(destinations) if titles is None else titles
+        self.assertEqual(html.count("data-customer-navigation"), int(bool(titles)))
         self.assertEqual(links, [(destinations[title], title) for title in titles])
         self.assertEqual(body.count('aria-current="page"'), int(active is not None))
         if active:
             self.assertRegex(body, rf'<a[^>]*aria-current="page"[^>]*>{active}</a>')
         if titles:
-            self.assertLess(body.index("data-customer-identity"), body.index("<nav"))
+            self.assertIsNotNone(match)
+            self.assertIn('aria-label="Customer sections"', match.group(0))
+            self.assertIn("flex-wrap", match.group(0))
+            self.assertNotIn("data-customer-identity", match.group(0))
+            if self.navigation_layout == "header":
+                self.assertIn(match.group(0), header)
+                self.assertLess(header.index("data-customer-identity"), header.index("data-customer-navigation"))
+                self.assertLess(header.index("</nav>"), header.index('class="row g-2 align-items-center"'))
+            else:
+                self.assertNotIn("data-customer-navigation", header)
+                main = html.split("<main ", 1)[1].split("</main>", 1)[0]
+                card = re.search(r'<div data-customer-navigation-card class="card mb-3">\s*'
+                                 r'<div class="card-header">(.*?)</div>\s*</div>', main, re.S)
+                self.assertIsNotNone(card)
+                self.assertIn(match.group(0), card.group(1))
+                self.assertEqual(main.count("data-customer-navigation-card"), 1)
         else:
-            self.assertNotIn("<nav", body)
+            self.assertIsNone(match)
+            self.assertNotIn("data-customer-navigation-card", html)
         return links
 
     def no_navigation(self, response):
@@ -478,7 +499,49 @@ class NavigationPreservationTests(NavigationAssertions, OrderTestCase):
         self.no_navigation(denied)
 
 
-class CustomerNavigationTests(SalesTestCase):
+class CustomerNavigationTests(NavigationAssertions, SalesTestCase):
+    def test_identity_and_sections_are_independent(self):
+        self.login("sam")
+        customer = self.granted.first()
+        response = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk}))
+        self.navigation(response, customer, active="Details")
+        self.assertTemplateUsed(response, "project/customer_navigation/identity.html")
+        self.assertTemplateUsed(response, "project/customer_navigation/sections.html")
+
+    def test_partials_render_data_independently_and_escape_identity(self):
+        customer = self.granted.first()
+        customer.name = '<script>alert("identity")</script> & Coffee'
+        data = {"customer_nav": {"customer": customer, "links": [
+            {"title": "Details", "url": "/customer/1/detail/", "active": True}]}}
+        identity = render_to_string("project/customer_navigation/identity.html", data)
+        sections = render_to_string("project/customer_navigation/sections.html", data)
+        self.assertIn(escape(customer.name), identity)
+        self.assertNotIn(customer.name, identity)
+        self.assertNotIn("data-customer-navigation", identity)
+        self.assertNotIn("data-customer-identity", sections)
+        self.assertIn('aria-current="page"', sections)
+        self.assertIn('href="/customer/1/detail/"', sections)
+        data["customer_nav"]["links"] = []
+        self.assertIn("data-customer-identity", render_to_string("project/customer_navigation/identity.html", data))
+        self.assertEqual(render_to_string("project/customer_navigation/sections.html", data).strip(), "")
+
+    def test_page_resolves_navigation_once(self):
+        self.login("sam")
+        # Patch the tag node's resolved callable, not a disconnected module alias.
+        from django.template.library import SimpleNode
+        original = SimpleNode.render
+        calls = []
+
+        def observe(node, context):
+            if node.func is customer_navigation:
+                calls.append(node)
+            return original(node, context)
+
+        with patch.object(SimpleNode, "render", observe):
+            response = self.client.get(reverse("customer-detail", kwargs={"pk": self.granted.first().pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(calls), 1)
+
     def test_detail_links_follow_same_customer(self):
         customer = self.granted.filter(kind="wholesale").first()
         grant_customer(self.sam, customer, actions=("view",))
@@ -490,17 +553,12 @@ class CustomerNavigationTests(SalesTestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         header = html.split('<div class="page-header d-print-none">', 1)[1].split('<main ', 1)[0]
-        match = re.search(r'<section\b[^>]*data-customer-navigation[^>]*>(.*?)</section>', header, re.S)
+        links = self.navigation(response, customer, active="Details")
+        match = re.search(r'<nav\b[^>]*data-customer-navigation[^>]*>(.*?)</nav>', header, re.S)
         self.assertIsNotNone(match)
-        navigation = match.group(1)
-        self.assertEqual(navigation.count("data-customer-identity"), 1)
-        self.assertIn(escape(customer.name), navigation)
-        self.assertIn(f">{customer.initials}</span>", navigation)
-        self.assertLess(navigation.index("data-customer-identity"), navigation.index("<nav"))
-        self.assertLess(header.index("</section>"), header.index('class="row g-2 align-items-center"'))
+        navigation = match.group(0)
         self.assertIn('aria-label="Customer sections"', navigation)
         self.assertIn("flex-wrap", navigation)
-        links = re.findall(r'<a\b[^>]*href="([^"]+)"[^>]*>([^<]+)</a>', navigation)
         expected = [
             (detail_url, "Details"),
             (reverse("order-list", kwargs={"customer_pk": customer.pk}), "Orders"),

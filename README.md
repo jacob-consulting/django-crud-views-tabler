@@ -109,8 +109,9 @@ is the moon/sun toggle. A choice stays in the browser's `localStorage` and wins 
 ## Settings from the environment
 
 `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` (`1`/`0`, default `1`), `DJANGO_ALLOWED_HOSTS` (comma-separated) and
-`CRUD_VIEWS_MANAGE_VIEWS_ENABLED` (`no` by default: crud_views' manage pages list who holds which permission, and
-upstream's `debug_only` would open them to every signed-in user while `DEBUG` is on). The built-in secret key is for
+`CRUD_VIEWS_MANAGE_VIEWS_ENABLED` (`yes` by default: crud_views' manage pages list who holds which permission, so
+only active members of the `CRUD_VIEWS_MANAGE` group may open them, whatever `DEBUG` says; the seed makes `alex` the
+only member. `no` closes them for everyone, `debug_only` also requires `DEBUG`). The built-in secret key is for
 local development only.
 
 ## Tests

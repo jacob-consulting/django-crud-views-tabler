@@ -657,9 +657,15 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   scrollbar sits at the bottom of the content, not under each table. Test:
   `tests/crud_views_tabler/test_theme.py::BareTableTests::test_manage_page_content_scrolls_below_768px`. The
   suggested upstream change below (wrap the manage tables in `.table-responsive`) would let this rule go.
-- **Checked against #336, not addressed:** `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` still defaults to `"debug_only"`, and
-  `ManageView._cv_manage_public()` still admits everybody while `DEBUG` is on (`src/crud_views/lib/views/manage.py`).
-  The PR only adds the ancestor guard for nested manage pages and shows the ancestor policy on them.
+- **Checked against #336 (before #361), not addressed then:** `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` still defaulted to
+  `"debug_only"`, and `ManageView._cv_manage_public()` still admitted everybody while `DEBUG` was on. That PR only
+  added the ancestor guard for nested manage pages and showed the ancestor policy on them. #361 removed
+  `_cv_manage_public()`.
+- **Existing databases:** `seed_demo` refuses when the demo accounts exist, so a database seeded before this change
+  gets the (empty) group from `cv_manage_group` but not alex's membership: nobody sees the manage pages until
+  `task seed:reset` (or alex is added to `CRUD_VIEWS_MANAGE` in the admin). This fails closed.
+
+The original report, against `cf2bfc0f` (line numbers below are from then):
 
 - **What happened:** `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` defaults to `"debug_only"`, which opens every manage page to
   any signed-in user while `DEBUG` is on, whatever their permissions. On a Guardian ViewSet that page lists every
@@ -875,8 +881,8 @@ Features from the spec's feature map that were dropped or reduced, with the reas
   for ~30 products.
 - **"Restock" action view:** only "Mark default address" shows an `ActionView`; a restock button would duplicate it.
 - **Category-driven sidebar:** categories (ordered, up/down) drive the product filter, not the sidebar.
-- **Guardian manage page:** off by default (`CRUD_VIEWS_MANAGE_VIEWS_ENABLED = "no"`, #25). Set the environment
-  variable `CRUD_VIEWS_MANAGE_VIEWS_ENABLED=debug_only` locally to see it.
+- **Guardian manage page:** shown since #361 (finding 25), but only to `alex`, the seeded manage-group member;
+  `CRUD_VIEWS_MANAGE_VIEWS_ENABLED=no` hides it again.
 - **Upstream's tooltip-per-location recipe:** shown only as the theme's own wrapper (#2).
 
 ## Known rough edges

@@ -684,15 +684,19 @@ class ManageViewsTests(TestCase):
         self.assertEqual(self.client.get(nested).status_code, 200)
 
     def test_sam_and_kim_are_refused(self):
-        for username in ("sam", "kim"):
+        from sales.models import Customer
+
+        nested = reverse("address-manage", kwargs={"customer_pk": Customer.objects.first().pk})
+        for username, list_url in (("sam", "/customer/"), ("kim", "/batch/")):
             with self.subTest(username):
                 self.assertEqual(self.get(username, "/customer/manage/").status_code, 403)
-        self.client.force_login(self.users["sam"])
-        self.assertNotContains(self.client.get("/customer/"), 'href="/customer/manage/"')
+                self.assertEqual(self.client.get(nested).status_code, 403)
+                self.assertNotContains(self.client.get(list_url), "/manage/")
 
     def test_superuser_outside_the_group_is_refused(self):
         self.client.force_login(User.objects.create_superuser("root", password="x"))
         self.assertEqual(self.client.get("/customer/manage/").status_code, 403)
+        self.assertNotContains(self.client.get("/customer/"), "/manage/")
 
     def test_no_mode_refuses_alex(self):
         # crud_views reads its settings once at import, so the value is patched on its settings object.

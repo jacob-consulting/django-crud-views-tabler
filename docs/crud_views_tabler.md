@@ -344,8 +344,8 @@ views, resources, card views, custom form and action views, and the typeahead an
 before the demo's hand-over checked every page at 1280/1400 px and 390 px, light and dark, with no console errors.
 Still not covered:
 
-- The **manage** views (off in the demo, finding #25; their tables
-  are not responsive) and the **language selector**.
+- The **language selector**. (The **manage** views are on since upstream #361, for alex only; theme CSS scrolls their
+  content below 768 px, finding #25.)
 - A Tabler-style cancel button.
 - The datetimepicker's own look (finding #32).
 

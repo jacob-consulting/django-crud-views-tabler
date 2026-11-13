@@ -7,6 +7,7 @@
   <div class="page-wrapper">
     <div class="page-header d-print-none">
       <div class="container-xl">
+        {% block page_header_before %}{% endblock %}
         <div class="row g-2 align-items-center">
           {# Below md the title takes the whole row and the actions wrap below it, instead of squeezing the title. #}
           <div class="col-12 col-md">

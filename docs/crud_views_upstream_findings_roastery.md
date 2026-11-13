@@ -569,6 +569,19 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 23. Child viewsets under a Guardian parent need their own gate; no page tabs for children
 
+- **Isolated downstream experiment (2026-11-13, phase 06.33 / issue #363):** the private
+  `customer_navigation` tag in the existing `acme_nav` library builds ordinary same-customer links using
+  concrete destination access hooks and one customer read check for the three child lists. The project page
+  computes it once before rendering the body. An empty `page_header_before` block in the downstream Tabler
+  shell places compact escaped identity and wrapping links above the complete heading/actions row.
+  Customer detail uses a Details heading while preserving the document title, summary, properties and Show code.
+  No upstream library, ancestor guard, route or public navigation API changes. This first slice participates only
+  on customer detail; broader approved pages and human comparison follow in later plans. It remains on
+  `experiment/customer-section-navigation-06-33`; no merge or upstream adoption is implied.
+  Tracer verification: granted-manager same-customer link-following integration passed (1 test, 1.461s);
+  shared shell/theme suite passed (83 tests, 3.62s), crispy pack passed (34 tests, 0.17s), all exit 0.
+  Pytest uses the existing serial locked runner; no worker dependency was added.
+
 - **Partly implemented upstream:** [PR #336](https://github.com/jacob-consulting/django-crud-views/pull/336) (phase 06.18, merge
   `fe9d5d2e`, merged 2026-11-09; no linked issue). Ancestor authorization: every nested request
   resolves the ancestors in its URL and checks their permissions before the endpoint's own work, so "a plain child

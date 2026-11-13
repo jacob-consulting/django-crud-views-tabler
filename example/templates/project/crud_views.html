@@ -1,7 +1,26 @@
 {% extends "crud_views_tabler/page.html" %}
-{% load showcode static tabler %}
+{% load showcode static tabler acme_nav %}
 {# CRUD_VIEWS_EXTENDS: the project's own layer on top of the theme's page: the demo's "Show code" panel. #}
 {% block extra_head %}{{ block.super }}<link rel="stylesheet" href="{% url 'pygments-css' %}" />{% endblock %}
+{% block body %}{% customer_navigation as customer_nav %}{{ block.super }}{% endblock %}
+{% block page_header_before %}
+{% if customer_nav %}
+<section data-customer-navigation class="mb-3">
+  <div data-customer-identity class="d-flex align-items-center gap-2 mb-3">
+    <span class="avatar avatar-sm bg-{{ customer_nav.customer.avatar_color }}-lt">{{ customer_nav.customer.initials }}</span>
+    <span class="h3 mb-0">{{ customer_nav.customer.name }}</span>
+  </div>
+  {% if customer_nav.links %}
+  <nav aria-label="Customer sections" class="nav nav-pills flex-wrap gap-1">
+    {% for link in customer_nav.links %}
+    <a class="nav-link{% if link.active %} active{% endif %}" href="{{ link.url }}"{% if link.active %} aria-current="page"{% endif %}>{{ link.title }}</a>
+    {% endfor %}
+  </nav>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
+{% block page_title %}{% if customer_nav.section == "Details" %}Details{% else %}{{ block.super }}{% endif %}{% endblock %}
 {% block actions %}
 {{ block.super }}
 {% code_panel_url as code_url %}

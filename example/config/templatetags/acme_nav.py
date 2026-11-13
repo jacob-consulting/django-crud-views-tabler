@@ -89,3 +89,34 @@ def acme_menu(context) -> dict:
             sections.append({"title": section.title, "icon": section.icon, "links": links,
                              "active": any(link["active"] for link in links)})
     return {"dashboard": _link(DASHBOARD, url_name, current), "sections": sections}
+
+
+@register.simple_tag(takes_context=True)
+def customer_navigation(context):
+    """Private full-page customer navigation; endpoint authorization stays in the views."""
+    request = context["request"]
+    match = request.resolver_match
+    if match is None or match.url_name != "customer-detail":
+        return None
+
+    # Local imports keep the menu library independent of view registration at startup.
+    from sales.permissions import can_on_customer
+    from sales.views.addresses import AddressListView
+    from sales.views.customers import CustomerDetailView
+    from sales.views.orders import OrderListView
+    from sales.views.subscriptions import SubscriptionListView
+
+    customer = context["view"].object
+    user = request.user
+    can_read_customer = can_on_customer(user, "view", customer)
+    links = []
+    if CustomerDetailView.cv_has_access(user, customer):
+        links.append({"title": "Details", "url": reverse("customer-detail", kwargs={"pk": customer.pk}), "active": True})
+    for title, name, destination in (
+        ("Orders", "order-list", OrderListView),
+        ("Addresses", "address-list", AddressListView),
+        ("Subscriptions", "subscription-list", SubscriptionListView),
+    ):
+        if can_read_customer and destination.cv_has_access(user, None):
+            links.append({"title": title, "url": reverse(name, kwargs={"customer_pk": customer.pk}), "active": False})
+    return {"customer": customer, "section": "Details", "links": links}

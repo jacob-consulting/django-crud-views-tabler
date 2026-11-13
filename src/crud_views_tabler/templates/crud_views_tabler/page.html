@@ -9,7 +9,7 @@
 {% block subtitle %}{% block cv_paragraph %}<div class="page-subtitle mt-1">{% cv_paragraph %}</div>{% endblock cv_paragraph %}{% endblock %}
 {% block actions %}{% block cv_context %}{% cv_context_actions object %}{% endblock cv_context %}{% endblock %}
 {% block messages %}{% cv_messages %}{% endblock %}
-{% block content %}
+{% block content %}{% block cv_content_before %}{% endblock cv_content_before %}
 {% block cv_filter %}{% endblock cv_filter %}
 {% block cv_content %}{% endblock cv_content %}
 {% cv_config %}

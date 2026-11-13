@@ -46,11 +46,26 @@ class CardPageCoverageTests(SelectedLayout, navigation.PageCoverageTests):
     navigation_layout = "card"
 
 
-class HeaderNavigationAccessTests(SelectedLayout, navigation.NavigationAccessTests):
+class SelectedAccessLayout(SelectedLayout):
+    def test_change_only_with_child_read_cannot_link_to_denied_order_list(self):
+        self.actor("layout-change-only", ["add_address", "change_address", "view_order"],
+                   self.mine, actions=("change",))
+        for name, kwargs in (
+            ("address-create", {"customer_pk": self.mine.pk}),
+            ("address-update", {"customer_pk": self.mine.pk, "pk": self.mine.addresses.first().pk}),
+        ):
+            response = self.client.get(reverse(name, kwargs=kwargs))
+            self.navigation(response, self.mine, titles=[])
+        denied = self.client.get(reverse("order-list", kwargs={"customer_pk": self.mine.pk}))
+        self.assertEqual(denied.status_code, 403)
+        self.no_navigation(denied)
+
+
+class HeaderNavigationAccessTests(SelectedAccessLayout, navigation.NavigationAccessTests):
     navigation_layout = "header"
 
 
-class CardNavigationAccessTests(SelectedLayout, navigation.NavigationAccessTests):
+class CardNavigationAccessTests(SelectedAccessLayout, navigation.NavigationAccessTests):
     navigation_layout = "card"
 
 
@@ -146,8 +161,15 @@ class TemplateLayoutTests(navigation.NavigationAssertions, navigation.OrderTestC
         view = response.context["view"]
         template = "crud_views_tabler/page.html"
         source = get_template(template).template.source
-        original = render_to_string(template, {"view": view}, request=view.request)
+        # CSRF masks vary on every render; compare all output except that legitimate random mask.
+        def rendered():
+            html = render_to_string(template, {"view": view}, request=view.request)
+            html = re.sub(r'name="csrfmiddlewaretoken" value="[^"]+"',
+                          'name="csrfmiddlewaretoken" value="MASK"', html)
+            return re.sub(r'data-csrf-token="[^"]+"', 'data-csrf-token="MASK"', html)
+
+        original = rendered()
         without_seam = source.replace("{% block cv_content_before %}{% endblock cv_content_before %}", "")
         with template_sources({template: without_seam}):
-            self.assertEqual(render_to_string(template, {"view": view}, request=view.request), original)
+            self.assertEqual(rendered(), original)
         self.no_navigation(response)

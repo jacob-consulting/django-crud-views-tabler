@@ -1,0 +1,12 @@
+{% extends "project/customer_navigation/header.html" %}
+{% block customer_sections %}{% endblock %}
+{% block cv_content_before %}
+{{ block.super }}
+{% if customer_nav.links %}
+<div data-customer-navigation-card class="card mb-3">
+  <div class="card-header">
+    {% include "project/customer_navigation/sections.html" %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

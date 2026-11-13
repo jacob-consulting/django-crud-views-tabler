@@ -881,6 +881,27 @@ the experiment. This is a bounded reason to preserve the helper, not a proposal 
 The initial equivalence probe failed on the rendered denied link; the committed characterization and focused
 22-test suite pass. These are request/rendering checks; refreshed browser evaluation remains separate.
 
+### Experimental customer navigation: project composition seam (2026-11-13)
+
+`project/crud_views.html` now selects `project/customer_navigation/header.html` through one literal extends.
+The project's existing asset, action and Show code layer moved into that header composition; escaped identity
+and section navigation are separate partials and blocks. The helper runs once per full-page render and stays
+unchanged. Empty links keep identity without rendering a navigation landmark or navigation card.
+
+The alternate `card.html` extends that same project layer, suppresses only header sections, and includes the
+same sections partial inside a standalone card header in main. Identity stays above the page heading. This
+needs one empty downstream theme insertion block, `cv_content_before`, immediately before `cv_filter` and
+`cv_content` in `crud_views_tabler/page.html`. Existing forms and multi-card order content are not wrapped or
+copied. No Python placement option, new CSS, JavaScript, dependency or upstream change is involved.
+
+Maintenance cost is four small project templates, a one-line selector and one theme block whose position must
+remain before filters/content when the theme evolves. Both template selections reuse the thirteen-route,
+access and preservation tests, including denied destinations, custom order blocks/CSRF, Show code, empty links,
+modal exclusions and real form/workflow behavior. The test loader shadows only the selector and restores
+settings/template engines afterward; the empty theme seam preserves nonparticipating output. Shared theme
+and crispy suites also exercise the package surface. This proves composition and request behavior, not user
+preference: fresh desktop/mobile comparison and the maintainer's outcome remain pending.
+
 Left as they are, each more than a quick fix or outside this repo:
 
 - The workflow page has no card frame, and the datetimepicker keeps its blue look (#5, #32).

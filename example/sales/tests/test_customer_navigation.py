@@ -170,7 +170,7 @@ class NavigationAssertions:
             "Subscriptions": reverse("subscription-list", kwargs={"customer_pk": customer.pk}),
         }
         titles = list(destinations) if titles is None else titles
-        self.assertEqual(html.count("data-customer-navigation"), int(bool(titles)))
+        self.assertEqual(len(re.findall(r"\bdata-customer-navigation(?=[\s>])", html)), int(bool(titles)))
         self.assertEqual(links, [(destinations[title], title) for title in titles])
         self.assertEqual(body.count('aria-current="page"'), int(active is not None))
         if active:

@@ -1,5 +1,85 @@
 # Customer navigation comparison — Phase 06.33
 
+## Two template placements — Plan 04 handoff
+
+Plan 04 adds two compositions, selected **only** by the literal extends target in
+`example/templates/project/crud_views.html`. The committed default is
+`{% extends "project/customer_navigation/header.html" %}`. The alternative is
+`{% extends "project/customer_navigation/card.html" %}`. Both use the same private helper, identity and section
+partials. Header places sections below identity and above heading/actions; card leaves identity there and
+places sections in a standalone card header before filters/content. Existing content cards stay separate.
+
+The following is the later live comparison procedure, not a record of browser checks performed in Plan 04.
+Use one experiment URL sequentially under the named layouts:
+http://127.0.0.1:9000/customer/4/detail/ beside independent baseline
+http://localhost:8633/customer/4/detail/. Earlier Plan 03 screenshots/observations and port 8634 references
+below are historical. Port 9000 and the current local server records govern the new comparison.
+
+From the experiment checkout, first verify branch `experiment/customer-section-navigation-06-33`, a clean
+selector, and its literal default. Preserve the exact contents before changing anything:
+
+```bash
+git diff --exit-code -- example/templates/project/crud_views.html
+cat example/templates/project/crud_views.html
+cp example/templates/project/crud_views.html .local/customer-navigation-06-33/selector-before-comparison.html
+```
+
+Inspect the header variant first. Then change only the extends target and show the one-line diff:
+
+```bash
+sed -i 's@project/customer_navigation/header.html@project/customer_navigation/card.html@' example/templates/project/crud_views.html
+git diff -- example/templates/project/crud_views.html
+```
+
+There is no query, environment, settings or Python placement switch. Django's default cached loader can retain
+the compiled selector, and the owned server uses `--noreload`: editing the file alone does not prove which
+variant a browser receives. Before each comparison, read `.local/customer-navigation-06-33/server.json`.
+Verify its PID against `/proc/<pid>/cwd`, `/proc/<pid>/cmdline`, field 22 of `/proc/<pid>/stat` and
+`ss -ltnp '( sport = :9000 )'`. All must identify this experiment's direct `.venv/bin/python` process,
+`example/manage.py runserver 127.0.0.1:9000 --noreload` and recorded start ticks. Do not signal anything on a
+mismatch. When reload is needed, terminate only that verified PID, confirm its listener has disappeared,
+then restart from the same experiment cwd with the existing environment/data:
+
+```bash
+.venv/bin/python example/manage.py runserver 127.0.0.1:9000 --noreload
+```
+
+For detached operation retain the existing log destination, record the new PID/start ticks/cwd/command/revision
+in the adjacent `server.json`, and verify the listener and login GET. Never reset or reseed the database.
+Leave baseline localhost:8633 running independently; its own server.json is a separate process identity.
+After reload, authenticate with the documented synthetic demo accounts and verify the *served* selection:
+header has one `data-customer-navigation` landmark before the heading; card has it inside main under
+`data-customer-navigation-card`, with one identity remaining in the page header. Check all thirteen routes,
+roles and desktop/narrow widths and record variant, route, viewport, actor, revision, selector diff, timestamp
+and cache/process verification. The automated test matrix is not browser evidence.
+
+Restore the exact saved selector after comparison, check that it matches the committed header default, and
+repeat the verified owned-process restart/cache check so the served page also returns to header:
+
+```bash
+cp .local/customer-navigation-06-33/selector-before-comparison.html example/templates/project/crud_views.html
+git diff --exit-code -- example/templates/project/crud_views.html
+cat example/templates/project/crud_views.html
+```
+
+If a pre-existing selector edit is present, preserve it and reconcile it before starting; do not overwrite it
+or assume a stale saved copy is current. Do not commit temporary layout selections. The default source and
+runtime restoration, fresh browser observations, actual maintainer feedback and issue outcome belong to Plan 05.
+
+Automated verification from the experiment uses the existing environment only:
+
+```bash
+uv run --no-sync python example/manage.py test sales.tests.test_customer_navigation_layouts sales.tests.test_customer_navigation --parallel 2
+uv run --no-sync --group test pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
+uv run --no-sync --group test pytest tests/crispy_tabler
+```
+
+Django uses two workers; the locked pytest environment has no xdist and remains serial. Tests override only
+the selector through Django's [locmem loader](https://docs.djangoproject.com/en/6.0/ref/templates/api/#django.template.loaders.locmem.Loader)
+with filesystem/app loaders retained, and use
+[override_settings](https://docs.djangoproject.com/en/6.0/topics/testing/tools/#overriding-settings) for engine/cache restoration.
+The test override is not a production placement setting.
+
 ## Isolation established 2026-11-13
 
 Product work belongs only to `/home/alex/projects/workspaces/customer-navigation-06-33/tabler-test`, branch

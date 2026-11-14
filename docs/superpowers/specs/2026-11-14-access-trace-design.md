@@ -3,6 +3,9 @@
 **Date:** 2026-11-14
 **Status:** approved by the maintainer. Upstream issue:
 [django-crud-views#370](https://github.com/jacob-consulting/django-crud-views/issues/370).
+**Mockup:** [`2026-11-14-access-trace-mockup.html`](2026-11-14-access-trace-mockup.html), next to this file: the Access
+check card on the manage page and the command's output, with the tabler-test demo's data (self-contained apart
+from Tabler 1.6.1 CSS from jsDelivr; open it in a browser).
 **Depends on:** [#366](https://github.com/jacob-consulting/django-crud-views/issues/366) (structured manage page;
 design in [`2026-11-14-manage-page-design.md`](2026-11-14-manage-page-design.md)). References such as "#366 D-27"
 point at that design's decisions.

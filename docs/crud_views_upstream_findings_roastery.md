@@ -86,7 +86,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
 | 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | **DONE** upstream #362 / PR #364; order transitions show their variant and icon; theme registers `workflow:transition-<variant>` |
 | 34 | [Compact formsets reject custom `Select` subclasses](#34-compact-formsets-reject-custom-select-subclasses) | cosmetic | **DONE** upstream #349 / PR #350; order lines use compact mode with the marked `ProductSelect` |
-| 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | open upstream [#366](https://github.com/jacob-consulting/django-crud-views/issues/366) (design approved, gsd-handover D-01–D-16); nothing downstream yet |
+| 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | open upstream [#366](https://github.com/jacob-consulting/django-crud-views/issues/366) (design approved, gsd-handover D-01–D-16 plus addendum D-17–D-24); nothing downstream yet |
 
 ---
 
@@ -868,8 +868,10 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
 ### 35. The manage page is one flat column of tables
 
 - **Status: open upstream** — [issue #366](https://github.com/jacob-consulting/django-crud-views/issues/366),
-  filed 2026-11-13 from a design session; its `gsd-handover` section records the approved decisions (D-01–D-16) and
-  the first comment carries the approved full-page mockup.
+  filed 2026-11-13 from a design session; its `gsd-handover` section records the approved decisions (D-01–D-16), an
+  addendum comment of 2026-11-14 adds D-17–D-24 (system checks, ViewSet identity, hierarchy, URL names, a Presentation
+  card with context-button targets, short permission/group badges, "?" links to a new `reference/manage` docs page),
+  and the first comment carries the approved full-page mockup (`page-v12.html`).
 - **What happened:** `/customer/manage/` (as alex, after #361) is about 10,800 px tall with 216 table rows: one
   `<h3>`, twelve `<h4>`, every section a striped table, separated by `<br><hr><br>`. Most of it is the per-view
   key/value dump, where most rows are `None` or the library's stock value. Values print as raw Python. Who holds which

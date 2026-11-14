@@ -871,7 +871,8 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
   filed 2026-11-13 from a design session. On 2026-11-14 the design was reviewed against upstream `4510cee9` and the
   issue body was overwritten with the complete result: its `gsd-handover` section records D-01–D-30, the earlier
   addendum comment is marked superseded, and the first comment carries the approved full-page mockup
-  (`page-v13.html`). The same text is `docs/superpowers/specs/2026-11-14-manage-page-design.md` here. The user form
+  (`page-v13.html`). The same text and the mockup live upstream in `superpowers/specs/2026-11-14-manage-page-design.md` and
+  `2026-11-14-manage-page-mockup.html` (moved there from this repo on 2026-11-14). The user form
   and access trace (D-29) were handed to [#370](https://github.com/jacob-consulting/django-crud-views/issues/370).
 - **What happened:** `/customer/manage/` (as alex, after #361) is about 10,800 px tall with 216 table rows: one
   `<h3>`, twelve `<h4>`, every section a striped table, separated by `<br><hr><br>`. Most of it is the per-view

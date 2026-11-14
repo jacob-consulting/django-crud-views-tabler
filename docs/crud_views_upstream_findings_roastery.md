@@ -86,7 +86,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
 | 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | **DONE** upstream #362 / PR #364; order transitions show their variant and icon; theme registers `workflow:transition-<variant>` |
 | 34 | [Compact formsets reject custom `Select` subclasses](#34-compact-formsets-reject-custom-select-subclasses) | cosmetic | **DONE** upstream #349 / PR #350; order lines use compact mode with the marked `ProductSelect` |
-| 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | open upstream [#366](https://github.com/jacob-consulting/django-crud-views/issues/366) (design approved, gsd-handover D-01–D-16 plus addendum D-17–D-24); nothing downstream yet |
+| 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | open upstream [#366](https://github.com/jacob-consulting/django-crud-views/issues/366) (design approved and revised after a code review, gsd-handover D-01–D-30 in the issue body); nothing downstream yet |
 
 ---
 
@@ -868,10 +868,11 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
 ### 35. The manage page is one flat column of tables
 
 - **Status: open upstream** — [issue #366](https://github.com/jacob-consulting/django-crud-views/issues/366),
-  filed 2026-11-13 from a design session; its `gsd-handover` section records the approved decisions (D-01–D-16), an
-  addendum comment of 2026-11-14 adds D-17–D-24 (system checks, ViewSet identity, hierarchy, URL names, a Presentation
-  card with context-button targets, short permission/group badges, "?" links to a new `reference/manage` docs page),
-  and the first comment carries the approved full-page mockup (`page-v12.html`).
+  filed 2026-11-13 from a design session. On 2026-11-14 the design was reviewed against upstream `4510cee9` and the
+  issue body was overwritten with the complete result: its `gsd-handover` section records D-01–D-30, the earlier
+  addendum comment is marked superseded, and the first comment carries the approved full-page mockup
+  (`page-v13.html`). The same text is `docs/superpowers/specs/2026-11-14-manage-page-design.md` here. The user form
+  and access trace (D-29) were handed to [#370](https://github.com/jacob-consulting/django-crud-views/issues/370).
 - **What happened:** `/customer/manage/` (as alex, after #361) is about 10,800 px tall with 216 table rows: one
   `<h3>`, twelve `<h4>`, every section a striped table, separated by `<br><hr><br>`. Most of it is the per-view
   key/value dump, where most rows are `None` or the library's stock value. Values print as raw Python. Who holds which
@@ -886,7 +887,11 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
   `CRUD_VIEWS_MANAGE_SHOW_USERS`, incl. user object grants), a collapsible views list with a summary line (URL,
   class, required permission, Guardian policy) and one key/value table per view whose default rows (anything not set
   on a project class) are dimmed and hidden by one switch; small ViewSet facts in a side column. The view prepares
-  the data; badge colours go through class-registry keys.
+  the data; badge colours go through class-registry keys. The review added: the signed-in user's own row in the
+  matrix, superuser and group-size counts, an **Other** section with every remaining `cv_*` attribute, a precise
+  set/default rule (the library's `manage` append to `cv_context_actions` and the validators' `pk`/`prefix` don't
+  count as set), a public method by which a view describes its requirement, system checks beyond
+  `viewset.checks()`, and no inline JavaScript or styles (CSP).
 - **What we do now:** nothing; the theme's finding-25 rule still scrolls the manage content below 768 px.
 - **Downstream after upstream lands:** register Tabler classes (`bg-*-lt`) for the new `manage:*` keys in
   `crud_views_tabler` and drop the finding-25 overflow rule once the tables sit in `.table-responsive`.

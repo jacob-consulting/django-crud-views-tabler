@@ -460,6 +460,10 @@ Page-structure alternatives were compared as mockups:
   - `GuardianManageView` extends the same structures (object counts including user grants, Guardian entries and
     badges) instead of keeping a parallel table.
   - Templates contain no default detection and no pivoting.
+  - The new data methods take the ViewSet and the user as arguments and don't read `self.request`. Today's
+    methods do (`crud_views/lib/views/manage.py:74,106`). A command can then call them without a web request:
+    the configuration dump planned in
+    [#371](https://github.com/jacob-consulting/django-crud-views/issues/371) and the access trace of #370.
   - The core template renders the complete Guardian page from that data. The Guardian template stays as a file but
     adds nothing the page depends on, because a project may replace it entirely and fill only `guardian_config`
     (`tests/test1/test_authorization_templates.py:77`).

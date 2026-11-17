@@ -57,6 +57,8 @@ class Product(PolymorphicModel):
     card_color = "secondary"
     card_icon = "tabler:package"
     show_stock = True  # subscriptions are not stocked
+    # the conditional key of an order line's product select (sales.forms.LINE_PRODUCT): only beans take grind and bag
+    order_line_kind = "product"
 
     class Meta:
         ordering = ["name"]
@@ -118,6 +120,7 @@ class Beans(Product):
     )
 
     card_color = "orange"
+    order_line_kind = "beans"
     card_icon = "tabler:plant-2"
 
     class Meta:
@@ -147,6 +150,7 @@ class Equipment(Product):
     weight_kg = models.DecimalField("weight (kg)", max_digits=6, decimal_places=2, null=True, blank=True)
 
     card_color = "azure"
+    order_line_kind = "equipment"
     card_icon = "tabler:tool"
 
     class Meta:
@@ -180,6 +184,7 @@ class Subscription(Product):
     bag_size = models.CharField(max_length=5, choices=BagSize, default=BagSize.G250)
 
     card_color = "purple"
+    order_line_kind = "subscription"
     card_icon = "tabler:repeat"
     show_stock = False
 

@@ -67,4 +67,27 @@ TABLER_BUTTON_CLASSES: dict[str, str] = {
     "formset:control-danger": "btn btn-icon btn-danger",
     "conditional:legend": "cv-tabler-section-legend",
     "formset:legend": "cv-tabler-section-legend",
+    # The structured manage page (#366, #370, #372; finding 35): Tabler's light badges, as for the workflow state.
+    # Named colours, not primary: the page's legend says "Blue: required permission · Magenta: required group ·
+    # Green: Guardian policy", and a project's primary may be any colour (Acme's is sienna). The group badge drops
+    # upstream's fixed-colour cv-manage-badge-group for Tabler's pink, which follows dark mode.
+    "manage:badge-model": "badge bg-secondary-lt",
+    "manage:badge-resource": "badge bg-azure-lt",
+    "manage:badge-objects": "badge badge-outline text-secondary",
+    "manage:badge-permission": "badge bg-blue-lt",
+    "manage:badge-group": "badge bg-pink-lt",
+    "manage:badge-policy-global": "badge bg-green-lt",
+    "manage:badge-policy-strict": "badge bg-green-lt",
+    "manage:badge-policy-na": "badge bg-secondary-lt",
+    "manage:help": "btn btn-sm",
+    "manage:trace-allowed": "badge bg-green-lt",
+    "manage:trace-passed": "badge bg-green-lt",
+    "manage:trace-denied": "badge bg-red-lt",
+    "manage:trace-not-found": "badge bg-yellow-lt",
+    "manage:trace-login-redirect": "badge bg-yellow-lt",
+    "manage:trace-error": "badge bg-yellow-lt",
+    "manage:trace-no-such-route": "badge bg-yellow-lt",
+    "manage:trace-not-evaluated": "badge bg-yellow-lt",
+    "manage:trace-skipped": "badge bg-secondary-lt",
+    "manage:trace-not-reached": "badge bg-secondary-lt",
 }

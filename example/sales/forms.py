@@ -2,13 +2,16 @@
 
 The wholesale-only fields follow ``Customer.kind`` through a shared ``ValueToggle`` in the server-side
 conditional group and the crispy layout. Upstream infers native empty values when the group is inactive.
+An order line's grind and bag size follow the selected product's kind through ``QuerysetConditions``.
 """
 
 from crispy_forms.layout import HTML, Div, Row
-from crud_views.lib.conditional import ConditionalGroup, ConditionalGroupModelForm, ToggleGroup, ValueToggle
+from crud_views.lib.conditional import (
+    ConditionalGroup, ConditionalGroupModelForm, QuerysetConditions, ToggleGroup, ValueToggle,
+)
 from crud_views.lib.crispy import Column2, Column3, Column4, Column6, Column12, CrispyForm, CrispyModelForm
 from crud_views.lib.formsets import (
-    CompactColumn, CompactLayout, CompactWidgetCompatible, FormSet, FormSets, Formsets, InlineFormSet,
+    CompactColumn, CompactLayout, FormSet, FormSets, Formsets, InlineFormSet,
 )
 from crud_views_widget_datetimepicker.widgets import DatePickerInput
 from crud_views_widget_typeahead.fields import TypeaheadField
@@ -84,21 +87,21 @@ class AddressForm(CrispyModelForm):
 # --------------------------------------------------------------------------- orders
 
 
-class ProductSelect(CompactWidgetCompatible, forms.Select):
-    """Marks each coffee option with ``data-beans``, so ``sales.js`` can switch grind and bag size off for the rest."""
+# grind and bag size only apply to coffee: the product's kind (``Product.order_line_kind``, a class attribute of each
+# polymorphic kind) is the conditional key, so a new coffee needs no code change; upstream disables the two cells in
+# compact rows (also in rows added later) and clears them on save when the product is not coffee (finding 20)
+LINE_PRODUCT = QuerysetConditions(
+    "product", conditional_key="order_line_kind", keys=("beans", "equipment", "subscription", "product")
+)
+BEANS_ONLY = LINE_PRODUCT.when("beans")
 
-    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
-        option = super().create_option(name, value, label, selected, index, subindex, attrs)
-        if isinstance(getattr(value, "instance", None), Beans):
-            option["attrs"]["data-beans"] = "1"
-        return option
 
+class OrderLineForm(ConditionalGroupModelForm):
+    cv_conditional_groups = [ConditionalGroup(toggle=BEANS_ONLY, fields=["grind", "bag_size"])]
 
-class OrderLineForm(CrispyModelForm):
     class Meta:
         model = OrderLine
         fields = ["product", "grind", "bag_size", "quantity"]
-        widgets = {"product": ProductSelect(attrs={"data-order-line-product": ""})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -111,15 +114,6 @@ class OrderLineForm(CrispyModelForm):
         for name in ("grind", "bag_size"):
             field = self.fields[name]
             field.choices = [("", "—"), *field.choices[1:]]  # no "Select an option" in a narrow column
-            field.widget.attrs["data-order-line-beans-only"] = ""
-
-    def clean(self):
-        cleaned = super().clean()
-        product = cleaned.get("product")
-        if product is not None and not isinstance(product, Beans):
-            # grind and bag size only apply to coffee: drop whatever was posted (the script disables them, too)
-            cleaned["grind"] = cleaned["bag_size"] = ""
-        return cleaned
 
 
 class OrderLineInlineFormSet(InlineFormSet):

@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest import mock
 
 from io import StringIO
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
@@ -692,6 +693,38 @@ class ManageViewsTests(TestCase):
                 self.assertEqual(self.get(username, "/customer/manage/").status_code, 403)
                 self.assertEqual(self.client.get(nested).status_code, 403)
                 self.assertNotContains(self.client.get(list_url), "/manage/")
+
+    def test_shipment_resource_has_a_manage_page(self):
+        # Upstream #372: Resource ViewSets get the manage page too; opening it never calls the courier API (D-03)
+        with mock.patch("shipping.resources.fetch_shipments", side_effect=AssertionError("courier called")):
+            response = self.get("alex", "/shipment/manage/")
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'class="badge bg-azure-lt"')  # the theme's manage:badge-resource
+            for username in ("sam", "kim"):
+                with self.subTest(username):
+                    self.assertEqual(self.get(username, "/shipment/manage/").status_code, 403)
+
+    def test_manage_matrix_lists_sams_object_grants(self):
+        # Finding 35: user-level Guardian grants used to be invisible; CRUD_VIEWS_MANAGE_SHOW_USERS lists them
+        html = self.get("alex", "/customer/manage/").content.decode()
+        self.assertIn("sam", html, msg="sam missing from the matrix")
+        self.assertIn("badge badge-outline text-secondary", html)  # the theme's manage:badge-objects
+
+    def test_access_check_traces_sam_on_customers(self):
+        # Upstream #370, on in the demo (CRUD_VIEWS_MANAGE_ACCESS_TRACE): alex traces sam's access by path
+        from guardian.shortcuts import get_objects_for_user
+        from sales.models import Customer
+
+        mine = get_objects_for_user(self.users["sam"], "sales.view_customer", accept_global_perms=False)
+        cases = ((mine.first(), 'class="badge bg-green-lt">Allowed<'),
+                 (Customer.objects.exclude(pk__in=mine).first(), 'class="badge bg-red-lt">Denied<'))
+        for customer, outcome in cases:
+            with self.subTest(customer=customer.pk):
+                response = self.get("alex", "/customer/manage/?" + urlencode({
+                    "cv_access_mode": "path", "cv_access_user": "sam", "cv_access_path": f"/customer/{customer.pk}/detail/"}))
+                html = response.content.decode()
+                self.assertIn('id="cv-manage-access-trace"', html)
+                self.assertIn(outcome, html[html.index('id="cv-manage-access-trace"'):])
 
     def test_superuser_outside_the_group_is_refused(self):
         self.client.force_login(User.objects.create_superuser("root", password="x"))

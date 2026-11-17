@@ -151,6 +151,20 @@ class ButtonClassTests(SimpleTestCase):
             **{f"workflow:transition-{colour}": f"btn btn-{colour}" for colour in
                ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")},
             "workflow:history-table": "table table-vcenter",
+            "manage:badge-model": "badge bg-secondary-lt",
+            "manage:badge-resource": "badge bg-azure-lt",
+            "manage:badge-objects": "badge badge-outline text-secondary",
+            "manage:badge-permission": "badge bg-blue-lt",
+            "manage:badge-group": "badge bg-pink-lt",
+            "manage:badge-policy-global": "badge bg-green-lt",
+            "manage:badge-policy-strict": "badge bg-green-lt",
+            "manage:badge-policy-na": "badge bg-secondary-lt",
+            "manage:help": "btn btn-sm",
+            **{f"manage:trace-{state}": "badge bg-green-lt" for state in ("allowed", "passed")},
+            "manage:trace-denied": "badge bg-red-lt",
+            **{f"manage:trace-{state}": "badge bg-yellow-lt" for state in
+               ("not-found", "login-redirect", "error", "no-such-route", "not-evaluated")},
+            **{f"manage:trace-{state}": "badge bg-secondary-lt" for state in ("skipped", "not-reached")},
         }
         self.assertEqual(TABLER_BUTTON_CLASSES, expected)
 
@@ -709,16 +723,19 @@ class BareTableTests(SimpleTestCase):
         self.assertIn("--bs-body-bg: var(--tblr-bg-surface)", css)
         self.assertNotRegex(css, r"table\.table \{\s*display: block")
 
-    def test_manage_page_content_scrolls_below_768px(self):
-        # Finding 25: the manage pages render bare tables (no .table-responsive, no class key); at 390 px they pushed
-        # the page to ~610 px. Scoped through upstream's #cv-ancestor-policy, which every manage page renders.
+    def test_manage_page_no_longer_scrolls_the_content_container(self):
+        # Finding 35: the structured manage page (#366) wraps its tables in .table-responsive; the finding-25 rule is gone
+        css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
+        self.assertNotIn("#cv-ancestor-policy", css)
+
+    def test_manage_page_reads_tabler_secondary_colours(self):
+        # Finding 35: upstream's manage.css uses --bs-secondary-* with light fallbacks; Tabler names them --tblr-*
         css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
         self.assertRegex(
             css,
-            r"@media \(max-width: 767\.98px\) \{\s*"
-            r"\.page-body > \.container-xl:has\(> #cv-ancestor-policy\) \{\s*overflow-x: auto;",
+            r"\[data-cv-manage\] \{\s*--bs-secondary-color: var\(--tblr-secondary-color\);\s*"
+            r"--bs-secondary-text-emphasis: var\(--tblr-secondary-text-emphasis\);",
         )
-
 
 class ThemeAdoptionTests(TestCase):
     """Native form floor, exact registrations and real action rendering contracts."""

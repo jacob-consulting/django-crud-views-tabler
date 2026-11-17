@@ -73,6 +73,14 @@
   --bs-highlight-bg: var(--tblr-highlight-bg);
 }
 
+/* Finding 35: upstream's manage.css (the structured manage page, #366) colours headers and dimmed default rows with
+   Bootstrap's --bs-secondary-* properties and light-mode fallbacks; Tabler names them --tblr-*, so in dark mode the
+   fallbacks applied. Feed it Tabler's values. */
+[data-cv-manage] {
+  --bs-secondary-color: var(--tblr-secondary-color);
+  --bs-secondary-text-emphasis: var(--tblr-secondary-text-emphasis);
+}
+
 .cv-typeahead-select-popup {
   box-shadow: var(--tblr-shadow-dropdown);
 }
@@ -83,12 +91,3 @@
   display: block;
 }
 
-/* Finding 25: the manage pages (core and Guardian) render their tables bare, with no .table-responsive and no class
-   key, so on a phone they pushed the whole page sideways. Below 768 px the content container scrolls instead. Scoped
-   to manage pages by upstream's #cv-ancestor-policy table, which every one of them renders; the table stays a table,
-   so narrow ones still span the full width. */
-@media (max-width: 767.98px) {
-  .page-body > .container-xl:has(> #cv-ancestor-policy) {
-    overflow-x: auto;
-  }
-}

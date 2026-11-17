@@ -147,6 +147,19 @@ eight variants explicitly as `btn btn-<variant>`, the same values as upstream's 
 visible in `TABLER_BUTTON_CLASSES`. The theme overrides no workflow template and
 adds no workflow CSS. The `workflow:*` keys are registered only when `crud_views_workflow` is installed.
 
+## Manage page
+
+The structured manage page (upstream #366, with #370's Access check and #372's Resource pages) colours its badges
+through `manage:*` class keys. The theme registers Tabler's light badges for them in `buttons.TABLER_BUTTON_CLASSES`,
+using named colours rather than `primary`, because the page's legend names them ("Blue: required permission ·
+Magenta: required group · Green: Guardian policy"): `bg-blue-lt` for permissions, `bg-pink-lt` for groups (instead of
+upstream's fixed-colour `cv-manage-badge-group`), `bg-green-lt` for Guardian policies and allowed/passed trace
+steps, `bg-red-lt` for denied, `bg-yellow-lt` for the other trace outcomes, `bg-secondary-lt` for the rest, and
+`badge badge-outline text-secondary` for object grants; the help buttons are `btn btn-sm`. Upstream's `manage.css`
+reads `--bs-secondary-color` and `--bs-secondary-text-emphasis`; `crud_views_tabler.css` sets both on
+`[data-cv-manage]` from Tabler's `--tblr-*` values so the headers and dimmed default rows follow dark mode. The page
+wraps its tables in `.table-responsive`, so the theme needs no overflow rule for it.
+
 ## Card views
 
 `CardListView` pages (`view_card.content.html`, `tags/card.html`; the card buttons and the order bar are crud_views'

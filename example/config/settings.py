@@ -185,6 +185,12 @@ DJANGO_TABLES2_TEMPLATE = 'crud_views/table/bootstrap5.html'
 # CRUD_VIEWS_MANAGE_GROUP (default "CRUD_VIEWS_MANAGE"; the seed adds alex) may open them, whatever DEBUG says.
 # Set the environment variable to "no" to close them for everyone, or "debug_only" to require DEBUG as well.
 CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'yes')
+# The manage page's permission matrix also lists users (sam's own Guardian grants on his customers, #366)
+CRUD_VIEWS_MANAGE_SHOW_USERS = True
+# The Access check card (#370) on the manage pages: trace what any user may open, e.g. sam on a customer he has no
+# grant for. Discloses object existence and other users' access, but only to manage-group members (alex) and only
+# demo data.
+CRUD_VIEWS_MANAGE_ACCESS_TRACE = True
 
 # crud_views_object_detail: the layout of the detail pages' property groups
 CRUD_VIEWS_OBJECT_DETAIL_TEMPLATE_PACK_LAYOUT = 'tabs-vertical'

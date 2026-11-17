@@ -32,7 +32,17 @@ Findings 33 and 25 (its access half) are **DONE upstream** as of 2026-11-13:
 [#362](https://github.com/jacob-consulting/django-crud-views/issues/362) (PR #364) and
 [#361](https://github.com/jacob-consulting/django-crud-views/issues/361) (PR #365). Adopted here against the sibling
 checkout at `4510cee9`: workflow transition buttons show their variant and icon, and the manage pages are on for the
-manage group, whose only member is alex; the manage tables' overflow is still open upstream and handled by theme CSS.
+manage group, whose only member is alex; the manage tables' overflow was then still open upstream and handled by theme CSS (fixed by #366, see below).
+Findings 20 and 35 are **DONE upstream** as of 2026-11-14: [#360](https://github.com/jacob-consulting/django-crud-views/issues/360)
+(PR #367) and [#366](https://github.com/jacob-consulting/django-crud-views/issues/366) (PR #373), followed on the
+manage page by [#370](https://github.com/jacob-consulting/django-crud-views/issues/370) (PR #374, access trace),
+[#372](https://github.com/jacob-consulting/django-crud-views/issues/372) (PR #376, Resource manage pages),
+[#371](https://github.com/jacob-consulting/django-crud-views/issues/371) (PR #377) and
+[#375](https://github.com/jacob-consulting/django-crud-views/issues/375) (PR #379). Adopted here on 2026-11-17 against
+the sibling checkout at `8cc4c05a`: order lines use `QuerysetConditions` (the per-row script is gone), the theme
+registers Tabler classes for the `manage:*` keys and drops the finding-25 overflow rule, and the shipment Resource has
+a manage page. The child-tabs half of finding 23 was evaluated in
+[#363](https://github.com/jacob-consulting/django-crud-views/issues/363) (phase 06.33) and concluded "keep downstream" (the issue is still open).
 
 Upstream references (`path:line`) are against the sibling checkouts as of 2026-11-04: `../django-crud-views` `main`
 @ `cf2bfc0f` ("Delete confirm checkbox spans the full row (#308) (#310)"; the demo was built from `b73337ce`, #309,
@@ -71,12 +81,12 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 17 | [`tabs.js` reads `globalThis.bootstrap`](#17-tabsjs-looks-up-globalthisbootstrap-directly) | annoyance | resolved #328: tabs init through `cv.adapters.tab`; no theme code needed |
 | 18 | [Header icon is drawn beside a custom header template](#18-the-header-icon-is-drawn-beside-a-custom-header-template) | cosmetic | resolved in #329 / PR #345; customer detail uses `cv_icon_header = Icon.NONE` |
 | 19 | [Conditional groups toggle only on a checkbox](#19-conditional-groups-only-toggle-on-a-boolean-checkbox) | annoyance | **DONE** upstream #354 / PR #357; adopted: `ValueToggle` on `Customer.kind`, native choice clearing; checkbox workaround removed |
-| 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | `clean()`/`save()` clear the fields; `sales.js` disables them per row |
+| 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | **DONE** upstream #360 / PR #367; order lines use `QuerysetConditions` on the product's kind; `ProductSelect`, `clean()` and the row script removed |
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | **DONE** #346 / PR #352; both legend hooks use the theme's `cv-tabler-section-legend` class |
 | 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | **DONE** #347 / PR #348; cupping scores use shared headings and labelled mobile rows |
-| 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs open; context buttons instead of tabs |
+| 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs evaluated in #363 (phase 06.33): keep downstream, context buttons stay |
 | 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | **DONE** upstream #341 (PR #343); existing demo permission recipe documented and verified; startup check clean |
-| 25 | [Manage pages were open to every user under DEBUG](#25-manage-pages-were-open-to-every-signed-in-user-while-debug-was-on) | annoyance | **DONE** upstream #361 / PR #365 (access); alex is the only manage-group member; table overflow still open upstream, theme CSS scrolls the manage content below 768 px |
+| 25 | [Manage pages were open to every user under DEBUG](#25-manage-pages-were-open-to-every-signed-in-user-while-debug-was-on) | annoyance | **DONE** upstream #361 / PR #365 (access); alex is the only manage-group member; table overflow fixed by #366 (`.table-responsive`), theme overflow rule removed |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | resolved #337: tables declare `Meta.sequence` (the `__init__` workaround is gone); `Meta.exclude = ("actions",)` drops the column |
 | 27 | [Second top-level ViewSet on a child model needs hand-made links](#27-a-second-top-level-viewset-on-a-child-model-needs-hand-made-links) | cosmetic | tracked in #314 (open, backlog); `render_number` and `get_success_url` reverse the nested URLs |
 | 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | **DONE** — [PR #342](https://github.com/jacob-consulting/django-crud-views/pull/342) (#338); adopted in both subscription ViewSets; list-header overrides removed |
@@ -86,7 +96,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
 | 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | **DONE** upstream #362 / PR #364; order transitions show their variant and icon; theme registers `workflow:transition-<variant>` |
 | 34 | [Compact formsets reject custom `Select` subclasses](#34-compact-formsets-reject-custom-select-subclasses) | cosmetic | **DONE** upstream #349 / PR #350; order lines use compact mode with the marked `ProductSelect` |
-| 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | open upstream [#366](https://github.com/jacob-consulting/django-crud-views/issues/366) (design approved and revised after a code review, gsd-handover D-01–D-30 in the issue body); nothing downstream yet |
+| 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | **DONE** upstream #366 / PR #373 (+ #370, #372); theme registers Tabler classes for `manage:*` and maps the page's `--bs-secondary-*`; users and the Access check card shown; shipment Resource manage page |
 
 ---
 
@@ -512,6 +522,35 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 
 ### 20. Formsets have no per-row conditional fields
 
+- **Status: DONE upstream** — [issue #360](https://github.com/jacob-consulting/django-crud-views/issues/360) closed by
+  [PR #367](https://github.com/jacob-consulting/django-crud-views/pull/367) (phase 06.30, merge `9e421a06`, 2026-11-13).
+  `QuerysetConditions(controller, *, conditional_key, keys, allow_unmatched=False)` declares the categories of a native
+  `ModelChoiceField`; `.when(*keys)` is the toggle of a `ConditionalGroup`. The conditional key is a direct attribute
+  or a queryset annotation of the offered objects, never the label or a fixed PK list. Strict by default: an offered
+  object whose key is not declared raises `QuerysetConditionCoverageError` on render and is a form error on POST.
+  Compact rows keep the controlled cells visible and disable them (`cv-data-toggle-disable-only`); ordinary rows hide
+  them. Every row (also rows added later) follows its own prefixed controller; a successful save clears inactive
+  fields on the server, with or without JavaScript.
+- **Adopted here (2026-11-17, sibling checkout `8cc4c05a`):** each polymorphic `Product` kind carries a class
+  attribute `order_line_kind` (`"beans"`, `"equipment"`, `"subscription"`, base `"product"`;
+  `example/catalog/models.py`), which is the conditional key: polymorphic querysets yield the real subclass, so the
+  attribute needs no annotation and no query. `example/sales/forms.py` declares
+  `LINE_PRODUCT = QuerysetConditions("product", conditional_key="order_line_kind", keys=(...all four...))` and
+  `OrderLineForm(ConditionalGroupModelForm)` has one group, `BEANS_ONLY` → `grind`, `bag_size`. All four kinds are
+  declared, so a subscription line from "Run subscriptions" (offered as the line's current product) renders without a
+  coverage error. Removed: `ProductSelect` (and with it the `CompactWidgetCompatible` marker of finding 34: the
+  controller must be a stock `Select`), the `data-beans` option attribute, `OrderLineForm.clean()` and the row script
+  in `sales.js` (it keeps only the packing slip's print button). Inactive values are inferred as `""` (non-null text
+  fields with `blank=True`). `OrderLine.save()` still blanks the two fields for non-coffee products, as a model
+  invariant for lines written without a form. The empty extra row now starts with grind and bag size disabled (the
+  script used to leave them enabled until a product was picked).
+- **Checked:** `sales.tests.test_orders.OrderFormTests` asserts the queryset toggle on the grind and bag-size cells of
+  create and update pages (coffee PK in `cv-data-toggle-values`, equipment PK not, no coverage error, no `data-beans`)
+  and that `OrderLineForm` clears both fields for equipment and keeps them for coffee; both fail with an empty
+  `cv_conditional_groups`. In a browser (order update as alex): switching a row to equipment disables both selects,
+  switching back enables them, and a row added with the add control follows its own product.
+- **Original report:**
+
 - **What happened:** an order line's grind and bag size only apply when the row's product is coffee. Conditional
   groups follow a controller on the main form (now including selects/radios after #354), and `ConditionalFormSet`
   switches a whole first-level formset; neither can follow a select inside each formset row.
@@ -591,8 +630,14 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   made `manage.py check` fail with `viewset.E268`, so each has an action pair: `address` `make_default`
   (`nearest="change"`, `higher="view"`), `order` `duplicate` (`change`/`view`) and `order` `workflow`
   (`view`/`view`). `sales/tests/test_access.py` (`AccessMatrixTests`) pins the nested access per role and passed
-  unchanged after the removal. Child tabs are still open: Orders, Subscriptions and Addresses remain context
-  buttons on the customer page.
+  unchanged after the removal. Orders, Subscriptions and Addresses remain context buttons on the customer page.
+- **Child tabs evaluated, keep downstream:** [issue #363](https://github.com/jacob-consulting/django-crud-views/issues/363)
+  (phase 06.33, label `P06.33`, still open as the tracking issue) ran the tabs half as a bounded experiment in this repo
+  only: a persistent customer section bar (Details, Orders, Addresses, Subscriptions) across thirteen existing
+  full-page routes, with header and card placements, on the branch `experiment/customer-section-navigation-06-33`
+  (not merged into `main`, on purpose: baseline and experiment stay side by side). The maintainer's outcome,
+  recorded in the issue's last comment: comparison "pass", decision **"keep downstream"**: no upstream navigation API
+  for now, and `main` keeps the context buttons.
 
 - **What happened:** `GuardianParentPermissionMixin` requires the child views to carry per-object Guardian grants on
   the child rows too, so a child with a plain `ViewSet` (addresses) is not covered by the parent's grants. Also, the
@@ -650,7 +695,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   (`dashboard.tests.ManageViewsTests`): alex opens `/customer/manage/` and a nested address manage page and sees the
   manage action; sam and kim get 403 and no action; a superuser outside the group gets 403; `no` refuses alex;
   `--reset` keeps alex in the group.
-- **Tables (still open upstream):** #361 left `.table-responsive` out on purpose. With the pages on, the problem
+- **Tables (fixed by #366, 2026-11-17):** the structured manage page wraps every table in `.table-responsive`, and
+  upstream's `#cv-ancestor-policy` table now sits inside a card, so the theme rule below no longer matched anything.
+  It is removed (with its test); at the narrowest window width `/customer/manage/` has no horizontal page scroll.
+  The history of the rule: #361 left `.table-responsive` out on purpose. With the pages on, the problem
   showed again: at 390 px `/customer/manage/` was 612 px wide. The manage templates render bare tables with no class
   key or wrapper, so the theme adds CSS (`crud_views_tabler.css`): below 768 px the content container of a page that
   holds upstream's `#cv-ancestor-policy` table (every core and Guardian manage page) gets `overflow-x: auto`. The page
@@ -863,12 +911,53 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
   Create/update and invalid-quantity rendered-page tests pass, as do the existing save and equipment-cleaning tests.
   In a browser, desktop headings align, mobile cards show labels, and a dynamically added row retains `data-beans`;
   coffee enables grind and bag size while equipment disables them. No additional theme CSS was needed.
+- **Superseded (2026-11-17):** finding 20's adoption removed `ProductSelect`; the product cell is a stock `Select`
+  again, so the order lines no longer need the marker.
 - **Severity:** cosmetic.
 
 ### 35. The manage page is one flat column of tables
 
-- **Status: open upstream** — [issue #366](https://github.com/jacob-consulting/django-crud-views/issues/366),
-  filed 2026-11-13 from a design session. On 2026-11-14 the design was reviewed against upstream `4510cee9` and the
+- **Status: DONE upstream** — [issue #366](https://github.com/jacob-consulting/django-crud-views/issues/366) closed by
+  [PR #373](https://github.com/jacob-consulting/django-crud-views/pull/373) (phase 06.33 "Structured manage page",
+  merge `105eabc4`, 2026-11-14). Built on it: #370 (PR #374, the `cv_access` command and the opt-in **Access check**
+  card, `CRUD_VIEWS_MANAGE_ACCESS_TRACE`), #372 (PR #376, manage pages for Resource ViewSets), #371 (PR #377,
+  configuration CLI and JSON contract) and #375 (PR #379, Pydantic validation of the `cv_access` JSON). The page is
+  cards with a permission matrix, a collapsible views list with a "Show defaults" switch, and side cards; badge
+  colours go through new `manage:*` class keys (`src/crud_views/lib/button_classes.py`), and the page ships its own
+  `css/manage.css` and `js/manage.js`.
+- **Adopted here (2026-11-17, sibling checkout `8cc4c05a`):**
+  - `src/crud_views_tabler/buttons.py` registers Tabler classes for every `manage:*` badge key: light badges
+    (`bg-*-lt`) as for the workflow state, `badge badge-outline text-secondary` for object grants, `btn btn-sm` for
+    the help buttons. `manage:row-default` keeps upstream's `cv-manage-default`. The group badge uses `bg-pink-lt`
+    instead of upstream's `cv-manage-badge-group` (a fixed `#a61e6a`), so it follows dark mode.
+  - **Awkwardness:** the page's legend names colours ("Blue: required permission · Magenta: required group · Green:
+    Guardian policy"), while the colours are themeable class keys and upstream's permission default is
+    `bg-primary`. With Acme's sienna primary a `bg-primary-lt` permission badge contradicted the legend, so the theme
+    uses named colours (`bg-blue-lt`, `bg-pink-lt`, `bg-green-lt`). Suggested upstream: describe the badges by meaning,
+    not colour, or default the permission key to a named blue.
+  - **Theme CSS:** `manage.css` colours row headers and the dimmed default rows with `--bs-secondary-text-emphasis` and
+    `--bs-secondary-color`, with light-mode fallbacks (`#495057`, `#6c757d`). Tabler defines only `--tblr-*`, so
+    the fallbacks applied in dark mode too. `crud_views_tabler.css` maps both on `[data-cv-manage]` to Tabler's
+    values (same approach as finding 31); in dark mode a default row is now Tabler's secondary text, not `#6c757d`.
+    Test: `BareTableTests::test_manage_page_reads_tabler_secondary_colours`.
+  - The finding-25 overflow rule is gone (finding 25, "Tables").
+  - `example/config/settings.py` sets `CRUD_VIEWS_MANAGE_SHOW_USERS = True`: the matrix lists users, so sam's own
+    Guardian grants on his customers (the gap reported below) are visible to alex.
+  - `CRUD_VIEWS_MANAGE_ACCESS_TRACE = True` turns on the Access check card (#370) under Permissions. It deliberately
+    discloses object existence and other users' access, but only to manage-group members (alex), and the data is
+    demo data. Example: on `/customer/manage/`, "For any URL" with user `sam` and `/customer/<pk>/detail/` gives
+    **Allowed** for one of sam's customers and **Denied** for another; the outcome badges use the theme's
+    `manage:trace-*` classes. Test: `test_access_check_traces_sam_on_customers` (fails with the setting off).
+  - The shipment Resource ViewSet gets `/shipment/manage/` automatically (#372); it opens without calling the courier
+    API.
+  - Tests: `dashboard.tests.ManageViewsTests` (`test_shipment_resource_has_a_manage_page`: alex 200 with the
+    `bg-azure-lt` resource badge and `fetch_shipments` patched to fail, sam and kim 403;
+    `test_manage_matrix_lists_sams_object_grants`, which fails with the setting off) and the exact class-table test in
+    `tests/crud_views_tabler/test_theme.py`. Checked in a browser as alex: `/customer/manage/` and `/shipment/manage/`
+    in light and dark mode.
+  - **Not changed:** `manage.css` sets `font-size: 16px` on the page, so it reads larger than Tabler's 14 px body. Left
+    as upstream intends.
+- **History:** filed 2026-11-13 from a design session. On 2026-11-14 the design was reviewed against upstream `4510cee9` and the
   issue body was overwritten with the complete result: its `gsd-handover` section records D-01–D-30, the earlier
   addendum comment is marked superseded, and the first comment carries the approved full-page mockup
   (`page-v13.html`). The same text and the mockup live upstream in `superpowers/specs/2026-11-14-manage-page-design.md` and
@@ -893,9 +982,7 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
   set/default rule (the library's `manage` append to `cv_context_actions` and the validators' `pk`/`prefix` don't
   count as set), a public method by which a view describes its requirement, system checks beyond
   `viewset.checks()`, and no inline JavaScript or styles (CSP).
-- **What we do now:** nothing; the theme's finding-25 rule still scrolls the manage content below 768 px.
-- **Downstream after upstream lands:** register Tabler classes (`bg-*-lt`) for the new `manage:*` keys in
-  `crud_views_tabler` and drop the finding-25 overflow rule once the tables sit in `.table-responsive`.
+- **What we did before #366:** nothing; the theme's finding-25 rule scrolled the manage content below 768 px.
 - **Severity:** cosmetic.
 
 ---
@@ -906,18 +993,17 @@ Features from the spec's feature map that were dropped or reduced, with the reas
 
 - **Object-detail packs:** the demo shows `split-card` (customers), `accordion` (green lots, first group open, #15)
   and the project default `tabs-vertical` (products and the rest). `card-rows` is not used.
-- **`ConditionalFormSet`:** not used. The spec's "grind/bag size only for beans" needs a per-row toggle, which
-  upstream does not have (#20); the demo clears the fields in `clean()`/`save()` and disables them with a small script.
-  No other formset in the domain switches as a whole.
+- **`ConditionalFormSet`:** not used. The spec's "grind/bag size only for beans" is a per-row toggle, done with
+  `QuerysetConditions` since #360 (#20). No formset in the domain switches as a whole.
 - **Tabs for a customer's orders, addresses and subscriptions** (mockup): context buttons to the nested lists instead
-  (#23).
-- **Typeahead product picker in order lines:** a plain select with `data-beans` options; the typeahead is the
+  (#23). A section bar was tried on an unmerged experiment branch (#363) and kept downstream.
+- **Typeahead product picker in order lines:** a plain select (upstream's queryset conditions need a stock `Select`); the typeahead is the
   customer picker on the top-level order create. Per-row typeahead plus the per-row disable script was not worth it
   for ~30 products.
 - **"Restock" action view:** only "Mark default address" shows an `ActionView`; a restock button would duplicate it.
 - **Category-driven sidebar:** categories (ordered, up/down) drive the product filter, not the sidebar.
 - **Guardian manage page:** shown since #361 (finding 25), but only to `alex`, the seeded manage-group member;
-  `CRUD_VIEWS_MANAGE_VIEWS_ENABLED=no` hides it again.
+  `CRUD_VIEWS_MANAGE_VIEWS_ENABLED=no` hides it again. The opt-in Access check card (#370) is on.
 - **Upstream's tooltip-per-location recipe:** shown only as the theme's own wrapper (#2).
 
 ## Known rough edges

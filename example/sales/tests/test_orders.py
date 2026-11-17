@@ -1,3 +1,4 @@
+import json
 import re
 from datetime import timedelta
 from html import escape, unescape
@@ -82,7 +83,17 @@ class OrderFormTests(OrderTestCase):
                 self.assertIn('<legend class="cv-tabler-section-legend">', html)
                 for field in ("product", "quantity"):
                     self.assertRegex(html, rf'<label[^>]*for="id_lines-[^"]+-{field}"')
-                self.assertRegex(html, rf'<option[^>]*value="{self.huila.pk}"[^>]*data-beans="1"')
+                # finding 20: upstream's QuerysetConditions disables grind and bag size unless the row's product is coffee
+                for field in ("grind", "bag_size"):
+                    cell = re.search(rf'<div[^>]*cv-data-toggle-group[^>]*>\s*<div id="div_id_lines-[^"]+-0-{field}"', html)
+                    self.assertIsNotNone(cell, field)
+                    self.assertIn('cv-data-toggle-kind="queryset"', cell.group(0))
+                    self.assertIn("cv-data-toggle-disable-only", cell.group(0))
+                    values = json.loads(unescape(re.search(r'cv-data-toggle-values="([^"]*)"', cell.group(0)).group(1)))
+                    self.assertIn(str(self.huila.pk), values)
+                    self.assertNotIn(str(self.dripper.pk), values)
+                self.assertNotIn("data-beans", html)
+                self.assertNotIn("cv-queryset-condition-error", html)
 
     def test_invalid_order_line_keeps_compact_row_and_error(self):
         self.login()
@@ -151,6 +162,17 @@ class OrderFormTests(OrderTestCase):
         line = Order.objects.latest("number").lines.get()
         self.assertEqual((line.grind, line.bag_size), ("", ""))
         self.assertEqual(line.unit_price, Decimal("28.00"))
+
+    def test_line_form_clears_grind_and_bag_for_non_beans(self):
+        # the form clears them itself (upstream's conditional group), not only OrderLine.save()
+        from sales.forms import OrderLineForm
+
+        form = OrderLineForm(None, data={"product": self.dripper.pk, "grind": "espresso", "bag_size": "1kg", "quantity": "1"})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual((form.cleaned_data["grind"], form.cleaned_data["bag_size"]), ("", ""))
+        form = OrderLineForm(None, data={"product": self.huila.pk, "grind": "espresso", "bag_size": "1kg", "quantity": "1"})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual((form.cleaned_data["grind"], form.cleaned_data["bag_size"]), ("espresso", "1kg"))
 
     def test_update_edits_lines(self):
         self.login()

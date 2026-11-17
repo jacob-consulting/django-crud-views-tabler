@@ -286,7 +286,7 @@ class OrderLine(models.Model):
         return (self.unit_price or Decimal("0.00")) * self.quantity
 
     def save(self, *args, **kwargs):
-        if not self.is_beans:  # grind and bag size only mean something for coffee
+        if not self.is_beans:  # grind and bag size only mean something for coffee (also for lines written without a form)
             self.grind = self.bag_size = ""
         if self.unit_price is None or self.order.is_editable:  # prices are fixed once the order is roasted
             self.unit_price = self.product.price

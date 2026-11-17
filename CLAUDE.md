@@ -80,7 +80,8 @@ Overrides are deliberately limited to page *layout* (modal shell, form frame, ta
 content) — none renders a button. Everything else is registered in `CrudViewsTablerConfig.ready()`:
 - button classes: `buttons.TABLER_BUTTON_CLASSES` via `register_button_classes()` (keys like `location:variant` and
   `location:variant:icon`; the `:icon` variant adds `btn-icon` for icon-only label mode; also the `workflow:*` keys:
-  `workflow:badge-<colour>` for the state badge and `workflow:history-table`),
+  `workflow:badge-<colour>` for the state badge and `workflow:history-table`, and the manage page's `manage:*` badge
+  keys, in named colours because the page's legend names them),
 - label modes: `register_label_mode_defaults({"form": "both"})`, so form buttons show icon plus label,
 - icons: `register_icon_library("tabler", ...)` + `register_icons(TABLER_ICONS)` mapping crud_views' semantic icon
   names to `tabler:<name>`; SVG paths live in `django_tabler.icons.ICONS`, and the system check
@@ -117,7 +118,8 @@ shows Tabler's base blue; the switch offers no colour choice.
 - Settings from env: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` (`1`/`0`), `DJANGO_ALLOWED_HOSTS`,
   `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` (default `yes`: since upstream #361 only active members of the
   `CRUD_VIEWS_MANAGE` group may open the manage pages, whatever DEBUG says; `no` closes them for everyone,
-  `debug_only` also requires DEBUG). The default allowed hosts
+  `debug_only` also requires DEBUG). The manage pages also list users (`CRUD_VIEWS_MANAGE_SHOW_USERS`) and show the
+  Access check card (`CRUD_VIEWS_MANAGE_ACCESS_TRACE`), both on in `example/config/settings.py`. The default allowed hosts
   include `cv.jacob-consulting.org`, where the demo is served through a Cloudflare tunnel that terminates HTTPS;
   hence `CSRF_TRUSTED_ORIGINS = ['https://cv.jacob-consulting.org']` in `example/config/settings.py`.
 - Demo accounts: `alex` (Owner; the only member of the `CRUD_VIEWS_MANAGE` group, so the only account that opens

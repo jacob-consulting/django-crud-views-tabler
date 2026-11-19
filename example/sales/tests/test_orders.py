@@ -4,6 +4,7 @@ from datetime import timedelta
 from decimal import Decimal
 from html import escape, unescape
 
+import django
 from catalog.models import Beans, Equipment, Origin
 from crud_views_widget_typeahead.lookups import get_lookup
 from crud_views_workflow.models import WorkflowInfo
@@ -114,7 +115,10 @@ class OrderFormTests(OrderTestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn("cv-formset-row-compact", html)
-        self.assertRegex(html, r'name="lines-None-0-0-quantity" value="0"[^>]*aria-invalid="true"')
+        if django.VERSION >= (5, 0):  # Django 5.0 adds aria-invalid to widgets with errors
+            self.assertRegex(html, r'name="lines-None-0-0-quantity" value="0"[^>]*aria-invalid="true"')
+        else:
+            self.assertRegex(html, r'name="lines-None-0-0-quantity" value="0"')
         self.assertIn("Ensure this value is greater than or equal to 1.", html)
 
     def test_nested_create_heading_names_customer(self):

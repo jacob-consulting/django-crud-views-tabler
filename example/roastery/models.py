@@ -26,7 +26,7 @@ class GreenLot(models.Model):
     origin = models.ForeignKey(Origin, on_delete=models.PROTECT, related_name="lots")
     producer = models.CharField(max_length=150)
     variety = models.CharField(max_length=100)
-    process = models.CharField(max_length=10, choices=Beans.Process, default=Beans.Process.WASHED)
+    process = models.CharField(max_length=10, choices=Beans.Process.choices, default=Beans.Process.WASHED)
     harvest_year = models.PositiveSmallIntegerField()
     kg_purchased = models.DecimalField(
         "kg purchased", max_digits=8, decimal_places=1, validators=[MinValueValidator(0)]
@@ -139,7 +139,7 @@ class RoastBatch(models.Model):
 
     lot = models.ForeignKey(GreenLot, on_delete=models.PROTECT, related_name="batches")
     roasted_on = models.DateField()
-    profile = models.CharField(max_length=10, choices=Profile, default=Profile.MEDIUM)
+    profile = models.CharField(max_length=10, choices=Profile.choices, default=Profile.MEDIUM)
     green_kg = models.DecimalField(
         "green kg", max_digits=6, decimal_places=1, validators=[MinValueValidator(Decimal("0.1"))]
     )

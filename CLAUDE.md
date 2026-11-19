@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The distribution **django-crud-views-tabler** (PyPI; repo `jacob-consulting/django-crud-views-tabler`, docs on Read the
 Docs): two reusable packages under `src/` and a demo project under `example/` that exercises them. Supported: Python
-3.12–3.15 × Django 5.2, 6.1 (the nox matrix); local development runs Python 3.14 / Django 6.1.
+3.12–3.15 × Django 4.2, 5.2, 6.1 (the nox matrix; 4.2 only on 3.12/3.13); local development runs Python 3.14 / Django 6.1.
 
 - `src/django_tabler/`: Tabler 1.6.1 page shell (loaded from the jsDelivr CDN), layouts, sign-in page, `{% load tabler %}`
   icon tags, Tabler icon SVG paths (`icons.py`), the end-user layout switch, **and** the django-crispy-forms template
@@ -39,15 +39,18 @@ task seed:reset   # seed_demo --reset: rebuild the demo data in place
 
 uv run python example/manage.py seed_demo [--reset] | seed_demo_showcase   # demo data by hand
 
+# Always run test suites on all cores: pytest -n auto (pytest-xdist; task test and nox do). Single-core only for
+# one test or a -k selection.
+
 # Example apps' tests: pytest-django from example/ (example/pytest.ini, settings config.settings)
-cd example && uv run pytest
+cd example && uv run pytest -n auto
 cd example && uv run pytest dashboard/tests.py -k some_name   # single test
 # sales keeps its tests in a tests/ package (sales/tests/test_orders.py, ...), the other apps in tests.py
 
 # package suites, each with its own settings
-uv run pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings   # theme (own test app)
-uv run pytest tests/django_tabler --ds tests.django_tabler.settings           # shell, packaging scripts
-uv run pytest                                                                 # crispy_tabler pack (default)
+uv run pytest -n auto tests/crud_views_tabler --ds tests.crud_views_tabler.settings   # theme (own test app)
+uv run pytest -n auto tests/django_tabler --ds tests.django_tabler.settings           # shell, packaging scripts
+uv run pytest -n auto                                                         # crispy_tabler pack (default)
 uv run pytest tests/crispy_tabler/test_widgets.py -k some_name
 
 task test          # all of the above plus the check, against the sibling checkouts
@@ -103,8 +106,11 @@ overrides; copied templates drift from upstream silently. Upstream asks and thei
 **crispy_tabler pack.** The templates are vendored from crispy-bootstrap5 by `scripts/vendor_templates.py` (rewrites
 `bootstrap5/` includes to `crispy_tabler/`, adds a provenance comment, otherwise byte-identical). Six templates are
 hand-edited (`HAND_EDITED` in the script) and the script refuses to overwrite them without `--force`; files under
-`widget/` are pack-owned. `django_tabler/crispy/vendored.py:CRISPY_BOOTSTRAP5_VERSION` must match the `test` extra's
-crispy-bootstrap5 pin — `test_pack_parity.py` fails otherwise. `django_tabler.crispy.layout` subclasses
+`widget/` are pack-owned. `django_tabler/crispy/vendored.py:CRISPY_BOOTSTRAP5_VERSION` (2026.9) is the vendored
+release; the installed one must be in `CRISPY_BOOTSTRAP5_COMPATIBLE` (2026.3 for Django 4.2, 2026.9; byte-identical
+templates), which nox pins per Django version — `test_app.py`/`test_pack_parity.py` fail otherwise. Django-version
+gaps (4.2) live in the example and test settings: `example/config/login_required.py` stands in for Django 5.1's
+`LoginRequiredMiddleware`. `django_tabler.crispy.layout` subclasses
 crispy-bootstrap5's `FloatingField`/`Switch`, so that distribution stays installed (but not in `INSTALLED_APPS`).
 `docs/crispy_tabler.md` documents which template branches the `showcase` demo form exercises.
 

@@ -110,9 +110,9 @@ class Beans(Product):
         DARK = "dark", "Dark"
 
     origin = models.ForeignKey(Origin, on_delete=models.PROTECT, related_name="beans")
-    process = models.CharField(max_length=10, choices=Process, default=Process.WASHED)
+    process = models.CharField(max_length=10, choices=Process.choices, default=Process.WASHED)
     altitude_m = models.PositiveIntegerField("altitude (m)", null=True, blank=True)
-    roast_level = models.CharField(max_length=10, choices=RoastLevel, default=RoastLevel.MEDIUM)
+    roast_level = models.CharField(max_length=10, choices=RoastLevel.choices, default=RoastLevel.MEDIUM)
     flavor_notes = models.ManyToManyField(FlavorNote, blank=True, related_name="beans")
     green_lot = models.ForeignKey(
         "roastery.GreenLot",
@@ -184,9 +184,9 @@ class Subscription(Product):
         G250 = "250g", "250 g"
         KG1 = "1kg", "1 kg"
 
-    interval = models.CharField(max_length=10, choices=Interval, default=Interval.MONTHLY)
+    interval = models.CharField(max_length=10, choices=Interval.choices, default=Interval.MONTHLY)
     bags_per_delivery = models.PositiveIntegerField(default=2)
-    bag_size = models.CharField(max_length=5, choices=BagSize, default=BagSize.G250)
+    bag_size = models.CharField(max_length=5, choices=BagSize.choices, default=BagSize.G250)
 
     card_color = "purple"
     order_line_kind = "subscription"

@@ -17,27 +17,16 @@ script refuses to run while it would overwrite them, unless --force is given.
 After a forced run, review the git diff and re-apply those edits.
 """
 
-import re
 import sys
 from importlib.metadata import version
 from pathlib import Path
 
 import crispy_bootstrap5
 
-from django_tabler.crispy.vendored import CRISPY_BOOTSTRAP5_VERSION
+from django_tabler.crispy.vendored import CRISPY_BOOTSTRAP5_VERSION, HAND_EDITED, INCLUDE_PREFIX
 
 SRC = Path(crispy_bootstrap5.__file__).parent / "templates" / "bootstrap5"
 DEST = Path(__file__).resolve().parent.parent / "src/django_tabler/templates/crispy_tabler"
-# Templates edited by hand after vendoring; a re-run would silently revert them.
-HAND_EDITED = (
-    "field.html",
-    "layout/uneditable_input.html",
-    "layout/formactions.html",
-    "layout/fieldset.html",
-    "layout/radioselect_inline.html",
-    "layout/checkboxselectmultiple_inline.html",
-)
-INCLUDE_PREFIX = re.compile(r"""(['"])bootstrap5/""")
 
 
 def main(argv: list[str]) -> int:

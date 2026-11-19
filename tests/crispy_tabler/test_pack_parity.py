@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 import crispy_bootstrap5
@@ -66,3 +67,32 @@ def test_a_form_renders_through_the_pack_without_touching_bootstrap5(settings):
     settings.INSTALLED_APPS = [a for a in settings.INSTALLED_APPS if a != "crispy_bootstrap5"]
     html = render_crispy_form(CoverageForm())
     assert "form-control" in html
+
+
+def test_vendored_templates_match_the_installed_crispy_bootstrap5_byte_for_byte():
+    """Every vendored template is the installed one plus header and include rewrite (scripts/vendor_templates.py).
+
+    The hand-edited templates cannot match; their installed upstream originals must still be the ones vendored, by
+    hash. This is what makes CRISPY_BOOTSTRAP5_COMPATIBLE safe: a release with changed templates fails here.
+    """
+    from django_tabler.crispy.vendored import HAND_EDITED, INCLUDE_PREFIX, UPSTREAM_SHA256
+
+    checked = 0
+    for rel in sorted(bs5_names()):
+        upstream = (BS5_ROOT / rel).read_bytes()
+        if rel in HAND_EDITED:
+            assert hashlib.sha256(upstream).hexdigest() == UPSTREAM_SHA256[rel], rel
+            continue
+        expected = f"{{# vendored from crispy-bootstrap5 {CRISPY_BOOTSTRAP5_VERSION}: {rel} #}}\n"
+        expected += INCLUDE_PREFIX.sub(r"\1crispy_tabler/", upstream.decode("utf-8"))
+        assert (PACK_ROOT / rel).read_bytes().decode("utf-8") == expected, rel
+        checked += 1
+    assert checked > 30  # never pass vacuously
+
+
+def test_subclassed_layout_objects_match_the_vendored_crispy_bootstrap5():
+    # django_tabler.crispy.layout subclasses FloatingField and Switch from this module.
+    from django_tabler.crispy.vendored import UPSTREAM_SHA256
+
+    source = (Path(crispy_bootstrap5.__file__).parent / "bootstrap5.py").read_bytes()
+    assert hashlib.sha256(source).hexdigest() == UPSTREAM_SHA256["bootstrap5.py"]

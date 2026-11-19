@@ -3,7 +3,9 @@
 `crispy_tabler` is a [django-crispy-forms](https://django-crispy-forms.readthedocs.io/) template pack with Tabler
 markup, shipped in `django_tabler`. It is vendored from crispy-bootstrap5 2026.9: the templates are byte-identical
 except for the `bootstrap5/` include paths and six hand-edited templates, and a parity test fails when they drift
-from the installed crispy-bootstrap5.
+from the installed crispy-bootstrap5. crispy-bootstrap5 2026.3, the newest release on Django 4.2, has byte-identical templates
+(the parity test checks whichever release is installed), so the pack's markup is the same on every supported Django
+version. Django 4.2 itself adds less to form fields: `aria-describedby` and `aria-invalid` come from Django 5.0.
 
 ```python
 CRISPY_ALLOWED_TEMPLATE_PACKS = ("crispy_tabler",)

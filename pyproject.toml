@@ -55,7 +55,7 @@ test = [
     "pytest-xdist",
     "lxml",
     "cssselect",
-    # The exact crispy-bootstrap5 per Django version is pinned by noxfile.py (CRISPY_BOOTSTRAP5).
+    # The exact crispy-bootstrap5 per Django version is pinned by noxfile.py (crispy_bootstrap5()).
 ]
 
 dev = [

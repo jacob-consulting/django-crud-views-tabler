@@ -92,33 +92,13 @@
 }
 
 
-/* ViewSet Navigation (upstream PR #383, stock templates; finding 36). The theme's page template puts the owner's
-   header and the section links at the top of the page header (.cv-tabler-owner, finding 38). Upstream writes
-   `nav nav-pills` with no class key, so the pills are restyled as underline tabs here. Tabler's .nav-link is a flex
-   row, so the space the template puts between icon and label collapses: give the row a gap. The active tab takes
-   the link colour, which Tabler lightens in dark mode; the plain primary is too dim on a dark page. */
-.cv-tabler-navbar .nav-link {
-  gap: .375rem;
-}
-.cv-tabler-navbar .nav-pills {
-  gap: 0 1.25rem !important;
-  border-bottom: var(--tblr-border-width) solid var(--tblr-border-color);
-}
-.cv-tabler-navbar .nav-pills .nav-link {
-  padding: .5rem 0;
-  margin-bottom: calc(-1 * var(--tblr-border-width));
-  border-radius: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--tblr-secondary);
-}
-.cv-tabler-navbar .nav-pills .nav-link:hover {
-  color: var(--tblr-body-color);
-}
-.cv-tabler-navbar .nav-pills .nav-link.active {
+/* ViewSet Navigation (upstream PR #383): the theme's page template puts the owner's header and the section tabs at
+   the top of the page header (.cv-tabler-owner, finding 38). The tabs take Tabler's nav-bordered through the
+   navbar:* class keys (upstream #384, finding 36). Tabler colours the active tab with the plain primary, which is
+   too dim on a dark page (sienna, about 2.9:1): use the link colour, which Tabler lightens in dark mode. */
+.cv-tabler-navbar .nav-link.active {
   color: var(--tblr-link-color);
-  border-bottom-color: currentColor;
-  background: transparent;
+  border-color: var(--tblr-link-color);
 }
 /* The view's own title row follows the owner's header: a section heading, smaller than the owner's name. */
 .cv-tabler-owner ~ .row .page-title {

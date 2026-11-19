@@ -142,6 +142,9 @@ class ButtonClassTests(SimpleTestCase):
             "alert:close": "btn-close",
             "card-order:toggle": "btn btn-icon",
             "card-order:container": "btn-group",
+            "navbar:nav": "nav nav-bordered flex-wrap column-gap-4",
+            "navbar:item": "nav-item mw-100 ms-0",
+            "navbar:link": "nav-link mw-100 text-break gap-2",
             "formset:control": "btn btn-icon",
             "formset:control-danger": "btn btn-icon btn-danger",
             "conditional:legend": "cv-tabler-section-legend",
@@ -213,6 +216,21 @@ class ThemeRenderingTests(TestCase):
         self.assertNotIn('class="cv-navbar ', html)  # the full wrapper tag is not used
         self.assertIn('aria-label="Sections for Customer 03"', header)
         self.assertRegex(header, r'class="nav-link[^"]* active" href="[^"]+" aria-current="true"')
+        # Upstream #384's navbar:* keys: Tabler's underline tabs instead of the stock pills
+        # nav-bordered spaces tabs with margin-inline-start on every item after the first, which indents a wrapped row
+        # (browser check at 375px): a column gap on the list instead, no item margin
+        self.assertIn('<ul class="nav nav-bordered flex-wrap column-gap-4">', header)
+        sections = header[header.index('<nav aria-label="Sections') :]
+        sections = sections[: sections.index("</nav>")]
+        self.assertGreater(sections.count("<li "), 1)
+        self.assertEqual(sections.count('<li class="nav-item mw-100 ms-0">'), sections.count("<li "))
+        self.assertNotIn("nav-pills", header)
+        self.assertRegex(header, r'class="nav-link mw-100 text-break gap-2 active" href="[^"]+" aria-current="true"')
+
+    def test_project_setting_overrides_the_navbar_keys(self):
+        with override_settings(CRUD_VIEWS_BUTTON_CLASSES={"navbar:nav": "nav nav-tabs"}):
+            html = self.detail_html()
+        self.assertIn('<ul class="nav nav-tabs">', html)
 
     def test_bar_page_title_names_the_owner(self):
         self.assertRegex(self.detail_html(), r"<title>[^<]*· Customer 03 · ")
@@ -816,14 +834,19 @@ class BareTableTests(SimpleTestCase):
             r"--bs-secondary-text-emphasis: var\(--tblr-secondary-text-emphasis\);",
         )
 
-    def test_object_navbar_pills_look_like_tabs(self):
-        # Finding 36: upstream's pills restyled as Tabler underline tabs; Tabler's .nav-link is a flex row, which
-        # drops the space between icon and label
+    def test_object_navbar_tabs_use_tabler_classes(self):
+        # Finding 36, resolved by upstream #384: the tabs take Tabler's nav-bordered through the navbar:* keys; the
+        # CSS keeps only the active colour (readable in dark mode) and the smaller view title below the tabs
         css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
-        self.assertRegex(css, r"\.cv-tabler-navbar \.nav-link \{\s*gap: \.375rem;")
-        self.assertRegex(css, r"\.cv-tabler-navbar \.nav-pills[^{]*\{[^}]*border-bottom")
-        self.assertNotIn("--tblr-nav-pills-link-active-color", css)
-
+        self.assertNotIn(".nav-pills", css)
+        self.assertNotRegex(css, r"\.cv-tabler-navbar \.nav-link \{\s*gap:")
+        self.assertRegex(css, r"\.cv-tabler-navbar \.nav-link\.active \{[^}]*--tblr-link-color")
+        self.assertRegex(css, r"\.cv-tabler-owner ~ \.row \.page-title \{\s*font-size: 1rem;")
+        self.assertEqual(
+            {key: value for key, value in TABLER_BUTTON_CLASSES.items() if key.startswith("navbar:")},
+            {"navbar:nav": "nav nav-bordered flex-wrap column-gap-4", "navbar:item": "nav-item mw-100 ms-0",
+             "navbar:link": "nav-link mw-100 text-break gap-2"},
+        )
 
 class ThemeAdoptionTests(TestCase):
     """Native form floor, exact registrations and real action rendering contracts."""

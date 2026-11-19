@@ -4,9 +4,10 @@
 {% block title %}{% cv_header %}{% if cv_navbar %} · {{ cv_navbar.label }}{% endif %}{% endblock %}
 {% block extra_head %}{% cv_css %}{% endblock %}
 {# ViewSet Navigation (upstream PR #383): with a bar, the owner's header (breadcrumb, avatar, name as h1, the section #}
-{# tabs) sits at the top of the page header and the view's own title row follows the tabs as a section heading. #}
-{# The title row's blocks stay in place, so overrides of page_title, cv_context and actions keep working. #}
-{# The cv_navbar block holds only the tabs; the stock items template is used, no override (findings 36, 38). #}
+{# tabs) sits at the top of the page header and the view's own title row follows the tabs as a section heading, as #}
+{# in upstream's owner-as-page-heading recipe (#384, finding 38). The title row's blocks stay in place, so overrides #}
+{# of page_title, cv_context and actions keep working. The cv_navbar block holds only the tabs: the stock items #}
+{# template, styled through the navbar:* class keys (#384, finding 36). #}
 {% block page_header_top %}{% if cv_navbar %}
 <div class="cv-tabler-owner">
   {% cv_breadcrumb %}

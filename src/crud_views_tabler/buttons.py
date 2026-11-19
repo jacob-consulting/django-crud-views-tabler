@@ -63,6 +63,15 @@ TABLER_BUTTON_CLASSES: dict[str, str] = {
     "alert:close": "btn-close",
     "card-order:toggle": "btn btn-icon",
     "card-order:container": "btn-group",
+    # ViewSet Navigation (upstream #384, finding 36): Tabler's underline tabs (nav-bordered, as in the dashboard's
+    # tasks.html) instead of the stock pills. Tabler's .nav-link is a flex row that collapses the space between icon
+    # and label, hence gap-2. nav-bordered spaces the tabs with margin-inline-start on every item after the first,
+    # which indents a wrapped row on a narrow screen: a column gap on the list and ms-0 on the items instead. The
+    # active key keeps upstream's default; wrapper and identity are not rendered by the theme's page (it composes the
+    # owner header itself, finding 38).
+    "navbar:nav": "nav nav-bordered flex-wrap column-gap-4",
+    "navbar:item": "nav-item mw-100 ms-0",
+    "navbar:link": "nav-link mw-100 text-break gap-2",
     "formset:control": "btn btn-icon",
     "formset:control-danger": "btn btn-icon btn-danger",
     "conditional:legend": "cv-tabler-section-legend",

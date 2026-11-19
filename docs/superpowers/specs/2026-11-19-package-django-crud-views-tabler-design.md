@@ -36,7 +36,7 @@ publishes to PyPI, and deploys the demo to Render, with docs live on Read the Do
 
 - Shipping licensed Tabler archive files (`~/projects/tabler/`) or secrets, in the wheel, the sdist, or the public
   history.
-- Publishing a release that only works with an unreleased django-crud-views: PyPI release waits for crud-views 0.31.
+- Publishing a release that only works with an unreleased django-crud-views: PyPI release waits for crud-views 1.0.0rc1.
 - Patching or forking django-crud-views or django-crud-views-extensions (both stay read-only for this repo).
 - `django_tabler` code importing `crud_views` (the package boundary stays, even though both ship together).
 
@@ -73,12 +73,14 @@ publishes to PyPI, and deploys the demo to Render, with docs live on Read the Do
    the example on every row.
 2. **crud-views is a hard dependency.** `pip install django-crud-views-tabler` installs django-crud-views. The
    `crispy` extra is dropped (crud-views already requires django-crispy-forms and crispy-bootstrap5).
-3. **Unreleased upstream:** until crud-views 0.31 is on PyPI, nox sessions and the Render build install
+3. **Unreleased upstream:** until crud-views 1.0.0rc1 is on PyPI, nox sessions and the Render build install
    django-crud-views from `git+https://github.com/jacob-consulting/django-crud-views@main`. Local development keeps
-   the sibling path sources (`[tool.uv.sources]`). The first PyPI release waits for crud-views 0.31; then the git
+   the sibling path sources (`[tool.uv.sources]`). The first PyPI release waits for crud-views 1.0.0rc1; then the git
    install is removed. *Builder's call (from the review):* because upstream `main` still says 0.30.0, the package
-   declares `django-crud-views>=0.30` meanwhile and the release commit raises it to `>=0.31`; `publish.yml` refuses
-   to publish when the declared floor is below 0.31.
+   declares `django-crud-views>=0.30` meanwhile and the release commit raises it to `>=1.0.0rc1`; `publish.yml` refuses
+   to publish when the declared floor is below 1.0.0rc1. A floor that names a pre-release (`>=1.0.0rc1`) lets
+   pip install the release candidate without `--pre`, so the theme's 0.1.0 can be published as soon as crud-views
+   1.0.0rc1 is on PyPI; it does not wait for 1.0.0 final.
 4. **Repo:** rename and transfer this repo, full history, to `jacob-consulting/django-crud-views-tabler`, then make
    it public, after a history scan for licensed Tabler files and secrets.
 5. **Approach A.**
@@ -91,7 +93,7 @@ publishes to PyPI, and deploys the demo to Render, with docs live on Read the Do
   `readme`, classifiers (Django 5.2/6.0/6.1, Python 3.12–3.15), `[project.urls]` pointing at
   `jacob-consulting/django-crud-views-tabler` and `django-crud-views-tabler.readthedocs.io`.
 - `requires-python = ">=3.12"`; dependencies: `django>=5.2`, `django-crud-views>=0.30` (raised to
-  `>=0.31` at release, decision 3), `crispy-bootstrap5>=2026.9` (the vendored baseline) (plus whatever `src/` imports
+  `>=1.0.0rc1` at release, decision 3), `crispy-bootstrap5>=2026.9` (the vendored baseline) (plus whatever `src/` imports
   directly; nothing example-only).
 - Extras mirroring upstream's shape: `examples` (pygments, django-crud-views-extensions, and the crud-views extras the
   example needs: `workflow,polymorphic,guardian,ordered`), `test`, `dev` (ruff, pre-commit, bump-my-version, mkdocs
@@ -120,7 +122,7 @@ crud-views problem, logged in `docs/crud_views_upstream_findings_roastery.md` pe
   - `examples(python, django)`: installs the package with `examples,test`, runs the example's tests.
   - `package`: builds wheel + sdist and runs `check_dist.py`.
   - `docs`: `mkdocs build --strict` (optional locally, CI has its own job).
-- Both test sessions install crud-views from git `main` until 0.31 (decision 3).
+- Both test sessions install crud-views from git `main` until 1.0.0rc1 (decision 3).
 - `Taskfile.yaml` `test` keeps working for local use (it may call nox or pytest directly).
 
 ### Lint
@@ -186,7 +188,7 @@ README rewritten for PyPI (what it is, install, minimal settings, links to docs 
 4. Docs restructure and Read the Docs config.
 5. Render demo.
 6. History scan, then transfer and go public (user steps).
-7. Publish workflow ready; the first release follows the crud-views 0.31 release.
+7. Publish workflow ready; the first release follows the crud-views 1.0.0rc1 release.
 
 ## Left to the builder
 

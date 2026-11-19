@@ -21,3 +21,4 @@ Supported: Python 3.12–3.15, Django 5.2, 6.0 and 6.1, django-crud-views 1.0.
 - [Icons](icons.md) and the [crispy template pack](crispy_tabler.md).
 - [Theme internals](theme_internals.md): what is overridden and why, and every hook the theme uses.
 - [Demo](demo.md): Acme Roasters, a back office for a coffee roastery, built with django-crud-views and this theme.
+  Live at [django-crud-views-tabler-demo.onrender.com](https://django-crud-views-tabler-demo.onrender.com).

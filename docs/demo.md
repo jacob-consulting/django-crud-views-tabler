@@ -11,8 +11,10 @@ The app code never imports the theme: it is a plain django-crud-views project wi
 
 ## Online
 
+**https://django-crud-views-tabler-demo.onrender.com**
+
 The public demo runs on Render's free plan; the first request after a pause may take a minute. Its data is reset every
-night. The link is in the [README](https://github.com/jacob-consulting/django-crud-views-tabler#readme).
+night, so feel free to change things.
 
 | Account | Password | Role |
 |---|---|---|

@@ -16,6 +16,7 @@ Python 3.12–3.15, Django 5.2, 6.0 and 6.1. Tabler loads from the jsDelivr CDN.
 
 - Documentation: https://django-crud-views-tabler.readthedocs.io/
 - Source and issues: https://github.com/jacob-consulting/django-crud-views-tabler
+- Live demo: https://django-crud-views-tabler-demo.onrender.com (sign in as `alex`, `sam` or `kim`, password `demo`)
 
 ## Install
 
@@ -49,6 +50,10 @@ Branding (site name, logo, menu, default layout) is done by overriding a few inc
 `example/` is a back office for a specialty coffee roastery (customers, orders, subscriptions, products, green coffee
 lots, cupping, roast batches, shipments), built with django-crud-views and themed by this package. The app code never
 imports the theme; every crud_views page has a "Show code" panel, and `/theming/` shows the whole theme.
+
+Try it online at https://django-crud-views-tabler-demo.onrender.com: sign in as `alex`, `sam` or `kim` (password
+`demo`). It runs on Render's free plan, so the first request after a pause may take a minute, and its data is reset
+every night.
 
 ### Run it
 

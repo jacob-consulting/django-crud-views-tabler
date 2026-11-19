@@ -1,4 +1,7 @@
-"""Typeahead lookups of the sales app. ``crud_views_widget_typeahead`` imports every app's ``typeahead.py`` on startup."""
+"""Typeahead lookups of the sales app.
+
+``crud_views_widget_typeahead`` imports every app's ``typeahead.py`` on startup.
+"""
 
 from crud_views_widget_typeahead.lookups import TypeaheadLookup, register_lookup
 

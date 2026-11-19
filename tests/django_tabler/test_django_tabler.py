@@ -5,8 +5,8 @@ from pathlib import Path
 
 from django.contrib.messages import constants
 from django.contrib.messages.storage.base import Message
-from django.template.loader import render_to_string
 from django.template import Context, Template
+from django.template.loader import render_to_string
 from django.test import SimpleTestCase, override_settings
 from django.utils.safestring import mark_safe
 
@@ -113,20 +113,26 @@ def render_layout_attrs(defaults: str | None = None) -> str:
     """``{% layout_defaults_attrs %}`` with the package's include, or with ``defaults`` as the include's content."""
     if defaults is None:
         return Template("{% load tabler %}{% layout_defaults_attrs %}").render(Context())
-    loaders = [("django.template.loaders.locmem.Loader", {"django_tabler/includes/layout_defaults.html": defaults}),
-               "django.template.loaders.app_directories.Loader"]
-    engine = {"BACKEND": "django.template.backends.django.DjangoTemplates", "DIRS": [],
-              "OPTIONS": {"loaders": loaders}}
+    loaders = [
+        ("django.template.loaders.locmem.Loader", {"django_tabler/includes/layout_defaults.html": defaults}),
+        "django.template.loaders.app_directories.Loader",
+    ]
+    engine = {"BACKEND": "django.template.backends.django.DjangoTemplates", "DIRS": [], "OPTIONS": {"loaders": loaders}}
     with override_settings(TEMPLATES=[engine]):
         return Template("{% load tabler %}{% layout_defaults_attrs %}").render(Context())
 
 
 class LayoutDefaultsTests(SimpleTestCase):
-    """A project sets its default layout in django_tabler/includes/layout_defaults.html; the user's choice still wins."""
+    """A project sets its default layout in django_tabler/includes/layout_defaults.html.
+
+    The user's choice still wins.
+    """
 
     def test_package_default_sets_nothing(self):
         self.assertEqual(render_layout_attrs((INCLUDES / "layout_defaults.html").read_text()), "")
-        self.assertIn('<html lang="en"{% layout_defaults_attrs %}>', (PACKAGE / "templates/django_tabler/base.html").read_text())
+        self.assertIn(
+            '<html lang="en"{% layout_defaults_attrs %}>', (PACKAGE / "templates/django_tabler/base.html").read_text()
+        )
 
     def test_project_defaults_become_server_values_and_a_json_attribute(self):
         html = render_layout_attrs('{"navbar-position": "vertical", "navbar-theme": "dark", "sidebar": "default"}')
@@ -144,8 +150,13 @@ class LayoutDefaultsTests(SimpleTestCase):
 
     def test_switch_reads_the_project_defaults_and_keeps_tablers_as_fallback(self):
         js = LAYOUT_SWITCH_JS.read_text()
-        for pair in ('layout: "default"', '"navbar-position": "horizontal"', '"navbar-style": "default"',
-                     '"navbar-theme": "default"', 'sidebar: "default"'):
+        for pair in (
+            'layout: "default"',
+            '"navbar-position": "horizontal"',
+            '"navbar-style": "default"',
+            '"navbar-theme": "default"',
+            'sidebar: "default"',
+        ):
             self.assertIn(pair, js)
         self.assertIn("document.documentElement.dataset.tablerLayoutDefaults", js)
         self.assertIn("const DEFAULTS = { ...TABLER_DEFAULTS, ...projectDefaults() };", js)

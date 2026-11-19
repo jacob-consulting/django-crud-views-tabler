@@ -1,14 +1,13 @@
 import random
-from pathlib import Path
 from copy import deepcopy
+from pathlib import Path
 from unittest.mock import patch
 
+from dashboard.seed import seed as seed_dashboard
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
-
-from dashboard.seed import seed as seed_dashboard
 
 from .models import Beans, Category, Equipment, Product, Subscription
 from .seed import seed as seed_catalog
@@ -82,9 +81,7 @@ class ProductViewTests(CatalogTestCase):
 
     def test_create_select_then_typed_form(self):
         self.login()
-        response = self.client.post(
-            reverse("product-create_select"), {"polymorphic_ctype_id": self.ctype_id(Beans)}
-        )
+        response = self.client.post(reverse("product-create_select"), {"polymorphic_ctype_id": self.ctype_id(Beans)})
         self.assertRedirects(
             response,
             reverse("product-create", kwargs={"polymorphic_ctype_id": self.ctype_id(Beans)}),
@@ -105,8 +102,15 @@ class ProductViewTests(CatalogTestCase):
         response = self.client.post(
             url,
             {
-                "name": "Test Lot", "slug": "test-lot", "sku": "T-1", "price": "12.50", "stock": "5",
-                "is_active": "on", "origin": origin.pk, "process": "honey", "roast_level": "dark",
+                "name": "Test Lot",
+                "slug": "test-lot",
+                "sku": "T-1",
+                "price": "12.50",
+                "stock": "5",
+                "is_active": "on",
+                "origin": origin.pk,
+                "process": "honey",
+                "roast_level": "dark",
             },
         )
         self.assertEqual(response.status_code, 302, getattr(response, "context_data", None))
@@ -119,7 +123,6 @@ class ProductViewTests(CatalogTestCase):
         for title in ("Coffee", "Commerce"):
             self.assertIn(title, html)
         self.assertRegex(html, rf">\s*{beans.get_process_display()}\s*<")
-
 
     def test_detail_of_each_type(self):
         """Each kind shows its own property labels and none of another kind's."""
@@ -140,9 +143,7 @@ class ProductViewTests(CatalogTestCase):
             self.assertIn("Commerce", html)
             self.assertIn("About", html)
             properties = {
-                prop.path: prop.value
-                for group in response.context["object_detail_groups"]
-                for prop in group.properties
+                prop.path: prop.value for group in response.context["object_detail_groups"] for prop in group.properties
             }
             self.assertEqual(properties["sku"], obj.sku)
             field = {Beans: "altitude_m", Equipment: "warranty_months", Subscription: "bags_per_delivery"}[model]

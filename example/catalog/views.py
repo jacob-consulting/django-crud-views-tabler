@@ -8,8 +8,6 @@ lookup with up/down views.
 import django_filters
 import django_tables2 as tables
 from crispy_forms.layout import Layout, Row
-from django.contrib.contenttypes.models import ContentType
-from django.utils.translation import gettext_lazy as _
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
 from crud_views.lib.crispy import Column3, Column4, CrispyDeleteForm, CrispyViewMixin
 from crud_views.lib.table import LinkDetailColumn, Table
@@ -36,6 +34,8 @@ from crud_views_polymorphic.lib import (
     PolymorphicDetailViewPermissionRequired,
     PolymorphicUpdateViewPermissionRequired,
 )
+from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import gettext_lazy as _
 
 from .forms import POLYMORPHIC_FORMS, CategoryForm, ProductContentTypeForm
 from .models import Beans, Category, Equipment, Product, Subscription
@@ -85,7 +85,12 @@ class ProductCardListView(BreadcrumbMixin, ListViewTableFilterMixin, CardListVie
     cv_card_template = "catalog/product_card.html"
     cv_card_container_class = "col-md-6 col-lg-4"
     paginate_by = 12
-    cv_order_fields = [("name", _("Name A-Z")), ("-name", _("Name Z-A")), ("price", _("Price low-high")), ("-price", _("Price high-low"))]
+    cv_order_fields = [
+        ("name", _("Name A-Z")),
+        ("-name", _("Name Z-A")),
+        ("price", _("Price low-high")),
+        ("-price", _("Price high-low")),
+    ]
     cv_order_default = "name"
     cv_card_actions = [
         CardAction(key="detail", label=_("Details"), variant="primary", flex=True),

@@ -2,12 +2,11 @@
 
 from decimal import ROUND_HALF_UP, Decimal
 
+from catalog.models import Beans, Origin
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
-
-from catalog.models import Beans, Origin
 
 HUNDREDTH = Decimal("0.01")
 TENTH = Decimal("0.1")
@@ -29,9 +28,13 @@ class GreenLot(models.Model):
     variety = models.CharField(max_length=100)
     process = models.CharField(max_length=10, choices=Beans.Process, default=Beans.Process.WASHED)
     harvest_year = models.PositiveSmallIntegerField()
-    kg_purchased = models.DecimalField("kg purchased", max_digits=8, decimal_places=1, validators=[MinValueValidator(0)])
+    kg_purchased = models.DecimalField(
+        "kg purchased", max_digits=8, decimal_places=1, validators=[MinValueValidator(0)]
+    )
     kg_on_hand = models.DecimalField("kg on hand", max_digits=8, decimal_places=1, validators=[MinValueValidator(0)])
-    price_per_kg = models.DecimalField("price per kg (€)", max_digits=7, decimal_places=2, validators=[MinValueValidator(0)])
+    price_per_kg = models.DecimalField(
+        "price per kg (€)", max_digits=7, decimal_places=2, validators=[MinValueValidator(0)]
+    )
     arrived_on = models.DateField()
 
     class Meta:
@@ -91,13 +94,27 @@ class CuppingScore(models.Model):
 
     session = models.ForeignKey(CuppingSession, on_delete=models.CASCADE, related_name="scores")
     taster = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="cupping_scores")
-    aroma = models.DecimalField(max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step])
-    flavor = models.DecimalField(max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step])
-    acidity = models.DecimalField(max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step])
-    body = models.DecimalField(max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step])
-    aftertaste = models.DecimalField(max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step])
-    balance = models.DecimalField(max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step])
-    overall = models.DecimalField(max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step])
+    aroma = models.DecimalField(
+        max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step]
+    )
+    flavor = models.DecimalField(
+        max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step]
+    )
+    acidity = models.DecimalField(
+        max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step]
+    )
+    body = models.DecimalField(
+        max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step]
+    )
+    aftertaste = models.DecimalField(
+        max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step]
+    )
+    balance = models.DecimalField(
+        max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step]
+    )
+    overall = models.DecimalField(
+        max_digits=4, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(10), validate_score_step]
+    )
 
     class Meta:
         ordering = ["pk"]
@@ -123,7 +140,9 @@ class RoastBatch(models.Model):
     lot = models.ForeignKey(GreenLot, on_delete=models.PROTECT, related_name="batches")
     roasted_on = models.DateField()
     profile = models.CharField(max_length=10, choices=Profile, default=Profile.MEDIUM)
-    green_kg = models.DecimalField("green kg", max_digits=6, decimal_places=1, validators=[MinValueValidator(Decimal("0.1"))])
+    green_kg = models.DecimalField(
+        "green kg", max_digits=6, decimal_places=1, validators=[MinValueValidator(Decimal("0.1"))]
+    )
     roasted_kg = models.DecimalField("roasted kg", max_digits=6, decimal_places=1, validators=[MinValueValidator(0)])
     roaster = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="roast_batches")
     orders = models.ManyToManyField("sales.Order", blank=True, related_name="roast_batches")
@@ -148,7 +167,9 @@ class RoastBatch(models.Model):
         """What this batch may draw from its lot: the stock, plus the weight it already holds there."""
         available = GreenLot.objects.get(pk=self.lot_id).kg_on_hand
         if self.pk:
-            previous = RoastBatch.objects.filter(pk=self.pk, lot_id=self.lot_id).values_list("green_kg", flat=True).first()
+            previous = (
+                RoastBatch.objects.filter(pk=self.pk, lot_id=self.lot_id).values_list("green_kg", flat=True).first()
+            )
             available += previous or 0
         return available
 

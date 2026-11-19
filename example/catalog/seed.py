@@ -10,14 +10,37 @@ from .models import Beans, Category, Equipment, FlavorNote, Origin, Product, Sub
 
 CATEGORIES = ["Single origin", "Blends", "Equipment", "Subscriptions"]
 
-ORIGINS = [("CO", "Huila"), ("ET", "Yirgacheffe"), ("KE", "Nyeri"), ("BR", "Cerrado"), ("GT", "Antigua"), ("PE", "Cajamarca"),
-           ("GT", "Huehuetenango"), ("CR", "Tarrazú"), ("RW", "Nyamasheke")]
+ORIGINS = [
+    ("CO", "Huila"),
+    ("ET", "Yirgacheffe"),
+    ("KE", "Nyeri"),
+    ("BR", "Cerrado"),
+    ("GT", "Antigua"),
+    ("PE", "Cajamarca"),
+    ("GT", "Huehuetenango"),
+    ("CR", "Tarrazú"),
+    ("RW", "Nyamasheke"),
+]
 
 NOTES = {
-    "raspberry": "red", "rose": "pink", "cane sugar": "orange", "jasmine": "lime", "bergamot": "yellow",
-    "blueberry": "indigo", "cocoa": "brown", "hazelnut": "orange", "black tea": "azure", "red apple": "red",
-    "caramel": "orange", "citrus": "yellow", "plum": "purple", "peach": "pink", "honey": "yellow",
-    "almond": "brown", "orange": "orange", "dark chocolate": "brown",
+    "raspberry": "red",
+    "rose": "pink",
+    "cane sugar": "orange",
+    "jasmine": "lime",
+    "bergamot": "yellow",
+    "blueberry": "indigo",
+    "cocoa": "brown",
+    "hazelnut": "orange",
+    "black tea": "azure",
+    "red apple": "red",
+    "caramel": "orange",
+    "citrus": "yellow",
+    "plum": "purple",
+    "peach": "pink",
+    "honey": "yellow",
+    "almond": "brown",
+    "orange": "orange",
+    "dark chocolate": "brown",
 }
 
 # name, origin index, process, altitude, roast, notes, price, stock, active
@@ -29,7 +52,17 @@ BEANS = [
     ("Antigua Honey", 4, "honey", 1500, "medium", ["caramel", "cocoa", "red apple"], "13.90", 35, True),
     ("Cajamarca Dark", 5, "washed", 1650, "dark", ["cocoa", "hazelnut"], "12.50", 0, True),
     ("Yirgacheffe Anaerobic", 1, "anaerobic", 2000, "light", ["jasmine", "raspberry", "bergamot"], "22.00", 12, True),
-    ("Huehuetenango Washed", 6, "washed", 1800, "medium", ["caramel", "dark chocolate", "red apple"], "14.50", 33, True),
+    (
+        "Huehuetenango Washed",
+        6,
+        "washed",
+        1800,
+        "medium",
+        ["caramel", "dark chocolate", "red apple"],
+        "14.50",
+        33,
+        True,
+    ),
     ("Tarrazú Honey", 7, "honey", 1600, "medium", ["honey", "orange", "cane sugar"], "15.40", 21, True),
     ("Nyamasheke Bourbon", 8, "washed", 1850, "light", ["plum", "black tea", "citrus"], "16.80", 17, True),
     ("Nyeri Peaberry", 2, "washed", 1750, "light", ["red apple", "black tea", "citrus"], "19.50", 9, True),
@@ -74,25 +107,50 @@ def seed(rng: random.Random, world: dict) -> None:
 
     for n, (name, o, process, alt, roast, flavor, price, stock, active) in enumerate(BEANS, 1):
         beans = Beans.objects.create(
-            name=name, slug=slugify(name), sku=f"BN-{n:03d}", price=Decimal(price), stock=stock, is_active=active,
-            category=categories["Blends" if "blend" in name.lower() else "Single origin"], origin=origins[o],
-            process=process, altitude_m=alt, roast_level=roast,
+            name=name,
+            slug=slugify(name),
+            sku=f"BN-{n:03d}",
+            price=Decimal(price),
+            stock=stock,
+            is_active=active,
+            category=categories["Blends" if "blend" in name.lower() else "Single origin"],
+            origin=origins[o],
+            process=process,
+            altitude_m=alt,
+            roast_level=roast,
             description=f"{name}: {', '.join(flavor)}. Roasted {roast} for filter and espresso.",
         )
         beans.flavor_notes.set([notes[f] for f in flavor])
         products.append(beans)
     for n, (name, brand, warranty, weight, price, stock) in enumerate(EQUIPMENT, 1):
-        products.append(Equipment.objects.create(
-            name=name, slug=slugify(name), sku=f"EQ-{n:03d}", price=Decimal(price), stock=stock,
-            category=categories["Equipment"], brand=brand, warranty_months=warranty, weight_kg=Decimal(weight),
-            description=f"{brand} {name.lower()}.",
-        ))
+        products.append(
+            Equipment.objects.create(
+                name=name,
+                slug=slugify(name),
+                sku=f"EQ-{n:03d}",
+                price=Decimal(price),
+                stock=stock,
+                category=categories["Equipment"],
+                brand=brand,
+                warranty_months=warranty,
+                weight_kg=Decimal(weight),
+                description=f"{brand} {name.lower()}.",
+            )
+        )
     for n, (name, interval, bags, size, price) in enumerate(SUBSCRIPTIONS, 1):
-        products.append(Subscription.objects.create(
-            name=name, slug=slugify(name), sku=f"SU-{n:03d}", price=Decimal(price),
-            category=categories["Subscriptions"], interval=interval, bags_per_delivery=bags, bag_size=size,
-            description="Fresh coffee on a schedule; pause or cancel any time.",
-        ))
+        products.append(
+            Subscription.objects.create(
+                name=name,
+                slug=slugify(name),
+                sku=f"SU-{n:03d}",
+                price=Decimal(price),
+                category=categories["Subscriptions"],
+                interval=interval,
+                bags_per_delivery=bags,
+                bag_size=size,
+                description="Fresh coffee on a schedule; pause or cancel any time.",
+            )
+        )
 
     # Account managers and Roasters look at the catalog but never change it (Owner has every permission).
     view_perms = Permission.objects.filter(content_type__app_label="catalog", codename__startswith="view_")

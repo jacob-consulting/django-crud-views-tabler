@@ -21,94 +21,97 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-$g1@&v70a8&!v(ie6=&1hf3mdba_1(6*ps4pwe5w))fd#rywi9')
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-$g1@&v70a8&!v(ie6=&1hf3mdba_1(6*ps4pwe5w))fd#rywi9")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
+DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,cv.jacob-consulting.org').split(',')
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,cv.jacob-consulting.org").split(",")
 
 # The Cloudflare tunnel terminates HTTPS, so Django sees an https Origin on a plain http request.
-CSRF_TRUSTED_ORIGINS = ['https://cv.jacob-consulting.org']
+CSRF_TRUSTED_ORIGINS = ["https://cv.jacob-consulting.org"]
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.humanize',
-    'crispy_forms',
-    'ordered_model',
-    'django_fsm',
-    'django_tables2',
-    'django_filters',
-    'crud_views_object_detail',
-    'polymorphic',
-    'guardian',
-    'django_tabler',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.humanize",
+    "crispy_forms",
+    "ordered_model",
+    "django_fsm",
+    "django_tables2",
+    "django_filters",
+    "crud_views_object_detail",
+    "polymorphic",
+    "guardian",
+    "django_tabler",
     # The Tabler theme overrides crud_views templates, so it must come before crud_views.
-    'crud_views_tabler',
-    'crud_views.apps.CrudViewsConfig',
-    'crud_views_workflow.apps.CrudViewsWorkflowConfig',
-    'crud_views_polymorphic.apps.CrudViewsPolymorphicConfig',
-    'crud_views_guardian.apps.CrudViewsGuardianConfig',
-    'crud_views_widget_datetimepicker.apps.CrudViewsWidgetDatetimepickerConfig',
-    'crud_views_widget_typeahead.apps.CrudViewsWidgetTypeaheadConfig',
-    'dashboard',
-    'catalog',
-    'sales',
-    'roastery',
-    'shipping',
-    'showcase',
+    "crud_views_tabler",
+    "crud_views.apps.CrudViewsConfig",
+    "crud_views_workflow.apps.CrudViewsWorkflowConfig",
+    "crud_views_polymorphic.apps.CrudViewsPolymorphicConfig",
+    "crud_views_guardian.apps.CrudViewsGuardianConfig",
+    "crud_views_widget_datetimepicker.apps.CrudViewsWidgetDatetimepickerConfig",
+    "crud_views_widget_typeahead.apps.CrudViewsWidgetTypeaheadConfig",
+    "dashboard",
+    "catalog",
+    "sales",
+    "roastery",
+    "shipping",
+    "showcase",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.LoginRequiredMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.LoginRequiredMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
             # config/ is not an app, so its tag libraries ("Show code" panel, navigation) are registered by hand
-            'libraries': {'showcode': 'config.templatetags.showcode', 'acme_nav': 'config.templatetags.acme_nav'},
+            "libraries": {"showcode": "config.templatetags.showcode", "acme_nav": "config.templatetags.acme_nav"},
         },
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# Django 6.0's default, set explicitly so Django 5.2 (default AutoField) matches the migrations, generated on 6.1.
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Password validation
@@ -116,16 +119,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -133,12 +136,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
 # config/formats/en/formats.py: "05 Jan 2026" instead of Django's "Jan. 5, 2026"
-FORMAT_MODULE_PATH = ['config.formats']
+FORMAT_MODULE_PATH = ["config.formats"]
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -148,43 +151,43 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Uploaded files (showcase datasheets). Served by config/urls.py while DEBUG is on.
 
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Authentication
 
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard:index'
-LOGOUT_REDIRECT_URL = 'login'
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "dashboard:index"
+LOGOUT_REDIRECT_URL = "login"
 
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
 MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+    "default": {
+        "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
 
 # django-crud-views
 
-CRISPY_ALLOWED_TEMPLATE_PACKS = ('crispy_tabler',)
-CRISPY_TEMPLATE_PACK = 'crispy_tabler'
-CRUD_VIEWS_EXTENDS = 'project/crud_views.html'
-CRUD_VIEWS_BREADCRUMB_PREFIX = [{'title': 'Home', 'url_name': 'dashboard:index'}]
-CRUD_VIEWS_DATETIMEPICKER = {'DEFAULTS': {'dayOfWeekStart': 1}}
-DJANGO_TABLES2_TEMPLATE = 'crud_views/table/bootstrap5.html'
+CRISPY_ALLOWED_TEMPLATE_PACKS = ("crispy_tabler",)
+CRISPY_TEMPLATE_PACK = "crispy_tabler"
+CRUD_VIEWS_EXTENDS = "project/crud_views.html"
+CRUD_VIEWS_BREADCRUMB_PREFIX = [{"title": "Home", "url_name": "dashboard:index"}]
+CRUD_VIEWS_DATETIMEPICKER = {"DEFAULTS": {"dayOfWeekStart": 1}}
+DJANGO_TABLES2_TEMPLATE = "crud_views/table/bootstrap5.html"
 # The manage pages list every view's permissions and who holds them. Since upstream #361 only active members of
 # CRUD_VIEWS_MANAGE_GROUP (default "CRUD_VIEWS_MANAGE"; the seed adds alex) may open them, whatever DEBUG says.
 # Set the environment variable to "no" to close them for everyone, or "debug_only" to require DEBUG as well.
-CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'yes')
+CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get("CRUD_VIEWS_MANAGE_VIEWS_ENABLED", "yes")
 # The manage page's permission matrix also lists users (sam's own Guardian grants on his customers, #366)
 CRUD_VIEWS_MANAGE_SHOW_USERS = True
 # The Access check card (#370) on the manage pages: trace what any user may open, e.g. sam on a customer he has no
@@ -193,13 +196,13 @@ CRUD_VIEWS_MANAGE_SHOW_USERS = True
 CRUD_VIEWS_MANAGE_ACCESS_TRACE = True
 
 # crud_views_object_detail: the layout of the detail pages' property groups
-CRUD_VIEWS_OBJECT_DETAIL_TEMPLATE_PACK_LAYOUT = 'tabs-vertical'
-CRUD_VIEWS_OBJECT_DETAIL_TEMPLATE_PACK_TYPES = 'default'
+CRUD_VIEWS_OBJECT_DETAIL_TEMPLATE_PACK_LAYOUT = "tabs-vertical"
+CRUD_VIEWS_OBJECT_DETAIL_TEMPLATE_PACK_TYPES = "default"
 
 # django-guardian (per-object permissions)
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'guardian.backends.ObjectPermissionBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "guardian.backends.ObjectPermissionBackend",
 ]
 ANONYMOUS_USER_NAME = None

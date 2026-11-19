@@ -1,41 +1,187 @@
 [project]
-name = "tabler-test"
+name = "django-crud-views-tabler"
 version = "0.1.0"
-requires-python = ">=3.14"
+description = "Tabler theme for django-crud-views, with a Tabler page shell and crispy-forms template pack"
+authors = [
+    { name = "Alexander Jacob", email = "alexander.jacob@jacob-consulting.de" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Development Status :: 3 - Alpha",
+    "Framework :: Django",
+    "Framework :: Django :: 5",
+    "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6",
+    "Framework :: Django :: 6.0",
+    "Framework :: Django :: 6.1",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+]
+requires-python = ">=3.12"
 dependencies = [
-    "django>=6.1,<6.2",
-    "django-crud-views[workflow,polymorphic,guardian,ordered]>=0.30.0",
-    "django-crud-views-extensions>=0.3.2",
-    "pygments",
+    "django (>=5.2)",
+    # Raised to >=1.0.0rc1 in the release commit (scripts/check_release_floor.py guards publish.yml).
+    "django-crud-views (>=0.30)",
+    "django-crispy-forms (>=2.3)",
+    # The crispy_tabler templates are vendored from this release (django_tabler/crispy/vendored.py).
+    "crispy-bootstrap5 (>=2026.9)",
 ]
 
 [project.optional-dependencies]
-# The django_tabler template pack and django_tabler.crispy need these; the rest of django_tabler does not.
-crispy = [
-    "django-crispy-forms>=2.4",
-    "crispy-bootstrap5>=2026.9",
+# The Acme Roasters example project (example/) and the public demo.
+examples = [
+    "django-crud-views[workflow,polymorphic,guardian,ordered]",
+    "django-crud-views-extensions (>=0.3.3)",
+    "pygments",
+    # the public demo's settings (config.settings_demo) and their tests; gunicorn is in requirements/demo.txt
+    "whitenoise (>=6.9)",
+    "django-ratelimit (>=4.1)",
 ]
 
+test = [
+    "nox",
+    "pytest",
+    "pytest-cov",
+    "pytest-random-order",
+    "pytest-mock",
+    "pytest-django",
+    "pytest-xdist",
+    "lxml",
+    "cssselect",
+    # test_pack_parity.py: must equal django_tabler.crispy.vendored.CRISPY_BOOTSTRAP5_VERSION
+    "crispy-bootstrap5 (==2026.9)",
+]
+
+dev = [
+    "ruff>=0.17,<0.18",
+    "pre-commit",
+    "bump-my-version",
+    "mkdocs (>=1.6.1)",
+    "mkdocs-awesome-pages-plugin (>=2.10.1)",
+    "mkdocs-get-deps (>=0.2.0)",
+    "pymdown-extensions (>=10.0)",
+]
+
+[project.urls]
+Homepage = "https://github.com/jacob-consulting/django-crud-views-tabler"
+Documentation = "https://django-crud-views-tabler.readthedocs.io/en/latest/"
+Repository = "https://github.com/jacob-consulting/django-crud-views-tabler.git"
+Issues = "https://github.com/jacob-consulting/django-crud-views-tabler/issues"
+Changelog = "https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/CHANGELOG.md"
+
+# Local development tracks the sibling checkouts (unreleased upstream features). nox, CI and Render install
+# django-crud-views from its GitHub main instead (noxfile.py CRUD_VIEWS) until 1.0.0rc1 is on PyPI.
 [tool.uv.sources]
 django-crud-views = { path = "../django-crud-views", editable = true }
 django-crud-views-extensions = { path = "../django-crud-views-extensions", editable = true }
 
 [build-system]
-requires = ["setuptools>=77"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/crud_views_tabler",
+    "src/django_tabler",
+]
 
-[tool.setuptools.package-data]
-"*" = ["templates/**/*.html", "static/**/*"]
-
-[dependency-groups]
-dev = ["tabler-test[crispy]"]  # the example project renders its forms through the pack
-test = ["pytest", "pytest-django", "crispy-bootstrap5==2026.9"]
+# The sdist ships only what is listed here; scripts/check_dist.py enforces this list on every built distribution.
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "src",
+    "tests",
+    "docs",
+    "example",
+    "noxfile.py",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+exclude = [
+    "example/db.sqlite3",
+    "example/media",
+    "example/staticfiles",
+    "__pycache__",
+]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "tests.crispy_tabler.settings"
 pythonpath = ["."]
 testpaths = ["tests/crispy_tabler"]
 addopts = "--strict-markers"
+
+[tool.coverage.run]
+relative_files = true
+source = [
+    "crud_views_tabler",
+    "django_tabler",
+]
+
+[tool.coverage.paths]
+# nox installs the package rather than linking it; map site-packages back onto src/ for Codecov.
+source = [
+    "src/",
+    "*/site-packages/",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.bumpversion]
+current_version = "0.1.0"
+commit = true
+tag = true
+tag_name = "v{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "src/crud_views_tabler/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "src/django_tabler/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "docs/index.md"
+search = "Current version: {current_version}"
+replace = "Current version: {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "README.md"
+search = "Current version: {current_version}"
+replace = "Current version: {new_version}"
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["superpowers/**"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM", "RUF"]
+# Typographic characters in demo copy and test data, on purpose.
+allowed-confusables = ["×", "’", "–"]
+
+[tool.ruff.lint.per-file-ignores]
+# ClassVar annotations on test fixtures and demo code add noise, not safety; Django generates migrations.
+"tests/**" = ["RUF012"]
+"example/**" = ["RUF012"]
+"**/migrations/*" = ["RUF012"]
+# Tabler icon SVG path data: one icon per line, not splittable prose.
+"src/django_tabler/icons.py" = ["E501"]

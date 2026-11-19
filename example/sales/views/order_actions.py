@@ -22,7 +22,9 @@ from .customers import CustomerNavbarMixin
 from .orders import ORDER_CONTEXT_ACTIONS, cv_order
 
 
-class OrderWorkflowView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, WorkflowViewPermissionRequired):
+class OrderWorkflowView(
+    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, WorkflowViewPermissionRequired
+):
     cv_viewset = cv_order
     form_class = WorkflowForm
     cv_transition_presentation = "buttons"
@@ -51,7 +53,9 @@ class OrderPackingSlipView(CustomerNavbarMixin, BreadcrumbMixin, DetailViewPermi
     cv_context_actions = ["detail", "packing_slip"]
 
 
-class OrderDuplicateView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, CustomFormViewPermissionRequired):
+class OrderDuplicateView(
+    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, CustomFormViewPermissionRequired
+):
     """A new draft for the same customer with the same lines, at today's prices."""
 
     cv_viewset = cv_order
@@ -78,7 +82,11 @@ class OrderDuplicateView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, 
         )
         for line in source.lines.all():
             OrderLine.objects.create(
-                order=self.duplicate, product=line.product, quantity=line.quantity, grind=line.grind, bag_size=line.bag_size
+                order=self.duplicate,
+                product=line.product,
+                quantity=line.quantity,
+                grind=line.grind,
+                bag_size=line.bag_size,
             )
 
     def get_success_url(self) -> str:

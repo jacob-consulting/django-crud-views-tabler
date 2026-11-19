@@ -1,6 +1,6 @@
 # django-crud-views: questions raised by the Tabler theme prototype
 
-Five points came up while building `crud_views_tabler` (see [crud_views_tabler.md](crud_views_tabler.md)). For
+Five points came up while building `crud_views_tabler` (see [theme_internals.md](../docs/theme_internals.md)). For
 each: what the package does today, why it matters for a theme, what the prototype does about it, and options with
 their trade-offs.
 

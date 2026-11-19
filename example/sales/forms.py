@@ -5,13 +5,23 @@ conditional group and the crispy layout. Upstream infers native empty values whe
 An order line's grind and bag size follow the selected product's kind through ``QuerysetConditions``.
 """
 
+from catalog.models import Beans, Equipment, Product, Subscription
 from crispy_forms.layout import HTML, Div, Row
 from crud_views.lib.conditional import (
-    ConditionalGroup, ConditionalGroupModelForm, QuerysetConditions, ToggleGroup, ValueToggle,
+    ConditionalGroup,
+    ConditionalGroupModelForm,
+    QuerysetConditions,
+    ToggleGroup,
+    ValueToggle,
 )
 from crud_views.lib.crispy import Column2, Column3, Column4, Column6, Column12, CrispyForm, CrispyModelForm
 from crud_views.lib.formsets import (
-    CompactColumn, CompactLayout, FormSet, FormSets, Formsets, InlineFormSet,
+    CompactColumn,
+    CompactLayout,
+    FormSet,
+    FormSets,
+    Formsets,
+    InlineFormSet,
 )
 from crud_views_widget_datetimepicker.widgets import DatePickerInput
 from crud_views_widget_typeahead.fields import TypeaheadField
@@ -21,8 +31,6 @@ from django.db.models import Q
 from django.forms.models import inlineformset_factory
 from django.template.loader import render_to_string
 from django.utils import timezone
-
-from catalog.models import Beans, Equipment, Product, Subscription
 
 from .models import Address, Customer, CustomerSubscription, Order, OrderLine, OrderState
 from .permissions import can_on_customer
@@ -44,7 +52,16 @@ class CustomerForm(ConditionalGroupModelForm):
     class Meta:
         model = Customer
         fields = [
-            "name", "kind", "contact_name", "email", "phone", "city", "country", "owner", *WHOLESALE_FIELDS, "notes",
+            "name",
+            "kind",
+            "contact_name",
+            "email",
+            "phone",
+            "city",
+            "country",
+            "owner",
+            *WHOLESALE_FIELDS,
+            "notes",
         ]
         widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
 
@@ -106,7 +123,8 @@ class OrderLineForm(ConditionalGroupModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # beans and equipment on sale, plus whatever this line already holds (a retired coffee stays selectable)
-        # (a union with the current product: a subscription line from "Run subscriptions" is neither beans nor equipment)
+        # (a union with the current product: a subscription line from "Run subscriptions" is neither beans nor
+        # equipment)
         products = Product.objects.instance_of(Beans, Equipment).filter(is_active=True)
         if self.instance.pk:
             products = products | Product.objects.filter(pk=self.instance.product_id)
@@ -124,6 +142,7 @@ class OrderLineInlineFormSet(InlineFormSet):
         kept = [f for f in self.forms if f.cleaned_data and not f.cleaned_data.get("DELETE")]
         if not kept:
             raise forms.ValidationError("A confirmed order needs at least one line item.")
+
 
 OrderLineFormSet = inlineformset_factory(
     Order,
@@ -251,7 +270,11 @@ class CustomerSubscriptionForm(CrispyModelForm):
         self.fields["is_active"].label = "Active"
 
     def get_layout_fields(self):
-        return [Row(Column6("product")), Row(Column3("started_on"), Column3("next_delivery")), Row(Column12("is_active"))]
+        return [
+            Row(Column6("product")),
+            Row(Column3("started_on"), Column3("next_delivery")),
+            Row(Column12("is_active")),
+        ]
 
 
 class RunSubscriptionsForm(CrispyForm):
@@ -259,8 +282,11 @@ class RunSubscriptionsForm(CrispyForm):
     submit_icon = None
 
     due = forms.DateField(
-        widget=DatePickerInput(), label="Deliver up to",
-        help_text="Every active subscription due on or before this date gets a draft order; each moves on by its interval.",
+        widget=DatePickerInput(),
+        label="Deliver up to",
+        help_text=(
+            "Every active subscription due on or before this date gets a draft order; each moves on by its interval."
+        ),
     )
 
     def __init__(self, *args, **kwargs):

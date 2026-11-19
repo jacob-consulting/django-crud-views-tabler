@@ -50,7 +50,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--seed", type=int, default=42, help="Random seed, for repeatable data.")
-        parser.add_argument("--reset", action="store_true", help="Wipe the demo tables entirely first, including rows you added yourself (not admin), then rebuild.")
+        parser.add_argument(
+            "--reset",
+            action="store_true",
+            help="Wipe the demo tables entirely first, including rows you added yourself (not admin), then rebuild.",
+        )
 
     def handle(self, *args, seed, reset, **options):
         User = get_user_model()

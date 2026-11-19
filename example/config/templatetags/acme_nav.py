@@ -35,30 +35,58 @@ DASHBOARD = Entry("Dashboard", "dashboard:index", "dashboard", ("index",))
 # Account managers hold only `add_customer` globally: their view rights are Guardian object grants, which a
 # permission check without an object cannot see, so Customers opens for add or view.
 MENU = (
-    Section("Sales", "building-store", (
-        Entry("Customers", "customer-list", "building-store", ("customer-", "address-"),
-              ("sales.view_customer", "sales.add_customer")),
-        Entry("Orders", "orders-list", "receipt", ("order-", "orders-"), ("sales.view_order",)),
-        Entry("Subscriptions", "subscriptions-list", "repeat", ("subscription-", "subscriptions-"),
-              ("sales.view_customersubscription",)),
-    )),
-    Section("Catalog", "package", (
-        Entry("Products", "product-list", "package", ("product-",), ("catalog.view_product",)),
-        Entry("Categories", "category-list", "category", ("category-",), ("catalog.view_category",)),
-    )),
-    Section("Roastery", "flame", (
-        Entry("Green lots", "lot-list", "package-import", ("lot-", "cupping-"), ("roastery.view_greenlot",)),
-        Entry("Roast batches", "batch-list", "flame", ("batch-",), ("roastery.view_roastbatch",)),
-        # the shipment list checks `sales.view_order` and scopes the rows to the user's customers
-        Entry("Shipments", "shipment-list", "truck-delivery", ("shipment-",), ("sales.view_order",)),
-    )),
-    Section("Developer", "code", (
-        Entry("Form showcase", "showcaseitem-list", "layout-grid", ("showcaseitem-",), ("showcase.view_showcaseitem",)),
-        Entry("How this is themed", "theming", "palette", ("theming",)),
-    )),
-    Section("Users", "users", (
-        Entry("Users", "dashboard:users", "users", ("users", "user_create"), ("auth.view_user",)),
-    )),
+    Section(
+        "Sales",
+        "building-store",
+        (
+            Entry(
+                "Customers",
+                "customer-list",
+                "building-store",
+                ("customer-", "address-"),
+                ("sales.view_customer", "sales.add_customer"),
+            ),
+            Entry("Orders", "orders-list", "receipt", ("order-", "orders-"), ("sales.view_order",)),
+            Entry(
+                "Subscriptions",
+                "subscriptions-list",
+                "repeat",
+                ("subscription-", "subscriptions-"),
+                ("sales.view_customersubscription",),
+            ),
+        ),
+    ),
+    Section(
+        "Catalog",
+        "package",
+        (
+            Entry("Products", "product-list", "package", ("product-",), ("catalog.view_product",)),
+            Entry("Categories", "category-list", "category", ("category-",), ("catalog.view_category",)),
+        ),
+    ),
+    Section(
+        "Roastery",
+        "flame",
+        (
+            Entry("Green lots", "lot-list", "package-import", ("lot-", "cupping-"), ("roastery.view_greenlot",)),
+            Entry("Roast batches", "batch-list", "flame", ("batch-",), ("roastery.view_roastbatch",)),
+            # the shipment list checks `sales.view_order` and scopes the rows to the user's customers
+            Entry("Shipments", "shipment-list", "truck-delivery", ("shipment-",), ("sales.view_order",)),
+        ),
+    ),
+    Section(
+        "Developer",
+        "code",
+        (
+            Entry(
+                "Form showcase", "showcaseitem-list", "layout-grid", ("showcaseitem-",), ("showcase.view_showcaseitem",)
+            ),
+            Entry("How this is themed", "theming", "palette", ("theming",)),
+        ),
+    ),
+    Section(
+        "Users", "users", (Entry("Users", "dashboard:users", "users", ("users", "user_create"), ("auth.view_user",)),)
+    ),
 )
 
 
@@ -70,8 +98,13 @@ def _is_active(entry: Entry, url_name: str | None) -> bool:
 
 def _link(entry: Entry, url_name: str | None, current: str | None) -> dict:
     url = reverse(entry.url_name)
-    return {"title": entry.title, "url": url, "icon": entry.icon, "active": _is_active(entry, url_name),
-            "current": current == url}
+    return {
+        "title": entry.title,
+        "url": url,
+        "icon": entry.icon,
+        "active": _is_active(entry, url_name),
+        "current": current == url,
+    }
 
 
 @register.simple_tag(takes_context=True)
@@ -84,8 +117,18 @@ def acme_menu(context) -> dict:
     current = request.path
     sections = []
     for section in MENU:
-        links = [_link(e, url_name, current) for e in section.entries if not e.perms or any(user.has_perm(p) for p in e.perms)]
+        links = [
+            _link(e, url_name, current)
+            for e in section.entries
+            if not e.perms or any(user.has_perm(p) for p in e.perms)
+        ]
         if links:
-            sections.append({"title": section.title, "icon": section.icon, "links": links,
-                             "active": any(link["active"] for link in links)})
+            sections.append(
+                {
+                    "title": section.title,
+                    "icon": section.icon,
+                    "links": links,
+                    "active": any(link["active"] for link in links),
+                }
+            )
     return {"dashboard": _link(DASHBOARD, url_name, current), "sections": sections}

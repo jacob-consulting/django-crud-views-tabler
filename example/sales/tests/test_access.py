@@ -51,7 +51,9 @@ WRITES = (
 class AccessMatrixTests(OrderTestCase):
     def build(self, customer):
         """The kwargs of every endpoint kind for one customer, with a fresh address, order and subscription."""
-        address = Address.objects.create(customer=customer, label="Spare", street="1 Main St", zip_code="10115", city="Berlin", country="DE")
+        address = Address.objects.create(
+            customer=customer, label="Spare", street="1 Main St", zip_code="10115", city="Berlin", country="DE"
+        )
         order = self.make_order(customer=customer)
         sub = CustomerSubscription.objects.create(
             customer=customer, product=self.weekly, started_on=TODAY, next_delivery=TODAY, is_active=True
@@ -75,8 +77,13 @@ class AccessMatrixTests(OrderTestCase):
         return getattr(self.client, method)(reverse(name, kwargs=fixtures[kind]), {})
 
     def snapshot(self):
-        return (Address.objects.count(), Order.objects.count(), CustomerSubscription.objects.count(),
-                sorted(Address.objects.values_list("pk", "is_default")), sorted(Order.objects.values_list("pk", "state")))
+        return (
+            Address.objects.count(),
+            Order.objects.count(),
+            CustomerSubscription.objects.count(),
+            sorted(Address.objects.values_list("pk", "is_default")),
+            sorted(Order.objects.values_list("pk", "state")),
+        )
 
     def test_sam_is_refused_on_other_customers_nested_pages(self):
         fixtures, _order = self.build(self.other)
@@ -95,7 +102,9 @@ class AccessMatrixTests(OrderTestCase):
                 continue  # changing pages are covered below and by the role tests
             response = self.request((name, kind, method), fixtures)
             self.assertEqual(response.status_code, 200, msg=name)
-        self.assertEqual(self.request(("address-update", "address", "get"), fixtures).status_code, 200, msg="address-update")
+        self.assertEqual(
+            self.request(("address-update", "address", "get"), fixtures).status_code, 200, msg="address-update"
+        )
         response = self.client.post(reverse("address-make_default", kwargs=fixtures["address"]))
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Address.objects.get(pk=fixtures["address"]["pk"]).is_default)
@@ -114,14 +123,20 @@ class AccessMatrixTests(OrderTestCase):
     def test_kim_cannot_write_addresses_or_subscriptions(self):
         fixtures, _order = self.build(self.other)
         self.login("kim")
-        for endpoint in (("address-create", "customer", "get"), ("address-update", "address", "get"),
-                         ("address-make_default", "address", "get"), ("subscription-create", "customer", "get")):
+        for endpoint in (
+            ("address-create", "customer", "get"),
+            ("address-update", "address", "get"),
+            ("address-make_default", "address", "get"),
+            ("subscription-create", "customer", "get"),
+        ):
             self.assertEqual(self.request(endpoint, fixtures).status_code, 403, msg=endpoint[0])
 
     def test_kim_roasts_any_customers_order(self):
         order = self.make_order(customer=self.other, state=OrderState.CONFIRMED)
         self.login("kim")
-        response = self.client.post(reverse("order-workflow", kwargs=self.order_kwargs(order)), {"transition": "wf_roast"})
+        response = self.client.post(
+            reverse("order-workflow", kwargs=self.order_kwargs(order)), {"transition": "wf_roast"}
+        )
         self.assertEqual(response.status_code, 302)
         order.refresh_from_db()
         self.assertEqual(order.state, OrderState.ROASTED)

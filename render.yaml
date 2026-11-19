@@ -1,0 +1,27 @@
+# Render Blueprint for the public demo of example/ (Acme Roasters).
+# Deploys are driven by .github/workflows/demo.yml through the Render API, never by pushes (autoDeploy: false).
+# The free plan's filesystem is ephemeral: a start normally sees a fresh SQLite database. seed_demo --reset also
+# copes with one that already has the data, and the showcase seed runs only on an empty table.
+services:
+  - type: web
+    name: django-crud-views-tabler-demo
+    runtime: python
+    plan: free
+    autoDeploy: false
+    buildCommand: >-
+      pip install ".[examples]" -r requirements/demo.txt &&
+      cd example && python manage.py collectstatic --noinput
+    startCommand: >-
+      cd example && python manage.py migrate --noinput && python manage.py cv_manage_group &&
+      python manage.py seed_demo --reset &&
+      { python manage.py shell -c "import sys; from showcase.models import ShowcaseItem;
+      sys.exit(0 if ShowcaseItem.objects.exists() else 1)" || python manage.py seed_demo_showcase; } &&
+      gunicorn config.wsgi --workers 1 --bind 0.0.0.0:$PORT
+    healthCheckPath: /accounts/login/
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings_demo
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: "3.14"

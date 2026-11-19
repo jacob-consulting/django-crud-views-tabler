@@ -3,10 +3,10 @@
 import re
 from html import unescape
 
+from catalog.models import Subscription
 from django.urls import reverse
 from django.utils.html import strip_tags
 
-from catalog.models import Subscription
 from sales.models import Address, Customer, CustomerSubscription
 
 from .test_orders import OrderTestCase
@@ -48,7 +48,9 @@ def navbar(response):
         return None
     items = [
         (strip_tags(body).strip(), href, "aria-current" in rest)
-        for href, rest, body in re.findall(r'<a class="nav-link[^"]*" href="([^"]+)"([^>]*)>(.*?)</a>', nav.group(2), re.S)
+        for href, rest, body in re.findall(
+            r'<a class="nav-link[^"]*" href="([^"]+)"([^>]*)>(.*?)</a>', nav.group(2), re.S
+        )
     ]
     return {"label": unescape(nav.group(1)), "items": items}
 
@@ -74,7 +76,9 @@ class CustomerNavbarTests(OrderTestCase):
 
     def build(self, customer):
         """The kwargs of every endpoint kind for one customer, with a fresh address, order and subscription."""
-        address = Address.objects.create(customer=customer, label="Spare", street="1 Main St", zip_code="10115", city="Berlin", country="DE")
+        address = Address.objects.create(
+            customer=customer, label="Spare", street="1 Main St", zip_code="10115", city="Berlin", country="DE"
+        )
         order = self.make_order(customer=customer)
         sub = CustomerSubscription.objects.create(
             customer=customer, product=self.weekly, started_on=TODAY, next_delivery=TODAY, is_active=True

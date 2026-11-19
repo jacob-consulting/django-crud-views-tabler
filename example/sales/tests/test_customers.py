@@ -1,13 +1,12 @@
 import random
 from html import escape
 
+from catalog.seed import seed as seed_catalog
+from dashboard.seed import seed as seed_dashboard
 from django.test import TestCase
 from django.urls import reverse
 
-from catalog.seed import seed as seed_catalog
-from dashboard.seed import seed as seed_dashboard
 from sales.models import Address, Customer
-from sales.permissions import grant_customer
 from sales.seed import seed as seed_sales
 
 CONSUMER_POST = {"name": "Test Person", "kind": "consumer", "country": "DE", "city": "Bonn"}
@@ -39,7 +38,9 @@ class SeedTests(SalesTestCase):
             self.assertEqual(customer.addresses.filter(is_default=True).count(), 1)
 
     def test_discount(self):
-        self.assertEqual([str(Customer(kind="wholesale", price_tier=t).discount) for t in "ABC"], ["0.20", "0.12", "0.05"])
+        self.assertEqual(
+            [str(Customer(kind="wholesale", price_tier=t).discount) for t in "ABC"], ["0.20", "0.12", "0.05"]
+        )
         self.assertEqual(Customer(kind="consumer").discount, 0)
 
 
@@ -62,7 +63,9 @@ class CustomerFormTests(SalesTestCase):
         self.assertEqual(response.status_code, 302)
         customer = Customer.objects.get(name="Test Person")
         self.assertEqual(customer.kind, "consumer")
-        self.assertEqual((customer.company, customer.vat_id, customer.price_tier, customer.payment_terms), ("", "", None, None))
+        self.assertEqual(
+            (customer.company, customer.vat_id, customer.price_tier, customer.payment_terms), ("", "", None, None)
+        )
 
         # wholesale without a company is refused
         response = self.client.post(
@@ -98,7 +101,9 @@ class CustomerFormTests(SalesTestCase):
         self.assertEqual(response.status_code, 302)
         customer.refresh_from_db()
         self.assertEqual(customer.kind, "consumer")
-        self.assertEqual((customer.company, customer.vat_id, customer.price_tier, customer.payment_terms), ("", "", None, None))
+        self.assertEqual(
+            (customer.company, customer.vat_id, customer.price_tier, customer.payment_terms), ("", "", None, None)
+        )
 
     def test_switching_to_wholesale_saves_terms(self):
         self.login()
@@ -145,7 +150,8 @@ class CustomerFormTests(SalesTestCase):
                 self.assertIn("kind", response.context["form"].errors)
                 customer.refresh_from_db()
                 self.assertEqual(
-                    (customer.kind, customer.company, customer.vat_id, customer.price_tier, customer.payment_terms), original
+                    (customer.kind, customer.company, customer.vat_id, customer.price_tier, customer.payment_terms),
+                    original,
                 )
 
     def test_creator_gets_a_grant(self):
@@ -176,7 +182,9 @@ class CustomerViewTests(SalesTestCase):
         html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
         for label in ("Phone", "Notes"):
             # the dash sits in the value cell right after the label, not in some later row
-            self.assertRegex(html, rf">\s*{label}\s*</div>\s*<div[^>]*>\s*<span class=\"text-body-tertiary\">&mdash;</span>")
+            self.assertRegex(
+                html, rf">\s*{label}\s*</div>\s*<div[^>]*>\s*<span class=\"text-body-tertiary\">&mdash;</span>"
+            )
         Customer.objects.filter(pk=customer.pk).update(phone="+49 40 123", notes="Likes it light")
         html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
         self.assertRegex(html, r">\s*Phone\s*<")
@@ -242,13 +250,18 @@ class RoleTests(SalesTestCase):
             status = self.client.get(reverse(url_name, kwargs={"pk": self.other.pk})).status_code
             self.assertIn(status, (403, 404), url_name)
         address = self.other.addresses.first()
-        self.assertIn(self.client.get(reverse("address-list", kwargs={"customer_pk": self.other.pk})).status_code, (403, 404))
         self.assertIn(
-            self.client.get(reverse("address-detail", kwargs={"customer_pk": self.other.pk, "pk": address.pk})).status_code,
+            self.client.get(reverse("address-list", kwargs={"customer_pk": self.other.pk})).status_code, (403, 404)
+        )
+        self.assertIn(
+            self.client.get(
+                reverse("address-detail", kwargs={"customer_pk": self.other.pk, "pk": address.pk})
+            ).status_code,
             (403, 404),
         )
         self.assertIn(
-            self.client.post(reverse("address-create", kwargs={"customer_pk": self.other.pk}), {}).status_code, (403, 404)
+            self.client.post(reverse("address-create", kwargs={"customer_pk": self.other.pk}), {}).status_code,
+            (403, 404),
         )
         # ... but the granted customer's pages open
         mine = self.granted.first()
@@ -272,9 +285,7 @@ class RoleTests(SalesTestCase):
         self.assertEqual(self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).status_code, 200)
         self.assertEqual(self.client.get(reverse("customer-update", kwargs={"pk": customer.pk})).status_code, 403)
         self.assertEqual(self.client.get(reverse("customer-create")).status_code, 403)
-        self.assertEqual(
-            self.client.get(reverse("address-list", kwargs={"customer_pk": customer.pk})).status_code, 200
-        )
+        self.assertEqual(self.client.get(reverse("address-list", kwargs={"customer_pk": customer.pk})).status_code, 200)
         self.assertEqual(
             self.client.get(reverse("address-create", kwargs={"customer_pk": customer.pk})).status_code, 403
         )
@@ -285,7 +296,9 @@ class AddressTests(SalesTestCase):
         self.login()
         customer = Customer.objects.filter(kind="wholesale").first()
         previous = customer.addresses.get(is_default=True)
-        second = Address.objects.create(customer=customer, label="Depot", street="X 1", zip_code="1", city="Y", country="DE")
+        second = Address.objects.create(
+            customer=customer, label="Depot", street="X 1", zip_code="1", city="Y", country="DE"
+        )
         url = reverse("address-make_default", kwargs={"customer_pk": customer.pk, "pk": second.pk})
         self.assertEqual(self.client.post(url).status_code, 302)
         second.refresh_from_db()
@@ -334,11 +347,15 @@ class AddressTests(SalesTestCase):
 
 class OwnerGrantTests(SalesTestCase):
     def update_post(self, customer, owner):
-        data = {"name": customer.name, "kind": customer.kind, "country": customer.country or "DE", "city": customer.city,
-                "owner": str(owner.pk) if owner else ""}
+        data = {
+            "name": customer.name,
+            "kind": customer.kind,
+            "country": customer.country or "DE",
+            "city": customer.city,
+            "owner": str(owner.pk) if owner else "",
+        }
         if customer.is_wholesale:
-            data.update(company=customer.company, price_tier=customer.price_tier,
-                        payment_terms=customer.payment_terms)
+            data.update(company=customer.company, price_tier=customer.price_tier, payment_terms=customer.payment_terms)
         return self.client.post(reverse("customer-update", kwargs={"pk": customer.pk}), data)
 
     def test_assigning_an_account_manager_grants_access(self):
@@ -356,9 +373,7 @@ class OwnerGrantTests(SalesTestCase):
         self.login()
         self.assertEqual(self.update_post(customer, self.sam).status_code, 302)
         self.login("sam")
-        self.assertEqual(
-            self.client.get(reverse("order-list", kwargs={"customer_pk": customer.pk})).status_code, 200
-        )
+        self.assertEqual(self.client.get(reverse("order-list", kwargs={"customer_pk": customer.pk})).status_code, 200)
         table = self.client.get(reverse("orders-list"), {"per_page": 100}).context["table"]
         self.assertIn(customer.pk, {o.customer_id for o in table.data})
 

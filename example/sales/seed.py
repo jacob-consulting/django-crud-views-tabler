@@ -4,12 +4,11 @@ and about 70 orders over the last 90 days in every workflow state."""
 import random
 from datetime import timedelta
 
+from catalog.models import Beans, Equipment, Product, Subscription
 from crud_views_workflow.lib import run_transition
 from crud_views_workflow.models import WorkflowInfo
 from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
-
-from catalog.models import Beans, Equipment, Product, Subscription
 
 from .models import Address, Customer, CustomerSubscription, Order, OrderLine
 from .permissions import grant_customer
@@ -31,10 +30,18 @@ WHOLESALE = [
 ]
 
 CONSUMERS = [
-    ("Mia Hoffmann", "Cologne", "DE"), ("Noah Schmidt", "Dresden", "DE"), ("Emma Fischer", "Bremen", "DE"),
-    ("Ben Keller", "Graz", "AT"), ("Lea Wagner", "Hannover", "DE"), ("Finn Becker", "Basel", "CH"),
-    ("Clara Vogel", "Utrecht", "NL"), ("Jakob Roth", "Salzburg", "AT"), ("Hanna Lorenz", "Hamburg", "DE"),
-    ("Oskar Winter", "Malmö", "SE"), ("Ida Sommer", "Ghent", "BE"), ("Leon Arnold", "Stuttgart", "DE"),
+    ("Mia Hoffmann", "Cologne", "DE"),
+    ("Noah Schmidt", "Dresden", "DE"),
+    ("Emma Fischer", "Bremen", "DE"),
+    ("Ben Keller", "Graz", "AT"),
+    ("Lea Wagner", "Hannover", "DE"),
+    ("Finn Becker", "Basel", "CH"),
+    ("Clara Vogel", "Utrecht", "NL"),
+    ("Jakob Roth", "Salzburg", "AT"),
+    ("Hanna Lorenz", "Hamburg", "DE"),
+    ("Oskar Winter", "Malmö", "SE"),
+    ("Ida Sommer", "Ghent", "BE"),
+    ("Leon Arnold", "Stuttgart", "DE"),
     ("Mara Schulz", "Bern", "CH"),
 ]
 
@@ -43,8 +50,13 @@ STREETS = ["Hauptstraße", "Marktplatz", "Bahnhofstraße", "Gartenweg", "Röster
 
 def address(rng, customer, label, default):
     return Address(
-        customer=customer, label=label, street=f"{rng.choice(STREETS)} {rng.randint(1, 120)}",
-        zip_code=str(rng.randint(10000, 99999)), city=customer.city, country=customer.country, is_default=default,
+        customer=customer,
+        label=label,
+        street=f"{rng.choice(STREETS)} {rng.randint(1, 120)}",
+        zip_code=str(rng.randint(10000, 99999)),
+        city=customer.city,
+        country=customer.country,
+        is_default=default,
     )
 
 
@@ -53,23 +65,44 @@ def seed(rng: random.Random, world: dict) -> None:
     customers = []
     for name, contact, city, country, tier, terms, owner in WHOLESALE:
         slug = "".join(c for c in name.lower() if c.isalnum())
-        customers.append(Customer.objects.create(
-            name=name, kind="wholesale", contact_name=contact, email=f"orders@{slug}.example",
-            phone=f"+{rng.randint(30, 49)} {rng.randint(100, 999)} {rng.randint(10000, 99999)}", city=city,
-            country=country, owner=users.get(owner), company=name, vat_id=f"{country}{rng.randint(10**8, 10**9 - 1)}",
-            price_tier=tier, payment_terms=terms,
-            notes="Delivers on Tuesdays and Fridays." if rng.random() < 0.4 else "",
-        ))
+        customers.append(
+            Customer.objects.create(
+                name=name,
+                kind="wholesale",
+                contact_name=contact,
+                email=f"orders@{slug}.example",
+                phone=f"+{rng.randint(30, 49)} {rng.randint(100, 999)} {rng.randint(10000, 99999)}",
+                city=city,
+                country=country,
+                owner=users.get(owner),
+                company=name,
+                vat_id=f"{country}{rng.randint(10**8, 10**9 - 1)}",
+                price_tier=tier,
+                payment_terms=terms,
+                notes="Delivers on Tuesdays and Fridays." if rng.random() < 0.4 else "",
+            )
+        )
     for i, (name, city, country) in enumerate(CONSUMERS):
         first, last = name.lower().split()
-        customers.append(Customer.objects.create(
-            name=name, kind="consumer", contact_name=name, email=f"{first}.{last}@mail.example", city=city,
-            country=country, owner=users["alex"] if i % 4 == 0 else None,
-        ))
+        customers.append(
+            Customer.objects.create(
+                name=name,
+                kind="consumer",
+                contact_name=name,
+                email=f"{first}.{last}@mail.example",
+                city=city,
+                country=country,
+                owner=users["alex"] if i % 4 == 0 else None,
+            )
+        )
 
     addresses = []
     for customer in customers:
-        labels = ["Shop", "Billing"] if customer.is_wholesale and rng.random() < 0.6 else ["Home" if not customer.is_wholesale else "Shop"]
+        labels = (
+            ["Shop", "Billing"]
+            if customer.is_wholesale and rng.random() < 0.6
+            else ["Home" if not customer.is_wholesale else "Shop"]
+        )
         addresses += [address(rng, customer, label, n == 0) for n, label in enumerate(labels)]
     Address.objects.bulk_create(addresses)
 
@@ -82,8 +115,8 @@ def seed(rng: random.Random, world: dict) -> None:
     # addresses of those; they get no model-level view permission on customers, or Guardian's object check would be
     # bypassed. Roasters (Kim) may look at customers and addresses, not edit.
     perm = lambda codename: Permission.objects.get(content_type__app_label="sales", codename=codename)  # noqa: E731
-    # Orders: account managers view, add and change them (for their granted customers, via upstream's ancestor guard) and
-    # take the workflow steps; Roasters only look, except that they mark confirmed orders as roasted.
+    # Orders: account managers view, add and change them (for their granted customers, via upstream's ancestor
+    # guard) and take the workflow steps; Roasters only look, except that they mark confirmed orders as roasted.
     Group.objects.get(name="Account managers").permissions.add(
         perm("add_customer"),
         *(perm(f"{a}_address") for a in ("view", "add", "change", "delete")),
@@ -91,7 +124,10 @@ def seed(rng: random.Random, world: dict) -> None:
         *(perm(f"{a}_customersubscription") for a in ("view", "add", "change")),  # for granted customers only
     )
     Group.objects.get(name="Roasters").permissions.add(
-        perm("view_customer"), perm("view_address"), perm("view_order"), perm("roast_order"),
+        perm("view_customer"),
+        perm("view_address"),
+        perm("view_order"),
+        perm("roast_order"),
         perm("view_customersubscription"),
     )
 
@@ -118,13 +154,23 @@ STEP_HOURS = {"wf_confirm": 3, "wf_roast": 30, "wf_ship": 54, "wf_deliver": 100,
 # (oldest age in days, weights per PATHS key): older orders are mostly delivered, newer ones still in progress
 STATE_MIX = [
     (35, {"delivered": 84, "cancelled": 6, "cancelled after confirm": 6, "shipped": 4}),
-    (14, {"delivered": 35, "shipped": 25, "roasted": 15, "confirmed": 10, "cancelled": 5, "cancelled after confirm": 10}),
+    (
+        14,
+        {"delivered": 35, "shipped": 25, "roasted": 15, "confirmed": 10, "cancelled": 5, "cancelled after confirm": 10},
+    ),
     (5, {"delivered": 5, "shipped": 10, "roasted": 30, "confirmed": 35, "cancelled": 5, "draft": 15}),
     (0, {"shipped": 4, "roasted": 22, "confirmed": 38, "draft": 32, "cancelled": 4}),
 ]
 # Orders by index (0 = oldest) with a fixed state, so every state is present whatever the dice say.
-FORCED = {1: "cancelled", 2: "delivered", ORDER_COUNT - 1: "draft", ORDER_COUNT - 2: "draft",
-          ORDER_COUNT - 3: "confirmed", ORDER_COUNT - 4: "roasted", ORDER_COUNT - 5: "shipped"}
+FORCED = {
+    1: "cancelled",
+    2: "delivered",
+    ORDER_COUNT - 1: "draft",
+    ORDER_COUNT - 2: "draft",
+    ORDER_COUNT - 3: "confirmed",
+    ORDER_COUNT - 4: "roasted",
+    ORDER_COUNT - 5: "shipped",
+}
 COMMENTS = {"wf_cancel": "Customer changed their mind.", "wf_ship": "DHL, two parcels.", "wf_roast": ""}
 
 
@@ -157,7 +203,9 @@ def seed_orders(rng: random.Random, customers: list[Customer], users: dict) -> l
         for product in rng.sample(products, rng.randint(1, 4)):
             beans = isinstance(product, Beans)
             OrderLine.objects.create(
-                order=order, product=product, quantity=rng.randint(1, 12) if beans else 1,
+                order=order,
+                product=product,
+                quantity=rng.randint(1, 12) if beans else 1,
                 grind=rng.choice(["whole", "filter", "espresso"]) if beans else "",
                 bag_size=rng.choice(["250g", "1kg"]) if beans else "",
             )
@@ -187,9 +235,14 @@ def seed_subscriptions(rng: random.Random, customers: list[Customer], products: 
     pool = [*rng.sample(sams, min(5, len(sams))), *rng.sample(rest, min(12, len(rest)))]
     today = timezone.localdate()
     subs = []
-    for n, (customer, offset) in enumerate(zip(pool, SUBSCRIPTION_OFFSETS)):
-        subs.append(CustomerSubscription.objects.create(
-            customer=customer, product=rng.choice(plans), started_on=today - timedelta(days=rng.randint(40, 300)),
-            next_delivery=today + timedelta(days=offset), is_active=n not in PAUSED,
-        ))
+    for n, (customer, offset) in enumerate(zip(pool, SUBSCRIPTION_OFFSETS, strict=False)):
+        subs.append(
+            CustomerSubscription.objects.create(
+                customer=customer,
+                product=rng.choice(plans),
+                started_on=today - timedelta(days=rng.randint(40, 300)),
+                next_delivery=today + timedelta(days=offset),
+                is_active=n not in PAUSED,
+            )
+        )
     return subs

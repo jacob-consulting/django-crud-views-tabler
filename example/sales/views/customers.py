@@ -9,8 +9,8 @@ import django_tables2 as tables
 from crispy_forms.layout import Layout, Row
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
 from crud_views.lib.crispy import Column3, Column4, CrispyDeleteForm, CrispyViewMixin
-from crud_views.lib.table import LinkDetailColumn, Table
 from crud_views.lib.navbar import CrudViewNavBarMixin, NavBar, NavItem
+from crud_views.lib.table import LinkDetailColumn, Table
 from crud_views.lib.views import ListViewTableFilterMixin, ListViewTableMixin, MessageMixin
 from crud_views.lib.views.list import ListViewFilterFormHelper
 from crud_views.lib.viewset import AncestorPolicy, context_buttons_default
@@ -154,11 +154,15 @@ _WHOLESALE = [
 ]
 
 # One card, like the mockup; consumers have no wholesale terms to show
-WHOLESALE_DISPLAY = [{"title": _("Details"), "icon": "tabler:building-store", "properties": [*_DETAILS, *_WHOLESALE, "notes"]}]
+WHOLESALE_DISPLAY = [
+    {"title": _("Details"), "icon": "tabler:building-store", "properties": [*_DETAILS, *_WHOLESALE, "notes"]}
+]
 CONSUMER_DISPLAY = [{"title": _("Details"), "icon": "tabler:building-store", "properties": [*_DETAILS, "notes"]}]
 
 
-class CustomerDetailView(CustomerNavbarMixin, GlobalPermsMixin, BreadcrumbMixin, ObjectDetailMixin, GuardianDetailViewPermissionRequired):
+class CustomerDetailView(
+    CustomerNavbarMixin, GlobalPermsMixin, BreadcrumbMixin, ObjectDetailMixin, GuardianDetailViewPermissionRequired
+):
     cv_viewset = cv_customer
     cv_object_detail_layout = "split-card"
     # The customer's name is the page's h1 (ViewSet Navigation); this view titles its own section, like its tab
@@ -195,7 +199,12 @@ class CustomerCreateView(
 
 
 class CustomerUpdateView(
-    CustomerNavbarMixin, GlobalPermsMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, GuardianUpdateViewPermissionRequired
+    CustomerNavbarMixin,
+    GlobalPermsMixin,
+    BreadcrumbMixin,
+    CrispyViewMixin,
+    MessageMixin,
+    GuardianUpdateViewPermissionRequired,
 ):
     cv_viewset = cv_customer
     form_class = CustomerForm
@@ -208,7 +217,12 @@ class CustomerUpdateView(
 
 
 class CustomerDeleteView(
-    CustomerNavbarMixin, GlobalPermsMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, GuardianDeleteViewPermissionRequired
+    CustomerNavbarMixin,
+    GlobalPermsMixin,
+    BreadcrumbMixin,
+    CrispyViewMixin,
+    MessageMixin,
+    GuardianDeleteViewPermissionRequired,
 ):
     cv_viewset = cv_customer
     form_class = CrispyDeleteForm

@@ -1,10 +1,10 @@
 """Shared rendering helpers. Tasks 3 to 6 import these; keep the shapes stable."""
 
-from django import forms
-from django.template import engines
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 from crispy_forms.utils import render_crispy_form
+from django import forms
+from django.template import engines
 
 PACK = "crispy_tabler"
 
@@ -17,9 +17,7 @@ class RatingForm(forms.Form):
 def render_field(field, name="field", tag=None, **context):
     """Render one form field through the pack's field.html."""
     form = type("OneFieldForm", (forms.Form,), {name: field})()
-    template = engines["django"].from_string(
-        "{% include 'crispy_tabler/field.html' %}"
-    )
+    template = engines["django"].from_string("{% include 'crispy_tabler/field.html' %}")
     ctx = {"field": form[name], "form_show_labels": True, **context}
     if tag:
         ctx["tag"] = tag
@@ -53,7 +51,5 @@ def bound_with_error(name, form_class=RatingForm):
     """Render the named field of a bound, invalid RatingForm-like form."""
     form = form_class(data={"rating": "not a number", "accent_color": ""})
     form.is_valid()
-    template = engines["django"].from_string(
-        "{% include 'crispy_tabler/field.html' %}"
-    )
+    template = engines["django"].from_string("{% include 'crispy_tabler/field.html' %}")
     return template.render({"field": form[name], "form_show_labels": True})

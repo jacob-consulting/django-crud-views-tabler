@@ -1,4 +1,34 @@
-# Crispy render-path coverage: the `showcase` demo app
+# Crispy template pack
+
+`crispy_tabler` is a [django-crispy-forms](https://django-crispy-forms.readthedocs.io/) template pack with Tabler
+markup, shipped in `django_tabler`. It is vendored from crispy-bootstrap5 2026.9: the templates are byte-identical
+except for the `bootstrap5/` include paths and six hand-edited templates, and a parity test fails when they drift
+from the installed crispy-bootstrap5.
+
+```python
+CRISPY_ALLOWED_TEMPLATE_PACKS = ("crispy_tabler",)
+CRISPY_TEMPLATE_PACK = "crispy_tabler"
+```
+
+django-crud-views' forms render through it, and so does any `{% crispy form %}` or `{{ form|crispy }}` of your own.
+
+## Fields, widgets and layout objects
+
+Tabler has form controls Bootstrap lacks. `django_tabler.crispy` provides them:
+
+| Import | What it does |
+|---|---|
+| `django_tabler.crispy.fields.RangeField` (`widgets.RangeInput`) | an integer field as a Tabler range input |
+| `django_tabler.crispy.fields.ColorField` (`widgets.ColorInput`) | a colour input |
+| `django_tabler.crispy.fields.PlaintextField` (`widgets.PlaintextInput`) | a read-only, disabled value in the form's grid |
+| `django_tabler.crispy.layout.FloatingField` | crispy-bootstrap5's `FloatingField`, rendered from this pack's template |
+| `django_tabler.crispy.layout.Switch` | crispy-bootstrap5's `Switch`, rendered from this pack's template |
+| `django_tabler.crispy.layout.UneditableField` | crispy-forms' `UneditableField` with Tabler's `form-control-plaintext` |
+
+crispy-bootstrap5's `FloatingField` and `Switch` hard-code `bootstrap5/` template paths, so they would ignore the
+pack; use these in a `FormHelper` layout instead.
+
+## Coverage: the `showcase` demo app
 
 The `showcase` app exists to make one page — `/showcase/create/` — render **every branch of the crispy
 template pack at once**, so the Tabler theme can be judged field by field instead of guessing. It is the

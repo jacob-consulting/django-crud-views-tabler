@@ -3,16 +3,23 @@
 ``ShowcaseItemForm`` is the reason this app exists: its layout uses one crispy layout object
 per render path, so a single create page shows every branch of the crispy template pack
 side by side. Keep that coverage when editing — the table in
-``docs/crispy_tabler_coverage.md`` says which field covers which template.
+``docs/crispy_tabler.md`` says which field covers which template.
 """
 
 import django_filters
 import django_tables2 as tables
 from crispy_forms.bootstrap import AppendedText, InlineCheckboxes, InlineRadios, PrependedText
 from crispy_forms.layout import Fieldset, Layout, Row
-from django_tabler.crispy.layout import FloatingField, Switch, UneditableField
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
-from crud_views.lib.crispy import Column3, Column4, Column6, Column12, CrispyDeleteForm, CrispyModelForm, CrispyViewMixin
+from crud_views.lib.crispy import (
+    Column3,
+    Column4,
+    Column6,
+    Column12,
+    CrispyDeleteForm,
+    CrispyModelForm,
+    CrispyViewMixin,
+)
 from crud_views.lib.table import LinkDetailColumn, Table
 from crud_views.lib.table.columns import NaturalTimeColumn
 from crud_views.lib.views import (
@@ -28,6 +35,8 @@ from crud_views.lib.views import (
 from crud_views.lib.views.list import ListViewFilterFormHelper
 from crud_views.lib.viewset import ViewSet
 from django import forms
+
+from django_tabler.crispy.layout import FloatingField, Switch, UneditableField
 
 from .models import ShowcaseCategory, ShowcaseItem, ShowcaseTag
 
@@ -83,12 +92,28 @@ class ShowcaseItemForm(CrispyModelForm):
     class Meta:
         model = ShowcaseItem
         fields = [
-            "name", "slug", "sku", "description",
-            "category", "tags", "channels", "size", "shipping",
-            "price", "warranty_months", "stock", "rating",
-            "released_on", "published_at", "restock_at",
-            "is_active", "is_featured",
-            "accent_color", "contact_email", "website", "datasheet",
+            "name",
+            "slug",
+            "sku",
+            "description",
+            "category",
+            "tags",
+            "channels",
+            "size",
+            "shipping",
+            "price",
+            "warranty_months",
+            "stock",
+            "rating",
+            "released_on",
+            "published_at",
+            "restock_at",
+            "is_active",
+            "is_featured",
+            "accent_color",
+            "contact_email",
+            "website",
+            "datasheet",
             "internal_notes",
         ]
         widgets = {

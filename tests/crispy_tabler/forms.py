@@ -13,12 +13,8 @@ class CoverageForm(forms.Form):
     select = forms.ChoiceField(choices=[("a", "A"), ("b", "B")])
     multi_select = forms.MultipleChoiceField(choices=[("a", "A"), ("b", "B")])
     checkbox = forms.BooleanField(required=False)
-    radio = forms.ChoiceField(
-        choices=[("a", "A"), ("b", "B")], widget=forms.RadioSelect
-    )
-    checkbox_group = forms.MultipleChoiceField(
-        choices=[("a", "A"), ("b", "B")], widget=forms.CheckboxSelectMultiple
-    )
+    radio = forms.ChoiceField(choices=[("a", "A"), ("b", "B")], widget=forms.RadioSelect)
+    checkbox_group = forms.MultipleChoiceField(choices=[("a", "A"), ("b", "B")], widget=forms.CheckboxSelectMultiple)
     file = forms.FileField()
     email = forms.EmailField()
     url = forms.URLField()

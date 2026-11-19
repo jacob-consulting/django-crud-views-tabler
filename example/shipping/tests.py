@@ -1,10 +1,9 @@
 import random
 
-from django.test import TestCase
-from django.urls import reverse
-
 from catalog.seed import seed as seed_catalog
 from dashboard.seed import seed as seed_dashboard
+from django.test import TestCase
+from django.urls import reverse
 from sales.models import Order, OrderState
 from sales.seed import seed as seed_sales
 
@@ -19,7 +18,9 @@ class ShippingTestCase(TestCase):
         seed_dashboard(rng, cls.world)
         seed_catalog(rng, cls.world)
         seed_sales(rng, cls.world)
-        cls.shipped = Order.objects.filter(state__in=[OrderState.SHIPPED, OrderState.DELIVERED]).select_related("customer")
+        cls.shipped = Order.objects.filter(state__in=[OrderState.SHIPPED, OrderState.DELIVERED]).select_related(
+            "customer"
+        )
         cls.sam = cls.world["users"]["sam"]
 
     def login(self, username="alex"):
@@ -76,7 +77,7 @@ class ShipmentViewTests(ShippingTestCase):
 
     def test_sam_gets_404_for_a_shipment_of_another_rep(self):
         self.login("sam")
-        foreign = others = self.shipped.exclude(customer__owner=self.sam).first()
+        foreign = self.shipped.exclude(customer__owner=self.sam).first()
         response = self.client.get(reverse("shipment-detail", kwargs={"pk": tracking_number(foreign.number)}))
         self.assertEqual(response.status_code, 404)
         mine = self.shipped.filter(customer__owner=self.sam).first()
@@ -94,7 +95,9 @@ class ShipmentViewTests(ShippingTestCase):
         self.login()
         order = self.shipped.first()
         url = reverse("order-detail", kwargs={"customer_pk": order.customer_id, "pk": order.pk})
-        self.assertContains(self.client.get(url), reverse("shipment-detail", kwargs={"pk": tracking_number(order.number)}))
+        self.assertContains(
+            self.client.get(url), reverse("shipment-detail", kwargs={"pk": tracking_number(order.number)})
+        )
         open_order = Order.objects.exclude(state__in=[OrderState.SHIPPED, OrderState.DELIVERED]).first()
         url = reverse("order-detail", kwargs={"customer_pk": open_order.customer_id, "pk": open_order.pk})
         self.assertNotContains(self.client.get(url), "Track shipment")

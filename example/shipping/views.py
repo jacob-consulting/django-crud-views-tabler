@@ -74,6 +74,8 @@ class ShipmentDetailView(BreadcrumbMixin, ResourceViewMixin, DetailViewPermissio
         context = super().get_context_data(**kwargs)
         shipment = self.object
         context["status_badge"] = status_badge(shipment.status)
-        context["order_url"] = reverse("order-detail", kwargs={"customer_pk": shipment.customer_pk, "pk": shipment.order_pk})
+        context["order_url"] = reverse(
+            "order-detail", kwargs={"customer_pk": shipment.customer_pk, "pk": shipment.order_pk}
+        )
         context["events"] = list(reversed(shipment.events))  # newest first
         return context

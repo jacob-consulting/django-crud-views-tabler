@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('sales', '0004_owner_help_text'),
+        ("sales", "0004_owner_help_text"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='address',
-            name='country',
-            field=models.CharField(help_text='ISO country code, e.g. DE.', max_length=2),
+            model_name="address",
+            name="country",
+            field=models.CharField(help_text="ISO country code, e.g. DE.", max_length=2),
         ),
         migrations.AlterField(
-            model_name='customer',
-            name='country',
-            field=models.CharField(blank=True, help_text='ISO country code, e.g. DE.', max_length=2),
+            model_name="customer",
+            name="country",
+            field=models.CharField(blank=True, help_text="ISO country code, e.g. DE.", max_length=2),
         ),
     ]

@@ -5,6 +5,7 @@ from crispy_forms.layout import Row
 from crud_views.lib.crispy import Column2, Column3, Column4, Column6, Column12, CrispyForm, CrispyModelForm
 from crud_views_polymorphic.lib import PolymorphicContentTypeForm
 from django import forms
+
 from .models import Beans, Category, Equipment, Subscription
 
 COMMON = ["name", "slug", "sku", "price", "stock", "is_active", "category", "description"]

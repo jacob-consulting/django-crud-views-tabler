@@ -9,7 +9,6 @@ from django.db.models import F, Min, Q, Sum
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-
 from roastery.models import CuppingSession, GreenLot
 from sales.models import CustomerSubscription, Order, OrderState
 from sales.permissions import customers_for
@@ -115,12 +114,17 @@ def user_list(request, form=None):
             | Q(email__icontains=query)
         )
     page = Paginator(users, 25).get_page(request.GET.get("page"))
-    return render(request, "dashboard/user_list.html", {
-        "page": page,
-        "query": query,
-        "form": form or NewUserForm(),
-        "show_form": form is not None,
-    }, status=400 if form is not None else 200)
+    return render(
+        request,
+        "dashboard/user_list.html",
+        {
+            "page": page,
+            "query": query,
+            "form": form or NewUserForm(),
+            "show_form": form is not None,
+        },
+        status=400 if form is not None else 200,
+    )
 
 
 @require_POST

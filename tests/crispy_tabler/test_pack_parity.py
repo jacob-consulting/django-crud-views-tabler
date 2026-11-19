@@ -1,9 +1,9 @@
 from pathlib import Path
 
 import crispy_bootstrap5
-import django_tabler
 from crispy_forms.utils import render_crispy_form
 
+import django_tabler
 from django_tabler.crispy.vendored import CRISPY_BOOTSTRAP5_VERSION
 from tests.crispy_tabler.forms import CoverageForm
 
@@ -63,8 +63,6 @@ def test_every_template_records_its_provenance():
 
 
 def test_a_form_renders_through_the_pack_without_touching_bootstrap5(settings):
-    settings.INSTALLED_APPS = [
-        a for a in settings.INSTALLED_APPS if a != "crispy_bootstrap5"
-    ]
+    settings.INSTALLED_APPS = [a for a in settings.INSTALLED_APPS if a != "crispy_bootstrap5"]
     html = render_crispy_form(CoverageForm())
     assert "form-control" in html

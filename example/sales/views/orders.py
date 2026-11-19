@@ -1,7 +1,7 @@
 """Orders: a child ViewSet of the customer (the full editor) and a top-level ViewSet (all orders, and "new order").
 
-Like addresses, the nested views are gated on the URL's customer by upstream's ancestor guard: an account manager reaches
-the orders of granted customers only. The top-level list filters by the same Guardian grants, never by
+Like addresses, the nested views are gated on the URL's customer by upstream's ancestor guard: an account manager
+reaches the orders of granted customers only. The top-level list filters by the same Guardian grants, never by
 ``Customer.owner``. An order can be edited or deleted only while it is a draft or confirmed; afterwards the actions
 show disabled and their URLs answer 403. The workflow, packing slip and duplicate views live in ``order_actions.py``.
 """
@@ -77,7 +77,9 @@ class EditableOrderMixin:
 class OrderTableBase(Table):
     created_at = tables.DateColumn(verbose_name="Date", format="d M Y")
     line_count = tables.Column(verbose_name="Items", orderable=False, empty_values=())
-    total = tables.Column(orderable=False, empty_values=(), attrs={"td": {"class": "text-end"}, "th": {"class": "text-end"}})
+    total = tables.Column(
+        orderable=False, empty_values=(), attrs={"td": {"class": "text-end"}, "th": {"class": "text-end"}}
+    )
     state = tables.Column(verbose_name="Status", accessor="state_badge", order_by="state")
 
     def render_total(self, record):
@@ -119,7 +121,9 @@ class OrderFilterFormHelper(ListViewFilterFormHelper):
 # --------------------------------------------------------------------------- nested: list / detail
 
 
-class OrderListView(CustomerNavbarMixin, BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired):
+class OrderListView(
+    CustomerNavbarMixin, BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired
+):
     cv_viewset = cv_order
     table_class = OrderTable
     filterset_class = OrderFilter
@@ -176,7 +180,13 @@ class OrderCreateView(
 
 
 class OrderUpdateView(
-    CustomerNavbarMixin, EditableOrderMixin, BreadcrumbMixin, CrispyViewMixin, FormSetMixin, MessageMixin, UpdateViewPermissionRequired
+    CustomerNavbarMixin,
+    EditableOrderMixin,
+    BreadcrumbMixin,
+    CrispyViewMixin,
+    FormSetMixin,
+    MessageMixin,
+    UpdateViewPermissionRequired,
 ):
     cv_viewset = cv_order
     form_class = OrderForm
@@ -191,7 +201,12 @@ class OrderUpdateView(
 
 
 class OrderDeleteView(
-    CustomerNavbarMixin, EditableOrderMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired
+    CustomerNavbarMixin,
+    EditableOrderMixin,
+    BreadcrumbMixin,
+    CrispyViewMixin,
+    MessageMixin,
+    DeleteViewPermissionRequired,
 ):
     cv_viewset = cv_order
     form_class = CrispyDeleteForm

@@ -1,11 +1,10 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel
 from crud_views.lib.resource import Resource
 from django.utils.translation import gettext_lazy as _
-
-from sales.permissions import customers_for
+from pydantic import BaseModel
 from sales.models import Order
+from sales.permissions import customers_for
 
 from .courier import fetch_shipments
 

@@ -2,13 +2,11 @@ import random
 from datetime import date
 from decimal import Decimal
 
-from django.contrib.auth import get_user_model
-from django.test import TestCase
-from django.urls import reverse
-
 from catalog.models import Beans, Origin
 from catalog.seed import seed as seed_catalog
 from dashboard.seed import seed as seed_dashboard
+from django.test import TestCase
+from django.urls import reverse
 from sales.models import OrderState
 from sales.seed import seed as seed_sales
 
@@ -29,9 +27,16 @@ class RoasteryTestCase(TestCase):
         seed_roastery(rng, cls.world)
         cls.users = cls.world["users"]
         cls.lot = GreenLot.objects.create(
-            code="XX-24-001", origin=Origin.objects.first(), producer="Test farm", variety="Bourbon",
-            process="washed", harvest_year=2024, kg_purchased=Decimal("600"), kg_on_hand=Decimal("600"),
-            price_per_kg=Decimal("9.50"), arrived_on=date(2026, 1, 5),
+            code="XX-24-001",
+            origin=Origin.objects.first(),
+            producer="Test farm",
+            variety="Bourbon",
+            process="washed",
+            harvest_year=2024,
+            kg_purchased=Decimal("600"),
+            kg_on_hand=Decimal("600"),
+            price_per_kg=Decimal("9.50"),
+            arrived_on=date(2026, 1, 5),
         )
 
     def login(self, username="alex"):
@@ -39,12 +44,16 @@ class RoasteryTestCase(TestCase):
 
     @staticmethod
     def score_row(taster, value="8.00"):
-        return {"taster": str(taster.pk), **{name: value for name in SCORE_FIELDS}}
+        return {"taster": str(taster.pk), **dict.fromkeys(SCORE_FIELDS, value)}
 
     @staticmethod
     def formset_post(prefix, rows, initial=0):
-        data = {f"{prefix}-TOTAL_FORMS": str(len(rows)), f"{prefix}-INITIAL_FORMS": str(initial),
-                f"{prefix}-MIN_NUM_FORMS": "0", f"{prefix}-MAX_NUM_FORMS": "1000"}
+        data = {
+            f"{prefix}-TOTAL_FORMS": str(len(rows)),
+            f"{prefix}-INITIAL_FORMS": str(initial),
+            f"{prefix}-MIN_NUM_FORMS": "0",
+            f"{prefix}-MAX_NUM_FORMS": "1000",
+        }
         for i, row in enumerate(rows):
             data.update({f"{prefix}-{i}-{key}": value for key, value in row.items()})
         return data
@@ -62,7 +71,10 @@ class SeedTests(RoasteryTestCase):
             for order in batch.orders.all():
                 self.assertNotIn(order.state, {OrderState.DRAFT, OrderState.CANCELLED})  # batches fill live orders
         self.assertTrue(Beans.objects.filter(green_lot__isnull=False).exists())
-        self.assertTrue(RoastBatch.objects.filter(orders__state=OrderState.CONFIRMED).exists() or RoastBatch.objects.filter(orders__state=OrderState.ROASTED).exists())
+        self.assertTrue(
+            RoastBatch.objects.filter(orders__state=OrderState.CONFIRMED).exists()
+            or RoastBatch.objects.filter(orders__state=OrderState.ROASTED).exists()
+        )
 
 
 class CuppingTests(RoasteryTestCase):
@@ -130,7 +142,9 @@ class CuppingTests(RoasteryTestCase):
 
     def test_update_edits_scores(self):
         session = CuppingSession.objects.create(lot=self.lot, held_on=date(2026, 11, 4))
-        score = CuppingScore.objects.create(session=session, taster=self.users["alex"], **{f: Decimal("8") for f in SCORE_FIELDS})
+        score = CuppingScore.objects.create(
+            session=session, taster=self.users["alex"], **{f: Decimal("8") for f in SCORE_FIELDS}
+        )
         self.login()
         url = reverse("cupping-update", kwargs={"lot_pk": self.lot.pk, "pk": session.pk})
         prefix = f"scores-{session.pk}-0"
@@ -142,7 +156,9 @@ class CuppingTests(RoasteryTestCase):
     def test_breadcrumb_two_levels(self):
         session = CuppingSession.objects.create(lot=self.lot, held_on=date(2026, 11, 4))
         self.login()
-        html = self.client.get(reverse("cupping-detail", kwargs={"lot_pk": self.lot.pk, "pk": session.pk})).content.decode()
+        html = self.client.get(
+            reverse("cupping-detail", kwargs={"lot_pk": self.lot.pk, "pk": session.pk})
+        ).content.decode()
         crumbs = html[html.index("breadcrumb") :]
         for text in ("Green lots", "XX-24-001", "04 Nov 2026"):
             self.assertIn(text, crumbs)
@@ -165,8 +181,12 @@ class LotTests(RoasteryTestCase):
 
     def test_lot_with_batch_is_protected(self):
         batch = RoastBatch.objects.create(
-            lot=self.lot, roasted_on=date(2026, 11, 4), profile="light", green_kg=Decimal("12"),
-            roasted_kg=Decimal("10.2"), roaster=self.users["kim"],
+            lot=self.lot,
+            roasted_on=date(2026, 11, 4),
+            profile="light",
+            green_kg=Decimal("12"),
+            roasted_kg=Decimal("10.2"),
+            roaster=self.users["kim"],
         )
         self.login()
         url = reverse("lot-delete", kwargs={"pk": self.lot.pk})
@@ -211,11 +231,19 @@ class BatchTests(RoasteryTestCase):
     def test_batch_create_links_orders(self):
         from sales.models import Order
 
-        order = Order.objects.filter(state=OrderState.CONFIRMED).first() or Order.objects.filter(state=OrderState.ROASTED).first()
+        order = (
+            Order.objects.filter(state=OrderState.CONFIRMED).first()
+            or Order.objects.filter(state=OrderState.ROASTED).first()
+        )
         self.login("kim")
         data = {
-            "lot": str(self.lot.pk), "roasted_on": "2026-11-04", "profile": "light", "green_kg": "12.0",
-            "roasted_kg": "10.2", "roaster": str(self.users["kim"].pk), "orders": [str(order.pk)],
+            "lot": str(self.lot.pk),
+            "roasted_on": "2026-11-04",
+            "profile": "light",
+            "green_kg": "12.0",
+            "roasted_kg": "10.2",
+            "roaster": str(self.users["kim"].pk),
+            "orders": [str(order.pk)],
         }
         response = self.client.post(reverse("batch-create"), data)
         self.assertEqual(response.status_code, 302)
@@ -224,12 +252,20 @@ class BatchTests(RoasteryTestCase):
         # a draft order is not selectable
         draft = Order.objects.filter(state=OrderState.DRAFT).first()
         if draft:
-            self.assertEqual(self.client.post(reverse("batch-create"), {**data, "orders": [str(draft.pk)]}).status_code, 200)
+            self.assertEqual(
+                self.client.post(reverse("batch-create"), {**data, "orders": [str(draft.pk)]}).status_code, 200
+            )
 
     def test_roasted_kg_cannot_exceed_green(self):
         self.login("kim")
-        data = {"lot": str(self.lot.pk), "roasted_on": "2026-11-04", "profile": "light", "green_kg": "10",
-                "roasted_kg": "11", "roaster": str(self.users["kim"].pk)}
+        data = {
+            "lot": str(self.lot.pk),
+            "roasted_on": "2026-11-04",
+            "profile": "light",
+            "green_kg": "10",
+            "roasted_kg": "11",
+            "roaster": str(self.users["kim"].pk),
+        }
         self.assertEqual(self.client.post(reverse("batch-create"), data).status_code, 200)
         self.assertFalse(RoastBatch.objects.exists() and RoastBatch.objects.filter(lot=self.lot).exists())
 
@@ -238,8 +274,15 @@ class BatchStockTests(RoasteryTestCase):
     """A roast batch draws its green weight from the lot's ``kg_on_hand``."""
 
     def data(self, **extra):
-        return {"lot": str(self.lot.pk), "roasted_on": "2026-11-04", "profile": "light", "green_kg": "12.0",
-                "roasted_kg": "10.2", "roaster": str(self.users["kim"].pk), **extra}
+        return {
+            "lot": str(self.lot.pk),
+            "roasted_on": "2026-11-04",
+            "profile": "light",
+            "green_kg": "12.0",
+            "roasted_kg": "10.2",
+            "roaster": str(self.users["kim"].pk),
+            **extra,
+        }
 
     def on_hand(self, lot=None):
         return GreenLot.objects.get(pk=(lot or self.lot).pk).kg_on_hand
@@ -282,7 +325,8 @@ class BatchStockTests(RoasteryTestCase):
         other = GreenLot.objects.exclude(pk=self.lot.pk).filter(kg_on_hand__gte=50).first()
         before = self.on_hand(other)
         response = self.client.post(
-            reverse("batch-update", kwargs={"pk": batch.pk}), self.data(lot=str(other.pk), green_kg="10.0", roasted_kg="8")
+            reverse("batch-update", kwargs={"pk": batch.pk}),
+            self.data(lot=str(other.pk), green_kg="10.0", roasted_kg="8"),
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.on_hand(), Decimal("600"))
@@ -290,7 +334,9 @@ class BatchStockTests(RoasteryTestCase):
 
     def test_delete_restores_the_stock(self):
         batch = self.make("12.0")
-        self.assertEqual(self.client.post(reverse("batch-delete", kwargs={"pk": batch.pk}), {"confirm": "on"}).status_code, 302)
+        self.assertEqual(
+            self.client.post(reverse("batch-delete", kwargs={"pk": batch.pk}), {"confirm": "on"}).status_code, 302
+        )
         self.assertFalse(RoastBatch.objects.filter(pk=batch.pk).exists())
         self.assertEqual(self.on_hand(), Decimal("600.0"))
 

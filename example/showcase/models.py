@@ -2,7 +2,7 @@
 
 The point of this app is not the data: it is that an ``add product`` form puts every
 django-crispy-forms template branch on one page, so the Tabler theme can be looked at
-field by field (see ``docs/crispy_tabler_coverage.md``).
+field by field (see ``docs/crispy_tabler.md``).
 """
 
 import random

@@ -1,6 +1,6 @@
 from django.contrib import admin
-from polymorphic.admin import PolymorphicChildModelAdmin, PolymorphicParentModelAdmin
 from ordered_model.admin import OrderedModelAdmin
+from polymorphic.admin import PolymorphicChildModelAdmin, PolymorphicParentModelAdmin
 
 from .models import Beans, Category, Equipment, FlavorNote, Origin, Product, Subscription
 

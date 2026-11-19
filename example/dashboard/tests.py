@@ -1,8 +1,7 @@
 import re
+from io import StringIO
 from pathlib import Path
 from unittest import mock
-
-from io import StringIO
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -11,10 +10,11 @@ from django.contrib.auth.models import Permission
 from django.contrib.staticfiles import finders
 from django.core.management import call_command
 from django.template.loader import render_to_string
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+import crud_views_tabler
 import django_tabler
 
 User = get_user_model()
@@ -56,14 +56,14 @@ class DashboardTests(TestCase):
 
 class DemoAccountTests(TestCase):
     def test_seed_creates_demo_accounts(self):
-        call_command("seed_demo", stdout=open("/dev/null", "w"))
+        call_command("seed_demo", stdout=StringIO())
         for name in ("alex", "sam", "kim"):
             self.assertTrue(User.objects.filter(username=name).exists())
         self.assertIsNotNone(authenticate(username="sam", password="demo"))
         self.assertTrue(User.objects.get(username="sam").groups.filter(name="Account managers").exists())
 
     def test_seed_demo_refuses_when_accounts_exist(self):
-        call_command("seed_demo", stdout=open("/dev/null", "w"))
+        call_command("seed_demo", stdout=StringIO())
         out = StringIO()
         call_command("seed_demo", stdout=out)
         self.assertEqual(out.getvalue().strip(), "Demo data already present; use --reset to rebuild.")
@@ -111,22 +111,29 @@ class UserListTests(TestCase):
         self.assertEqual([u.username for u in response.context["page"]], ["ann"])
 
     def test_create_user(self):
-        response = self.client.post(reverse("dashboard:user_create"), {
-            "username": "carol",
-            "email": "carol@example.com",
-            "password1": "a-Long-pass-123",
-            "password2": "a-Long-pass-123",
-        }, follow=True)
+        response = self.client.post(
+            reverse("dashboard:user_create"),
+            {
+                "username": "carol",
+                "email": "carol@example.com",
+                "password1": "a-Long-pass-123",
+                "password2": "a-Long-pass-123",
+            },
+            follow=True,
+        )
         self.assertRedirects(response, reverse("dashboard:users"))
         self.assertContains(response, "was created")
         self.assertTrue(User.objects.get(username="carol").check_password("a-Long-pass-123"))
 
     def test_invalid_create_reopens_form_with_errors(self):
-        response = self.client.post(reverse("dashboard:user_create"), {
-            "username": "root",
-            "password1": "x",
-            "password2": "y",
-        })
+        response = self.client.post(
+            reverse("dashboard:user_create"),
+            {
+                "username": "root",
+                "password1": "x",
+                "password2": "y",
+            },
+        )
         self.assertEqual(response.status_code, 400)
         self.assertContains(response, "data-show-on-load", status_code=400)
         self.assertContains(response, "is-invalid", status_code=400)
@@ -145,8 +152,8 @@ class LayoutSwitchTests(TestCase):
         self.html = self.client.get(reverse("dashboard:index")).content.decode()
 
     def test_page_renders_both_navigations(self):
-        self.assertEqual(self.html.count("<header class=\"navbar navbar-expand-md"), 1)
-        self.assertEqual(self.html.count("<aside class=\"navbar navbar-vertical navbar-expand-lg"), 1)
+        self.assertEqual(self.html.count('<header class="navbar navbar-expand-md'), 1)
+        self.assertEqual(self.html.count('<aside class="navbar navbar-vertical navbar-expand-lg'), 1)
 
     def test_sidebar_comes_before_the_page_wrapper_inside_page(self):
         # Tabler's CSS shows or hides each navigation through `.page > .navbar`.
@@ -168,8 +175,8 @@ class LayoutSwitchTests(TestCase):
     def test_sidebar_tools_are_in_the_footer_outside_the_collapse(self):
         # Tabler restyles every dropdown inside a folded .navbar-collapse as a small flyout,
         # which collapses the layout panel and traps the user in the folded sidebar.
-        sidebar = self.html[self.html.index("<aside"):self.html.index("</aside>")]
-        footer = sidebar[sidebar.index('class="navbar-footer"'):sidebar.index('id="sidebar-menu"')]
+        sidebar = self.html[self.html.index("<aside") : self.html.index("</aside>")]
+        footer = sidebar[sidebar.index('class="navbar-footer"') : sidebar.index('id="sidebar-menu"')]
         for label in ("Layout settings", "Enable dark mode", "Open user menu"):
             with self.subTest(label=label):
                 self.assertIn(f'aria-label="{label}"', footer)
@@ -180,11 +187,13 @@ class LayoutSwitchTests(TestCase):
 
     def test_sidebar_switch_menu_is_anchored_to_its_start(self):
         # Tabler anchors a footer dropup to its end on a phone, which runs off the left edge.
-        sidebar = self.html[self.html.index("<aside"):self.html.index("</aside>")]
-        self.assertRegex(sidebar, r'aria-label="Layout settings"[\s\S]*?<div class="dropdown-menu start-0 end-auto p-3"')
+        sidebar = self.html[self.html.index("<aside") : self.html.index("</aside>")]
+        self.assertRegex(
+            sidebar, r'aria-label="Layout settings"[\s\S]*?<div class="dropdown-menu start-0 end-auto p-3"'
+        )
 
     def test_switch_offers_every_option_with_its_tabler_settings(self):
-        for label, settings in (
+        for label, layout_settings in (
             ("Top", '{"navbar-position":"horizontal","sidebar":"default"}'),
             ("Side", '{"navbar-position":"vertical","sidebar":"default"}'),
             ("Folded", '{"navbar-position":"vertical","sidebar":"folded"}'),
@@ -194,11 +203,11 @@ class LayoutSwitchTests(TestCase):
             ("Floating", '{"navbar-style":"floating"}'),
         ):
             with self.subTest(label=label):
-                self.assertRegex(self.html, rf"data-layout-settings='{re.escape(settings)}'[^>]*>\s*{label}\s*<")
+                self.assertRegex(self.html, rf"data-layout-settings='{re.escape(layout_settings)}'[^>]*>\s*{label}\s*<")
 
     def test_sidebar_switch_opens_upwards(self):
         # It sits at the bottom of the sidebar: opening sideways runs off the window.
-        sidebar = self.html[self.html.index("<aside"):self.html.index("</aside>")]
+        sidebar = self.html[self.html.index("<aside") : self.html.index("</aside>")]
         self.assertRegex(sidebar, r'<li class="nav-item dropup">\s*<button[^>]*aria-label="Layout settings"')
 
     def test_stylesheet_is_loaded_and_exists(self):
@@ -224,12 +233,18 @@ class LayoutBoundaryTests(SimpleTestCase):
     def test_example_overrides_the_site_name(self):
         self.assertEqual(render_to_string("django_tabler/includes/site_name.html"), "Acme Roasters")
 
+    def test_boundary_scan_covers_only_the_two_packages(self):
+        # Under nox the packages live in site-packages: the scan must not walk every installed distribution.
+        roots = {Path(django_tabler.__file__).parent, Path(crud_views_tabler.__file__).parent}
+        files = list(_package_sources())
+        self.assertTrue(files)
+        self.assertTrue(all(any(path.is_relative_to(root) for root in roots) for path in files))
+
     def test_src_does_not_import_the_example(self):
-        src = Path(django_tabler.__file__).parents[1]
         pattern = re.compile(
             r"^\s*(from|import)\s+(catalog|customers|dashboard|config|sales|roastery|shipping|showcase)\b", re.MULTILINE
         )
-        for path in src.rglob("*.py"):
+        for path in _package_sources():
             with self.subTest(path=path):
                 self.assertIsNone(pattern.search(path.read_text()))
 
@@ -269,12 +284,10 @@ class SeedWorldTests(TestCase):
         self.assertEqual(User.objects.count(), 4)
 
     def test_seed_world_shape(self):
-        from datetime import timedelta
-
-        from django.db.models import Count
-        from guardian.shortcuts import get_objects_for_user
 
         from catalog.models import Beans, Equipment, Product, Subscription
+        from django.db.models import Count
+        from guardian.shortcuts import get_objects_for_user
         from roastery.models import GreenLot
         from sales.models import Customer, CustomerSubscription, Order, OrderState
 
@@ -320,7 +333,9 @@ class RoasteryDashboardTests(TestCase):
         cls.alex, cls.sam, cls.kim = (User.objects.get(username=n) for n in ("alex", "sam", "kim"))
 
         origin = Origin.objects.first()
-        beans = Beans.objects.create(name="Dash beans", slug="dash-beans", sku="D-1", price=Decimal("10.00"), origin=origin)
+        beans = Beans.objects.create(
+            name="Dash beans", slug="dash-beans", sku="D-1", price=Decimal("10.00"), origin=origin
+        )
         sub = Subscription.objects.create(name="Dash sub", slug="dash-sub", sku="D-2", price=Decimal("30.00"))
         cls.consumer = Customer.objects.create(name="Consumer One", kind="consumer")
         cls.shop = Customer.objects.create(name="Shop Two", kind="wholesale", company="Shop", price_tier="B")  # 12%
@@ -331,7 +346,9 @@ class RoasteryDashboardTests(TestCase):
 
         def order(customer, state, qty, days_ago, roast_in=None):
             o = Order.objects.create(
-                customer=customer, state=state, requested_roast_date=today + timedelta(days=roast_in) if roast_in is not None else None
+                customer=customer,
+                state=state,
+                requested_roast_date=today + timedelta(days=roast_in) if roast_in is not None else None,
             )
             OrderLine.objects.create(order=o, product=beans, quantity=qty)
             Order.objects.filter(pk=o.pk).update(created_at=now - timedelta(days=days_ago))
@@ -350,12 +367,26 @@ class RoasteryDashboardTests(TestCase):
         CustomerSubscription.objects.create(customer=cls.shop, product=sub, next_delivery=today, is_active=False)
 
         cls.lot = GreenLot.objects.create(
-            code="XX-24-001", origin=origin, producer="P", variety="V", harvest_year=2024,
-            kg_purchased=Decimal("100"), kg_on_hand=Decimal("40.5"), price_per_kg=Decimal("8"), arrived_on=today,
+            code="XX-24-001",
+            origin=origin,
+            producer="P",
+            variety="V",
+            harvest_year=2024,
+            kg_purchased=Decimal("100"),
+            kg_on_hand=Decimal("40.5"),
+            price_per_kg=Decimal("8"),
+            arrived_on=today,
         )
         GreenLot.objects.create(
-            code="XX-24-002", origin=origin, producer="P", variety="V", harvest_year=2024,
-            kg_purchased=Decimal("10"), kg_on_hand=Decimal("10"), price_per_kg=Decimal("8"), arrived_on=today,
+            code="XX-24-002",
+            origin=origin,
+            producer="P",
+            variety="V",
+            harvest_year=2024,
+            kg_purchased=Decimal("10"),
+            kg_on_hand=Decimal("10"),
+            price_per_kg=Decimal("8"),
+            arrived_on=today,
         )
         cls.session = CuppingSession.objects.create(lot=cls.lot, held_on=today)
         for taster, value in ((cls.kim, "8"), (cls.alex, "7")):
@@ -412,12 +443,17 @@ class RoasteryDashboardTests(TestCase):
 
     def test_rows_link_to_crud_pages(self):
         response = self.get(self.alex)
-        self.assertContains(response, reverse("order-detail", kwargs={"customer_pk": self.consumer.pk, "pk": self.to_roast.pk}))
+        self.assertContains(
+            response, reverse("order-detail", kwargs={"customer_pk": self.consumer.pk, "pk": self.to_roast.pk})
+        )
         self.assertContains(response, reverse("cupping-detail", kwargs={"lot_pk": self.lot.pk, "pk": self.session.pk}))
 
     def test_chart_assets_are_pinned_with_sri(self):
         html = self.get(self.alex).content.decode()
-        self.assertRegex(html, r'@tabler/core@[\d.]+/dist/libs/apexcharts/[^"]*"[^>]*integrity="sha384-[^"]+"[^>]*crossorigin="anonymous"')
+        self.assertRegex(
+            html,
+            r'@tabler/core@[\d.]+/dist/libs/apexcharts/[^"]*"[^>]*integrity="sha384-[^"]+"[^>]*crossorigin="anonymous"',
+        )
         self.assertIn('id="revenue-data"', html)
         self.assertIsNotNone(finders.find("dashboard/revenue-chart.js"))
 
@@ -475,9 +511,13 @@ class ShowCodeTests(TestCase):
     def test_settings_excerpt_handles_every_assignment_form(self):
         from config.showcode import settings_excerpt
 
-        text = "SECRET_KEY = 'x'\nINSTALLED_APPS = ['a']\nINSTALLED_APPS += ['b']\nCRUD_VIEWS_EXTENDS: str = 'p.html'\nDEBUG = True\n"
+        text = (
+            "SECRET_KEY = 'x'\nINSTALLED_APPS = ['a']\nINSTALLED_APPS += ['b']\n"
+            "CRUD_VIEWS_EXTENDS: str = 'p.html'\nDEBUG = True\n"
+        )
         self.assertEqual(
-            settings_excerpt(text), ["INSTALLED_APPS = ['a']", "INSTALLED_APPS += ['b']", "CRUD_VIEWS_EXTENDS: str = 'p.html'"]
+            settings_excerpt(text),
+            ["INSTALLED_APPS = ['a']", "INSTALLED_APPS += ['b']", "CRUD_VIEWS_EXTENDS: str = 'p.html'"],
         )
 
     def test_package_files_skip_binaries(self):
@@ -569,7 +609,7 @@ class ShowCodeTests(TestCase):
     def test_theming_page_links_to_the_docs(self):
         html = self.client.get(reverse("theming")).content.decode()
         self.assertIn("https://django-crud-views.readthedocs.io/en/latest/reference/theme/", html)
-        self.assertIn("https://github.com/alexander-jacob/tabler-test/blob/main/docs/crud_views_tabler.md", html)
+        self.assertIn("https://django-crud-views-tabler.readthedocs.io/en/latest/theme_internals/", html)
 
     def test_theming_is_in_the_nav_for_every_user(self):
         User.objects.create_user("plain", password="s3cret-pass")
@@ -600,16 +640,24 @@ class NavigationTests(TestCase):
 
     def page(self, url):
         html = self.client.get(url).content.decode()
-        header = html[html.index("<header class=\"navbar"):html.index("</header>")]
-        sidebar = html[html.index("<aside"):html.index("</aside>")]
+        header = html[html.index('<header class="navbar') : html.index("</header>")]
+        sidebar = html[html.index("<aside") : html.index("</aside>")]
         return header, sidebar
 
     def test_top_bar_folds_sections_into_dropdowns(self):
-        _grant(self.user, "sales.view_customer", "sales.view_order", "catalog.view_product", "catalog.view_category",
-               "roastery.view_greenlot")
+        _grant(
+            self.user,
+            "sales.view_customer",
+            "sales.view_order",
+            "catalog.view_product",
+            "catalog.view_category",
+            "roastery.view_greenlot",
+        )
         header, sidebar = self.page(reverse("dashboard:index"))
         for section in ("Sales", "Catalog", "Roastery"):
-            self.assertRegex(header, rf'class="nav-link dropdown-toggle"[^>]*>[\s\S]*?<span class="nav-link-title">{section}</span>')
+            self.assertRegex(
+                header, rf'class="nav-link dropdown-toggle"[^>]*>[\s\S]*?<span class="nav-link-title">{section}</span>'
+            )
         self.assertRegex(header, r'<a class="dropdown-item" href="/customer/">\s*Customers\s*</a>')
         self.assertNotIn("nav-section", header)
         self.assertIn('class="nav-item nav-section', sidebar)
@@ -619,9 +667,13 @@ class NavigationTests(TestCase):
     def test_active_entry_marks_its_section_in_the_top_bar(self):
         _grant(self.user, "sales.view_customer", "sales.view_order")
         header, sidebar = self.page(reverse("orders-list"))
-        self.assertRegex(header, r'<li class="nav-item dropdown active">\s*<a class="nav-link dropdown-toggle"[^>]*>[\s\S]*?Sales')
+        self.assertRegex(
+            header, r'<li class="nav-item dropdown active">\s*<a class="nav-link dropdown-toggle"[^>]*>[\s\S]*?Sales'
+        )
         self.assertRegex(header, r'<a class="dropdown-item active" href="/orders/" aria-current="page">')
-        self.assertRegex(sidebar, r'<li class="nav-item active">\s*<a class="nav-link" href="/orders/" aria-current="page">')
+        self.assertRegex(
+            sidebar, r'<li class="nav-item active">\s*<a class="nav-link" href="/orders/" aria-current="page">'
+        )
 
     def test_a_section_with_one_entry_is_a_plain_link_in_the_top_bar(self):
         header, sidebar = self.page(reverse("dashboard:index"))
@@ -653,7 +705,9 @@ class FaviconTests(TestCase):
         self.client.force_login(User.objects.create_user("fav"))
         for url in (reverse("dashboard:index"), reverse("theming")):
             with self.subTest(url=url):
-                self.assertContains(self.client.get(url), '<link rel="icon" href="/static/acme/favicon.svg" type="image/svg+xml" />')
+                self.assertContains(
+                    self.client.get(url), '<link rel="icon" href="/static/acme/favicon.svg" type="image/svg+xml" />'
+                )
         self.client.logout()
         self.assertContains(self.client.get(reverse("login")), 'href="/static/acme/favicon.svg"')
         self.assertIn("#a0522d", Path(finders.find("acme/favicon.svg")).read_text())
@@ -673,7 +727,9 @@ class ManageViewsTests(TestCase):
 
     def test_settings_default_to_yes_without_the_environment_variable(self):
         source = (Path(settings.BASE_DIR) / "config" / "settings.py").read_text()
-        self.assertIn("CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get('CRUD_VIEWS_MANAGE_VIEWS_ENABLED', 'yes')", source)
+        self.assertIn(
+            'CRUD_VIEWS_MANAGE_VIEWS_ENABLED = os.environ.get("CRUD_VIEWS_MANAGE_VIEWS_ENABLED", "yes")', source
+        )
 
     def test_alex_opens_the_manage_page(self):
         self.assertEqual(self.get("alex", "/customer/manage/").status_code, 200)
@@ -716,15 +772,26 @@ class ManageViewsTests(TestCase):
         from sales.models import Customer
 
         mine = get_objects_for_user(self.users["sam"], "sales.view_customer", accept_global_perms=False)
-        cases = ((mine.first(), 'class="badge bg-green-lt">Allowed<'),
-                 (Customer.objects.exclude(pk__in=mine).first(), 'class="badge bg-red-lt">Denied<'))
+        cases = (
+            (mine.first(), 'class="badge bg-green-lt">Allowed<'),
+            (Customer.objects.exclude(pk__in=mine).first(), 'class="badge bg-red-lt">Denied<'),
+        )
         for customer, outcome in cases:
             with self.subTest(customer=customer.pk):
-                response = self.get("alex", "/customer/manage/?" + urlencode({
-                    "cv_access_mode": "path", "cv_access_user": "sam", "cv_access_path": f"/customer/{customer.pk}/detail/"}))
+                response = self.get(
+                    "alex",
+                    "/customer/manage/?"
+                    + urlencode(
+                        {
+                            "cv_access_mode": "path",
+                            "cv_access_user": "sam",
+                            "cv_access_path": f"/customer/{customer.pk}/detail/",
+                        }
+                    ),
+                )
                 html = response.content.decode()
                 self.assertIn('id="cv-manage-access-trace"', html)
-                self.assertIn(outcome, html[html.index('id="cv-manage-access-trace"'):])
+                self.assertIn(outcome, html[html.index('id="cv-manage-access-trace"') :])
 
     def test_superuser_outside_the_group_is_refused(self):
         self.client.force_login(User.objects.create_superuser("root", password="x"))
@@ -744,3 +811,20 @@ class ManageViewsTests(TestCase):
         call_command("seed_demo", "--reset", stdout=StringIO())
         alex = User.objects.get(username="alex")
         self.assertTrue(alex.groups.filter(name=crud_views_settings.manage_group).exists())
+
+
+class MigrationsTests(TestCase):
+    """The migrations were generated on Django 6.1; every supported Django (5.2 too) must see no model changes."""
+
+    def test_models_match_migrations(self):
+        out = StringIO()
+        try:
+            call_command("makemigrations", "--check", "--dry-run", stdout=out, stderr=out)
+        except SystemExit:
+            self.fail(f"makemigrations --check found changes:\n{out.getvalue()}")
+
+
+def _package_sources():
+    """Every .py file of django_tabler and crud_views_tabler: the theme's own code, wherever it is installed."""
+    for package in (django_tabler, crud_views_tabler):
+        yield from Path(package.__file__).parent.rglob("*.py")

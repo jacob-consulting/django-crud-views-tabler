@@ -30,7 +30,7 @@ tasks:
   install:
     desc: Install the dependencies (needs the sibling checkout ../django-crud-views)
     cmds:
-      - uv sync
+      - uv sync --extra examples --extra test --extra dev
 
   migrate:
     desc: Apply database migrations and ensure the crud_views manage group exists
@@ -77,10 +77,16 @@ tasks:
   test:
     desc: Run every test suite (crispy pack, theme, example apps) and the system check
     cmds:
-      - uv run --group test pytest
-      - uv run --group test pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
-      - "{{.MANAGE}} test django_tabler dashboard sales catalog roastery shipping showcase"
+      - uv run pytest
+      - uv run pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
+      - uv run pytest tests/django_tabler --ds tests.django_tabler.settings
+      - cd example && uv run pytest
       - "{{.MANAGE}} check --fail-level WARNING"
+
+  test:matrix:
+    desc: Run the full nox matrix against the installed package (django-crud-views from GitHub main), as CI does
+    cmds:
+      - uvx nox {{.CLI_ARGS}}
 
   run:
     desc: Run the development server on http://127.0.0.1:8000/

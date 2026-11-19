@@ -1,9 +1,9 @@
 """Customer subscriptions: a child ViewSet of the customer, a top-level list of all of them, and "Run subscriptions".
 
-The nested views are gated on the URL's customer by upstream's ancestor guard, as for addresses and orders; the top-level
-list filters by the same Guardian grants. Running the subscriptions creates orders for *every* customer, so it has its
-own model permission (``run_customersubscription``, held by the Owner only); others see the button disabled and get
-403 on the URL.
+The nested views are gated on the URL's customer by upstream's ancestor guard, as for addresses and orders; the
+top-level list filters by the same Guardian grants. Running the subscriptions creates orders for *every* customer, so
+it has its own model permission (``run_customersubscription``, held by the Owner only); others see the button disabled
+and get 403 on the URL.
 
 The custom permission follows django-crud-views' documented recipe
 (``docs/reference/custom_form_view.md#a-permission-of-its-own``): ``CustomerSubscription.Meta.permissions``
@@ -29,7 +29,6 @@ from crud_views.lib.views.form import CustomFormNoObjectViewPermissionRequired
 from crud_views.lib.views.list import ListViewFilterFormHelper
 from crud_views.lib.viewset import ParentViewSet, ViewSet
 from django.contrib import messages
-from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
@@ -68,7 +67,9 @@ class SubscriptionTableBase(Table):
         return record.product.get_interval_display()
 
     def render_is_active(self, value):
-        return format_html('<span class="badge bg-{}-lt">{}</span>', "green" if value else "secondary", "Active" if value else "Paused")
+        return format_html(
+            '<span class="badge bg-{}-lt">{}</span>', "green" if value else "secondary", "Active" if value else "Paused"
+        )
 
 
 class SubscriptionTable(SubscriptionTableBase):
@@ -86,7 +87,8 @@ class AllSubscriptionsTable(SubscriptionTableBase):
 
 class SubscriptionFilter(django_filters.FilterSet):
     is_active = django_filters.BooleanFilter(
-        field_name="is_active", label="Status",
+        field_name="is_active",
+        label="Status",
         widget=django_filters.widgets.BooleanWidget(),
     )
 
@@ -113,20 +115,29 @@ class SubscriptionListView(CustomerNavbarMixin, BreadcrumbMixin, ListViewTableMi
 
 
 class SubscriptionCreateView(
-    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewParentMixin, CreateViewPermissionRequired
+    CustomerNavbarMixin,
+    BreadcrumbMixin,
+    CrispyViewMixin,
+    MessageMixin,
+    CreateViewParentMixin,
+    CreateViewPermissionRequired,
 ):
     cv_viewset = cv_subscription
     form_class = CustomerSubscriptionForm
     cv_message_template_code = _("Subscribed {{ object.customer }} to {{ object.product }}")
 
 
-class SubscriptionUpdateView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
+class SubscriptionUpdateView(
+    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired
+):
     cv_viewset = cv_subscription
     form_class = CustomerSubscriptionForm
     cv_message_template_code = _("Updated the subscription of {{ object.customer }}")
 
 
-class SubscriptionDeleteView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
+class SubscriptionDeleteView(
+    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired
+):
     cv_viewset = cv_subscription
     form_class = CrispyDeleteForm
     cv_modal = True
@@ -136,7 +147,9 @@ class SubscriptionDeleteView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMix
 # --------------------------------------------------------------------------- top level
 
 
-class AllSubscriptionsListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired):
+class AllSubscriptionsListView(
+    BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired
+):
     """Every subscription of the customers the user may see (Guardian grants decide, never ``Customer.owner``)."""
 
     cv_viewset = cv_all_subscriptions

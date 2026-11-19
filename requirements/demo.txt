@@ -1,0 +1,5 @@
+# Deploy-only dependencies of the public demo (render.yaml). Not part of the package.
+gunicorn>=23
+# Until django-crud-views 1.0.0rc1 is on PyPI the theme needs its GitHub main (same as CRUD_VIEWS in noxfile.py).
+# Remove this line then.
+django-crud-views[workflow,polymorphic,guardian,ordered] @ git+https://github.com/jacob-consulting/django-crud-views@main

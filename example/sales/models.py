@@ -209,12 +209,16 @@ class Order(WorkflowModelMixin, models.Model):
         return None
 
     def workflow_check_transition(self, name, *, user):
-        """Upstream's business hook: the workflow page shows Confirm disabled with the reason, and refuses it on POST."""
+        """Upstream's business hook: the workflow page shows Confirm disabled with the reason, and refuses it on
+        POST."""
         if name == "wf_confirm" and (problem := self.confirm_problem()):
             raise ValidationError(problem)
 
     @transition(
-        field=state, source=OrderState.DRAFT, target=OrderState.CONFIRMED, permission=may_change_order,
+        field=state,
+        source=OrderState.DRAFT,
+        target=OrderState.CONFIRMED,
+        permission=may_change_order,
         custom={"label": "Confirm", "comment": WorkflowComment.NONE, "icon": "tabler:check", "variant": "success"},
     )
     def wf_confirm(self, request=None, by=None, comment=None):
@@ -222,30 +226,56 @@ class Order(WorkflowModelMixin, models.Model):
             raise TransitionNotAllowed(problem)
 
     @transition(
-        field=state, source=OrderState.CONFIRMED, target=OrderState.ROASTED, permission=may_roast_order,
-        custom={"label": "Mark roasted", "comment": WorkflowComment.OPTIONAL, "icon": "tabler:coffee", "variant": "warning"},
+        field=state,
+        source=OrderState.CONFIRMED,
+        target=OrderState.ROASTED,
+        permission=may_roast_order,
+        custom={
+            "label": "Mark roasted",
+            "comment": WorkflowComment.OPTIONAL,
+            "icon": "tabler:coffee",
+            "variant": "warning",
+        },
     )
     def wf_roast(self, request=None, by=None, comment=None):
         pass
 
     @transition(
-        field=state, source=OrderState.ROASTED, target=OrderState.SHIPPED, permission=may_change_order,
+        field=state,
+        source=OrderState.ROASTED,
+        target=OrderState.SHIPPED,
+        permission=may_change_order,
         custom={"label": "Ship", "comment": WorkflowComment.OPTIONAL, "icon": "tabler:package", "variant": "primary"},
     )
     def wf_ship(self, request=None, by=None, comment=None):
         self.shipped_at = timezone.now()
 
     @transition(
-        field=state, source=OrderState.SHIPPED, target=OrderState.DELIVERED, permission=may_change_order,
-        custom={"label": "Mark delivered", "comment": WorkflowComment.NONE, "icon": "tabler:circle-check", "variant": "success"},
+        field=state,
+        source=OrderState.SHIPPED,
+        target=OrderState.DELIVERED,
+        permission=may_change_order,
+        custom={
+            "label": "Mark delivered",
+            "comment": WorkflowComment.NONE,
+            "icon": "tabler:circle-check",
+            "variant": "success",
+        },
     )
     def wf_deliver(self, request=None, by=None, comment=None):
         pass
 
     @transition(
-        field=state, source=[OrderState.DRAFT, OrderState.CONFIRMED], target=OrderState.CANCELLED,
+        field=state,
+        source=[OrderState.DRAFT, OrderState.CONFIRMED],
+        target=OrderState.CANCELLED,
         permission=may_change_order,
-        custom={"label": "Cancel order", "comment": WorkflowComment.REQUIRED, "icon": "tabler:circle-x", "variant": "danger"},
+        custom={
+            "label": "Cancel order",
+            "comment": WorkflowComment.REQUIRED,
+            "icon": "tabler:circle-x",
+            "variant": "danger",
+        },
     )
     def wf_cancel(self, request=None, by=None, comment=None):
         pass
@@ -286,7 +316,9 @@ class OrderLine(models.Model):
         return (self.unit_price or Decimal("0.00")) * self.quantity
 
     def save(self, *args, **kwargs):
-        if not self.is_beans:  # grind and bag size only mean something for coffee (also for lines written without a form)
+        if (
+            not self.is_beans
+        ):  # grind and bag size only mean something for coffee (also for lines written without a form)
             self.grind = self.bag_size = ""
         if self.unit_price is None or self.order.is_editable:  # prices are fixed once the order is roasted
             self.unit_price = self.product.price
@@ -299,7 +331,10 @@ INTERVAL_DAYS = {"weekly": 7, "biweekly": 14, "monthly": 30}
 
 
 class CustomerSubscription(models.Model):
-    """A customer's standing delivery of a ``catalog.Subscription`` product; "Run subscriptions" turns due ones into orders."""
+    """A customer's standing delivery of a ``catalog.Subscription`` product.
+
+    "Run subscriptions" turns due ones into orders.
+    """
 
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="subscriptions")
     product = models.ForeignKey("catalog.Subscription", on_delete=models.PROTECT, related_name="customer_subscriptions")

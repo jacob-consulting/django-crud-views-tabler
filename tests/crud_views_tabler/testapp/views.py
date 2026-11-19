@@ -1,9 +1,9 @@
-import django_tables2 as tables
 import django_filters
+import django_tables2 as tables
 from crispy_forms.layout import Layout, Row
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
-from crud_views.lib.navbar import CrudViewNavBarMixin, NavBar, NavItem
 from crud_views.lib.crispy import Column4, Column6, Column12, CrispyDeleteForm, CrispyModelForm, CrispyViewMixin
+from crud_views.lib.navbar import CrudViewNavBarMixin, NavBar, NavItem
 from crud_views.lib.table import LinkDetailColumn, Table
 from crud_views.lib.table.columns import NaturalTimeColumn
 from crud_views.lib.view import CardAction
@@ -115,7 +115,9 @@ class CustomerCreateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateV
     cv_message_template_code = "Created »{{ object }}«"
 
 
-class CustomerUpdateView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
+class CustomerUpdateView(
+    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired
+):
     cv_viewset = cv_customer
     form_class = CustomerForm
     cv_cancel_keys = ["list", "card", "detail"]

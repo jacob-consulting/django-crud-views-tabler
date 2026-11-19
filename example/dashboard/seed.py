@@ -3,11 +3,10 @@
 import random
 from datetime import timedelta
 
+from crud_views.lib.settings import crud_views_settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
-
-from crud_views.lib.settings import crud_views_settings
 
 GROUPS = ("Owner", "Account managers", "Roasters")
 

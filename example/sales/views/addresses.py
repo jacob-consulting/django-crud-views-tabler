@@ -72,20 +72,29 @@ class AddressDetailView(CustomerNavbarMixin, BreadcrumbMixin, ObjectDetailViewPe
 
 
 class AddressCreateView(
-    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewParentMixin, CreateViewPermissionRequired
+    CustomerNavbarMixin,
+    BreadcrumbMixin,
+    CrispyViewMixin,
+    MessageMixin,
+    CreateViewParentMixin,
+    CreateViewPermissionRequired,
 ):
     cv_viewset = cv_address
     form_class = AddressForm
     cv_message_template_code = _("Created address “{{ object.label }}”")
 
 
-class AddressUpdateView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
+class AddressUpdateView(
+    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired
+):
     cv_viewset = cv_address
     form_class = AddressForm
     cv_message_template_code = _("Updated address “{{ object.label }}”")
 
 
-class AddressDeleteView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
+class AddressDeleteView(
+    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired
+):
     cv_viewset = cv_address
     form_class = CrispyDeleteForm
     cv_modal = True

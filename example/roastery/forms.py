@@ -1,6 +1,6 @@
 """Forms for the roastery: lots, cupping sessions with their score rows, roast batches."""
 
-from crispy_forms.layout import Div, Row
+from crispy_forms.layout import Row
 from crud_views.lib.crispy import Column2, Column3, Column4, Column6, Column12, CrispyModelForm
 from crud_views.lib.formsets import CompactColumn, CompactLayout, FormSet, FormSets, Formsets, InlineFormSet
 from crud_views_widget_datetimepicker.widgets import DatePickerInput
@@ -9,7 +9,6 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
 from django.utils import timezone
-
 from sales.models import Order, OrderState
 
 from .models import CuppingScore, CuppingSession, GreenLot, RoastBatch
@@ -26,8 +25,16 @@ class GreenLotForm(CrispyModelForm):
     class Meta:
         model = GreenLot
         fields = [
-            "code", "origin", "producer", "variety", "process", "harvest_year", "kg_purchased", "kg_on_hand",
-            "price_per_kg", "arrived_on",
+            "code",
+            "origin",
+            "producer",
+            "variety",
+            "process",
+            "harvest_year",
+            "kg_purchased",
+            "kg_on_hand",
+            "price_per_kg",
+            "arrived_on",
         ]
         widgets = {"arrived_on": DatePickerInput()}
 
@@ -69,7 +76,8 @@ class CuppingScoreForm(CrispyModelForm):
         super().__init__(*args, **kwargs)
         self.fields["taster"] = UserChoiceField(
             queryset=get_user_model().objects.order_by("first_name", "username"),
-            label="Taster", empty_label="Choose a taster",
+            label="Taster",
+            empty_label="Choose a taster",
         )
 
 
@@ -92,8 +100,10 @@ CUPPING_FORMSETS = FormSets(
             fields=["taster", *CuppingScore.ATTRIBUTES],
             pk_field="id",
             compact_layout=CompactLayout(
-                columns=[CompactColumn("taster", span=3),
-                         *(CompactColumn(name, span=1) for name in CuppingScore.ATTRIBUTES)],
+                columns=[
+                    CompactColumn("taster", span=3),
+                    *(CompactColumn(name, span=1) for name in CuppingScore.ATTRIBUTES),
+                ],
                 controls_span=2,
             ),
         )
@@ -108,7 +118,9 @@ class RoastBatchForm(CrispyModelForm):
     submit_label = "Save"
     roaster = UserChoiceField(queryset=get_user_model().objects.order_by("first_name", "username"))
     orders = forms.ModelMultipleChoiceField(
-        queryset=Order.objects.none(), required=False, widget=forms.SelectMultiple(attrs={"size": 6}),
+        queryset=Order.objects.none(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"size": 6}),
         help_text="The confirmed or roasted orders this batch fills. Hold Ctrl or Cmd to pick several.",
     )
 

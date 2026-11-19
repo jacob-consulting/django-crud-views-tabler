@@ -8,7 +8,9 @@ from .models import CustomerSubscription, Order, OrderLine
 
 
 def run_subscriptions(due: date, user) -> list[Order]:
-    """Create one draft order (with one line) for every active subscription whose ``next_delivery`` is on or before ``due``.
+    """Create one draft order (with one line) for every active subscription due by ``due``.
+
+    A subscription is due when its ``next_delivery`` is on or before ``due``.
 
     Each subscription is advanced in the same transaction, past ``due`` (a lapsed subscription catches up with one
     order, not one per missed interval), so running again for the same date finds nothing due and returns ``[]``.
@@ -29,7 +31,9 @@ def run_subscriptions(due: date, user) -> list[Order]:
                 requested_roast_date=subscription.next_delivery,
                 notes=f"Subscription delivery ({subscription.product.name}), created by {user.get_username()}.",
             )
-            OrderLine.objects.create(order=order, product=subscription.product, quantity=subscription.product.bags_per_delivery)
+            OrderLine.objects.create(
+                order=order, product=subscription.product, quantity=subscription.product.bags_per_delivery
+            )
             while subscription.next_delivery <= due:
                 subscription.advance()
             subscription.save(update_fields=["next_delivery"])

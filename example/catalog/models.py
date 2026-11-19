@@ -115,8 +115,13 @@ class Beans(Product):
     roast_level = models.CharField(max_length=10, choices=RoastLevel, default=RoastLevel.MEDIUM)
     flavor_notes = models.ManyToManyField(FlavorNote, blank=True, related_name="beans")
     green_lot = models.ForeignKey(
-        "roastery.GreenLot", null=True, blank=True, on_delete=models.SET_NULL, related_name="beans",
-        verbose_name="green lot", help_text="The lot this coffee is roasted from.",
+        "roastery.GreenLot",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="beans",
+        verbose_name="green lot",
+        help_text="The lot this coffee is roasted from.",
     )
 
     card_color = "orange"

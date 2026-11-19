@@ -1,0 +1,21 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: 'pip install --require-hashes --only-binary :all: -r .github/requirements/ci.txt'
+      - run: ruff format --check .
+      - run: ruff check .
+      # Wheel and sdist contain only allowlisted paths, and the wheel its templates and static files.
+      - run: nox -s package

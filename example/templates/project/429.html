@@ -1,0 +1,13 @@
+{% extends "django_tabler/base.html" %}
+{# config.ratelimit.WriteRateLimitMiddleware (public demo only): a visitor saved too often. #}
+{% block title %}Too many changes{% endblock %}
+{% block body %}
+<div class="page page-center">
+  <div class="container container-tight py-4">
+    <div class="alert alert-warning" role="alert">
+      <h4 class="alert-title">Too many changes</h4>
+      <div class="text-secondary">This public demo limits how often one visitor can save. Please try again in a minute.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

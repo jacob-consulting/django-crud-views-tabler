@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -104,9 +103,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "label",
-                    models.CharField(
-                        help_text="E.g. Shop, Roastery door, Billing.", max_length=50
-                    ),
+                    models.CharField(help_text="E.g. Shop, Roastery door, Billing.", max_length=50),
                 ),
                 ("street", models.CharField(max_length=200)),
                 ("zip_code", models.CharField(max_length=20)),

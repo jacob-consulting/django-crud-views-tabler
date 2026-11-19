@@ -3,7 +3,7 @@
 
 Usage (from the repo root, with the test extra installed):
 
-    uv run --group test python scripts/vendor_templates.py [--force]
+    uv run python scripts/vendor_templates.py [--force]
 
 Copies every template of the installed crispy-bootstrap5 into
 src/django_tabler/templates/crispy_tabler/ and applies exactly two changes

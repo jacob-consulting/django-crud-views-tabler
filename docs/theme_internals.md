@@ -1,16 +1,12 @@
-# crud_views_tabler: a Tabler theme for django-crud-views (draft)
+# Theme internals
 
-Status: **prototype**, living in this project as the `crud_views_tabler` app. It is exercised by the Acme Roasters
-demo (`example/`: apps `sales`, `catalog`, `roastery`, `shipping`), which puts nested ViewSets, formsets,
-conditional groups, workflow, polymorphic models, object detail packs, Guardian, resources, card views and the
-django-crud-views-extensions widgets through it, and by the `showcase` app (`/showcase/`), whose create form renders
-every crispy template branch on one page — see [crispy_tabler_coverage.md](crispy_tabler_coverage.md). Everything the
-demo needed beyond upstream hooks is listed, with upstream references, in
-[crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md).
-
-Last checked against django-crud-views `main` @ cf2bfc0f (2026-11-04, the roastery demo; built from b73337ce, #309,
-the merge of `feature/examples-pre-1.0-restructure`). Before that against `feature/examples-pre-1.0-restructure` @
-eac0c21 (main up to Phase 06.7 plus 06.8, short action tooltips); originally built against main @ 32a3533 (0.30.0 plus the unreleased JavaScript adapters #200, button variants, class table and leaves #201, tooltip markers #204 and tooltip lifecycle #205, the three-state card button label mode #213, the removal of the dead crispy detail templates #217, `{% cv_messages %}` instead of django-bootstrap5 #222, label-mode class keys #209 and context/list label mode #216, utility class keys #227, `hidden` instead of `d-none` #232, form media once #191, multipart create forms #236, the form frame #239, the translated card empty state #246, accessible card pagination #241, card blocks and class keys #243 and the alert frame #250, installed as an editable path dependency from the sibling checkout `../django-crud-views`), Tabler 1.6.1 and crispy-bootstrap5 2026.9.
+How `crud_views_tabler` themes django-crud-views: what it overrides, which upstream hooks it uses, and where it stops.
+It is exercised by the Acme Roasters demo (`example/`: apps `sales`, `catalog`, `roastery`, `shipping`), which puts
+nested ViewSets, formsets, conditional groups, workflow, polymorphic models, object detail packs, Guardian, resources,
+card views and the django-crud-views-extensions widgets through it, and by the `showcase` app (`/showcase/`), whose
+create form renders every crispy template branch on one page (see [crispy_tabler.md](crispy_tabler.md)). Everything
+the demo needed beyond upstream hooks is listed, with upstream references, in the
+[findings log](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/dev/crud_views_upstream_findings_roastery.md).
 
 ## Approach
 
@@ -30,13 +26,13 @@ INSTALLED_APPS = [
     "crispy_forms",
     "django_tables2",
     "django_filters",
-    "django_tabler",                     # also provides the crispy_tabler template pack
-    "crud_views_tabler",                 # before crud_views
+    "django_tabler",  # also provides the crispy_tabler template pack
+    "crud_views_tabler",  # before crud_views
     "crud_views.apps.CrudViewsConfig",
 ]
 CRISPY_TEMPLATE_PACK = "crispy_tabler"
 CRISPY_ALLOWED_TEMPLATE_PACKS = ("crispy_tabler",)
-CRUD_VIEWS_EXTENDS = "crud_views_tabler/page.html"            # the theme's page, see below
+CRUD_VIEWS_EXTENDS = "crud_views_tabler/page.html"  # the theme's page, see below
 DJANGO_TABLES2_TEMPLATE = "crud_views/table/bootstrap5.html"  # the theme's table template
 ```
 
@@ -221,12 +217,12 @@ templates post to `request.get_full_path`, which keeps that origin across valida
 ## Forms (crispy)
 
 The demo renders forms through `django_tabler`'s template pack `crispy_tabler` (`CRISPY_TEMPLATE_PACK = "crispy_tabler"`;
-see [crispy_tabler_coverage.md](crispy_tabler_coverage.md) for what it fixes). The theme app itself needs **no
+see [crispy_tabler.md](crispy_tabler.md) for what it fixes). The theme app itself needs **no
 crispy template overrides**: Tabler is Bootstrap 5, so `form-label`, `form-control`, `form-select`, `form-check`,
 `is-invalid` and `invalid-feedback` render natively with either pack, including in dark mode. `crispy_bootstrap5`
 is **not** in `INSTALLED_APPS` and nothing needs it: upstream removed `crud_views/detail/` — the last templates in
 the package carrying hardcoded `bootstrap5/...` includes — in 10d81ad (#217), so the former precaution is gone (see
-[crispy_tabler_coverage.md](crispy_tabler_coverage.md)). The `crispy-bootstrap5` *distribution* stays installed, as a
+[crispy_tabler.md](crispy_tabler.md)). The `crispy-bootstrap5` *distribution* stays installed, as a
 dependency of the `crispy` extra: `django_tabler.crispy.layout` subclasses its `FloatingField` and `Switch`. Remaining gaps and
 how the prototype handles them:
 
@@ -335,7 +331,7 @@ static/crud_views_tabler/
 ```
 
 The CSS rules added for the roastery demo each have a finding in
-[crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md): section labels for toggle
+[crud_views_upstream_findings_roastery.md](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/dev/crud_views_upstream_findings_roastery.md): section labels for toggle
 groups and formsets (#21: `conditional:legend` and `formset:legend` register `cv-tabler-section-legend`),
 the typeahead skins reading Bootstrap's `--bs-*` properties (#31, plain CSS, the theme
 does not import the extensions package). The workflow history's sideways-scroll rule (#5) went with upstream's
@@ -382,7 +378,7 @@ Still not covered:
 ## Questions for django-crud-views upstream
 
 Discussed in detail, with the current code paths, pros and cons, in
-[crud_views_upstream_questions.md](crud_views_upstream_questions.md):
+[crud_views_upstream_questions.md](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/dev/crud_views_upstream_questions.md):
 
 1. Icons: Font Awesome class names on view classes, in two settings and hard-coded in templates. **Resolved in 0.30.0 (icon registry).**
 2. Button classes set in Python (`CrispyDeleteForm` has no hook for its Delete button). **Resolved on main (#201, button class table).**
@@ -392,4 +388,4 @@ Discussed in detail, with the current code paths, pros and cons, in
 
 Where each point stands against upstream main today, and what is left to do (two open points; the four upstream
 asks are filed as #208, #209, #210 and #211):
-[crud_views_upstream_status.md](crud_views_upstream_status.md).
+[crud_views_upstream_status.md](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/dev/crud_views_upstream_status.md).

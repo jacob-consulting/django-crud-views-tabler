@@ -1,0 +1,24 @@
+# Codecov is advisory here: main has no branch protection, so statuses inform rather than
+# gate.
+codecov:
+  notify:
+    # One upload per tests matrix row (py3.12, py3.13, py3.14, py3.15)
+    after_n_builds: 4
+
+coverage:
+  status:
+    # Not posted today: Codecov's free Developer plan is filed under the Team tier, which posts
+    # only codecov/patch (codecov/feedback#830). Kept so it works once that is fixed.
+    project:
+      default:
+        target: auto
+        informational: true
+    patch:
+      default:
+        target: auto
+
+comment:
+  after_n_builds: 4
+
+ignore:
+  - "src/**/migrations/**"

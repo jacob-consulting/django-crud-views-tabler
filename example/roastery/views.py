@@ -84,7 +84,9 @@ class LotTable(Table):
 
 
 class LotFilter(django_filters.FilterSet):
-    process = django_filters.ChoiceFilter(choices=GreenLot._meta.get_field("process").choices, empty_label="Any process")
+    process = django_filters.ChoiceFilter(
+        choices=GreenLot._meta.get_field("process").choices, empty_label="Any process"
+    )
     harvest_year = django_filters.ChoiceFilter(empty_label="Any harvest", label="Harvest")
 
     class Meta:
@@ -213,7 +215,9 @@ class SessionDetailView(BreadcrumbMixin, DetailViewPermissionRequired):
     cv_viewset = cv_session
     template_name = "roastery/session_detail.html"
     cv_header_template_code = _("Cupping session · {{ object.held_on|date:'j M Y' }}")
-    cv_paragraph_template_code = _("Lot {{ object.lot.code }} · {{ object.lot.origin }} · {{ object.lot.kg_on_hand }} kg on hand")
+    cv_paragraph_template_code = _(
+        "Lot {{ object.lot.code }} · {{ object.lot.origin }} · {{ object.lot.kg_on_hand }} kg on hand"
+    )
     cv_context_actions = ["home", "update", "delete"]
     cv_context_actions_inline = ["update"]
 
@@ -262,8 +266,15 @@ class BatchTable(Table):
     lot = tables.Column()
     profile = tables.Column()
     green_kg = tables.Column(verbose_name="Green", attrs={"td": {"class": "text-end"}, "th": {"class": "text-end"}})
-    roasted_kg = tables.Column(verbose_name="Roasted kg", attrs={"td": {"class": "text-end"}, "th": {"class": "text-end"}})
-    loss = tables.Column(verbose_name="Loss", accessor="weight_loss_pct", orderable=False, attrs={"td": {"class": "text-end"}, "th": {"class": "text-end"}})
+    roasted_kg = tables.Column(
+        verbose_name="Roasted kg", attrs={"td": {"class": "text-end"}, "th": {"class": "text-end"}}
+    )
+    loss = tables.Column(
+        verbose_name="Loss",
+        accessor="weight_loss_pct",
+        orderable=False,
+        attrs={"td": {"class": "text-end"}, "th": {"class": "text-end"}},
+    )
     roaster = tables.Column()
 
     def render_id(self, record):

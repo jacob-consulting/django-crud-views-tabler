@@ -1,48 +1,72 @@
-# Acme Admin
+# django-crud-views-tabler
 
-Django 6.1 project with a Tabler 1.6.1 UI (loaded from the jsDelivr CDN), two reusable packages and a demo:
+Current version: 0.1.0
 
-- `django_tabler`: the Tabler page shell, layouts, sign-in page, icons and a crispy-forms template pack;
-- `crud_views_tabler`: a Tabler theme for [django-crud-views](https://github.com/jacob-consulting/django-crud-views);
-- **Acme Roasters**, a back-office for a specialty coffee roastery (customers, orders, subscriptions, products, green
-  coffee lots, cupping, roast batches, shipments), built with django-crud-views and themed by `crud_views_tabler`.
-  The app code never imports the theme; every crud_views page has a "Show code" panel, and "How this is themed"
-  (`/theming/`) shows the whole theme.
+A [Tabler](https://tabler.io) 1.6.1 theme for [django-crud-views](https://github.com/jacob-consulting/django-crud-views).
+One distribution, two Django apps:
 
-## Run it
+- `crud_views_tabler`: the theme. Listed before `crud_views` in `INSTALLED_APPS`, it shadows the stock Bootstrap 5
+  layout templates and registers Tabler button classes, icons and JavaScript adapters through upstream's hooks; your
+  views need no changes.
+- `django_tabler`: a Tabler page shell that does not depend on django-crud-views: layouts (top bar or sidebar),
+  sign-in page, `{% load tabler %}` icon tags, an end-user layout switch, and `crispy_tabler`, a django-crispy-forms
+  template pack.
 
-With [Task](https://taskfile.dev):
+Python 3.12–3.15, Django 5.2, 6.0 and 6.1. Tabler loads from the jsDelivr CDN.
+
+- Documentation: https://django-crud-views-tabler.readthedocs.io/
+- Source and issues: https://github.com/jacob-consulting/django-crud-views-tabler
+
+## Install
+
+```shell
+pip install django-crud-views-tabler
+```
+
+```python
+INSTALLED_APPS = [
+    # django.contrib apps, then:
+    "crispy_forms",
+    "django_tables2",
+    "django_filters",
+    "django_tabler",
+    "crud_views_tabler",  # before crud_views: its templates shadow the stock ones
+    "crud_views.apps.CrudViewsConfig",
+    # your apps
+]
+
+CRUD_VIEWS_EXTENDS = "crud_views_tabler/page.html"
+CRISPY_ALLOWED_TEMPLATE_PACKS = ("crispy_tabler",)
+CRISPY_TEMPLATE_PACK = "crispy_tabler"
+DJANGO_TABLES2_TEMPLATE = "crud_views/table/bootstrap5.html"
+```
+
+Branding (site name, logo, menu, default layout) is done by overriding a few include templates; see the
+[documentation](https://django-crud-views-tabler.readthedocs.io/en/latest/branding/).
+
+## The demo: Acme Roasters
+
+`example/` is a back office for a specialty coffee roastery (customers, orders, subscriptions, products, green coffee
+lots, cupping, roast batches, shipments), built with django-crud-views and themed by this package. The app code never
+imports the theme; every crud_views page has a "Show code" panel, and `/theming/` shows the whole theme.
+
+### Run it
+
+With [Task](https://taskfile.dev) and [uv](https://docs.astral.sh/uv/), next to checkouts of
+[django-crud-views](https://github.com/jacob-consulting/django-crud-views) and
+[django-crud-views-extensions](https://github.com/jacob-consulting/django-crud-views-extensions) (local development
+installs both from `../`, because the theme tracks unreleased upstream features):
 
 ```shell
 task up      # uv sync, migrate, superuser admin/admin, seed the demo data, runserver
-task         # list all tasks (setup, run, seed, seed:reset, reset, test, …)
+task         # list all tasks (setup, run, seed, seed:reset, reset, test, test:matrix, …)
 ```
 
-`task setup` is safe to re-run: the superuser and each seed step are skipped when their data already exists.
-`task seed:reset` rebuilds the Acme Roasters demo data in place (`seed_demo --reset`; `admin` and showcase items stay).
-`task reset` deletes the SQLite database and uploaded media and sets everything up again. Change the login with
-`task up ADMIN_USER=… ADMIN_PASSWORD=…` (local development only).
+Open http://127.0.0.1:8000/ and sign in. `task setup` is safe to re-run; `task seed:reset` rebuilds the demo data in
+place; `task reset` deletes the SQLite database and uploaded media and sets everything up again. More in
+[Development](https://django-crud-views-tabler.readthedocs.io/en/latest/development/).
 
-Or by hand:
-
-```shell
-uv sync
-uv run python example/manage.py migrate
-uv run python example/manage.py createsuperuser
-uv run python example/manage.py seed_demo             # the Acme Roasters world and the accounts alex, sam, kim
-uv run python example/manage.py seed_demo_showcase    # 40 sample items for the form showcase
-uv run python example/manage.py runserver
-```
-
-django-crud-views and django-crud-views-extensions are installed from the sibling checkouts `../django-crud-views`
-and `../django-crud-views-extensions` (branch `main`) as editable path dependencies (`[tool.uv.sources]` in
-`pyproject.toml`), because the theme follows features that are not released yet. Replace the source entries with
-version pins once they are.
-
-Open http://127.0.0.1:8000/ and sign in. Every page except the login page requires a signed-in user
-(`LoginRequiredMiddleware`).
-
-## Demo accounts and data
+### Demo accounts and data
 
 | Account | Role | Sees |
 |---|---|---|
@@ -60,7 +84,7 @@ sessions and scores, roast batches, subscriptions and shipments for the shipped 
 database that already has the demo accounts. `seed_demo --reset` deletes every row of the demo apps' tables and the
 demo accounts and groups (not `admin`, not the showcase items) and builds the same world again; `--seed N` varies it.
 
-## Pages
+### Pages
 
 The sidebar (or, in the top-bar layout, one dropdown per section) shows what the account may open:
 
@@ -75,7 +99,7 @@ The sidebar (or, in the top-bar layout, one dropdown per section) shows what the
 | Roastery | Green lots | `/lot/` | object detail `accordion`, nested cupping sessions with a score formset, delete preview |
 | | Roast batches | `/batch/` | M2M to orders, computed weight loss |
 | | Shipments | `/shipment/` | a `Resource` (no ORM) from a fake courier API |
-| Developer | Form showcase | `/showcase/` | every branch of the crispy pack on one form ([coverage](docs/crispy_tabler_coverage.md)) |
+| Developer | Form showcase | `/showcase/` | every branch of the crispy pack on one form ([coverage](https://django-crud-views-tabler.readthedocs.io/en/latest/crispy_tabler/)) |
 | | How this is themed | `/theming/` | the theme's files and line counts, computed at render time |
 | Users | Users | `/users/` | searchable user list, create in a modal (`auth.view_user` / `auth.add_user`) |
 
@@ -84,29 +108,7 @@ default layout, `example/templates/django_tabler/includes/layout_defaults.html`)
 or in the top bar) switches the layout (top bar, sidebar, folded sidebar, width, navbar colour and style); dark mode
 is the moon/sun toggle. A choice stays in the browser's `localStorage` and wins over the default.
 
-## Layout
-
-- `src/django_tabler/`: the HTML shell and layouts (`templates/django_tabler/`: top navbar and sidebar, both rendered;
-  Tabler's CSS shows the one the user picked), sign-in page, messages and form-field partials, the `{% icon %}`
-  template tags (`{% load tabler %}`) and the Tabler icons. It does not depend on django-crud-views. It also holds the
-  django-crispy-forms template pack for Tabler (`templates/crispy_tabler/`, with fields, widgets and layout objects in
-  `django_tabler.crispy`), originally from `jacob-consulting/crispy-tabler`; the pack needs the `crispy` extra.
-  A project overrides `django_tabler/includes/{site_name,brand,nav_menu,head,layout_defaults}.html`; `nav_menu.html`
-  is included twice, with `nav_layout` set to `"horizontal"` (top bar) or `"vertical"` (sidebar).
-  `layout_defaults.html` holds the project's default layout as a JSON object of Tabler layout settings (`layout`,
-  `navbar-position`, `navbar-style`, `navbar-theme`, `sidebar`); empty, Tabler's top bar is the default.
-- `src/crud_views_tabler/`: Tabler theme for django-crud-views (template overrides, Tabler icon library, button
-  classes, CSS, JS adapter), including `crud_views_tabler/page.html`, the page every crud_views view extends; design
-  notes in [`docs/crud_views_tabler.md`](docs/crud_views_tabler.md).
-- `example/`: the demo project: `manage.py`, `config/` (settings, the "Show code" collector `showcode.py`, the
-  navigation `templatetags/acme_nav.py`, date formats), the apps `dashboard` (start page, demo accounts, `seed_demo`),
-  `sales`, `catalog`, `roastery`, `shipping` and `showcase`, and `templates/` (the Acme overrides of the
-  `django_tabler` includes, `project/crud_views.html` with the code panel, the theming page).
-- `tests/crispy_tabler/`: the template pack's test suite; `scripts/vendor_templates.py` re-vendors its templates.
-- `tests/crud_views_tabler/`: the theme's test suite, with its own settings and a small test app, independent of
-  the demo.
-
-## Settings from the environment
+### Settings from the environment
 
 `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` (`1`/`0`, default `1`), `DJANGO_ALLOWED_HOSTS` (comma-separated) and
 `CRUD_VIEWS_MANAGE_VIEWS_ENABLED` (`yes` by default: crud_views' manage pages list who holds which permission, so
@@ -114,17 +116,16 @@ only active members of the `CRUD_VIEWS_MANAGE` group may open them, whatever `DE
 only member. `no` closes them for everyone, `debug_only` also requires `DEBUG`). The built-in secret key is for
 local development only.
 
-## Tests
+## Development
 
 ```shell
-task test    # everything below
-uv run python example/manage.py test django_tabler dashboard sales catalog roastery shipping showcase
-uv run --group test pytest                                                         # the crispy template pack
-uv run --group test pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings   # the theme
-uv run python example/manage.py check --fail-level WARNING                          # incl. crud_views_tabler.W001
+task test          # all suites against the sibling checkouts, plus the system check
+task test:matrix   # nox: Python 3.12–3.15 x Django 5.2/6.0/6.1 against the built package, as CI
 ```
 
-## Upstream findings
+Everything the demo needed beyond upstream hooks (theme CSS, override templates, workarounds) is listed, with upstream
+file and line, in [`dev/crud_views_upstream_findings_roastery.md`](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/dev/crud_views_upstream_findings_roastery.md).
 
-Everything the demo needed beyond upstream hooks (theme CSS, override templates, workarounds) is listed, with
-upstream file and line, in [`docs/crud_views_upstream_findings_roastery.md`](docs/crud_views_upstream_findings_roastery.md).
+## License
+
+MIT

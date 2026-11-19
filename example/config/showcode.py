@@ -95,7 +95,9 @@ def _sources(paths, label_for) -> list[Source]:
         result = _highlighted(path, path.stat().st_mtime_ns)
         if result is not None:
             html, lines = result
-            sources.append(Source(label_for(path), path.relative_to(EXAMPLE_DIR.parent).as_posix(), mark_safe(html), lines))
+            sources.append(
+                Source(label_for(path), path.relative_to(EXAMPLE_DIR.parent).as_posix(), mark_safe(html), lines)
+            )
     return sources
 
 
@@ -199,7 +201,7 @@ def _package_files(root: Path) -> list[Path]:
 
 def collect_theme_sources() -> list[Source]:
     """The whole crud_views theme: every file of ``src/crud_views_tabler`` plus the settings that switch it on."""
-    return _sources(_package_files(THEME_DIR), lambda p: p.relative_to(SRC_DIR).as_posix()) + [_settings_excerpt()]
+    return [*_sources(_package_files(THEME_DIR), lambda p: p.relative_to(SRC_DIR).as_posix()), _settings_excerpt()]
 
 
 class FileInfo(NamedTuple):

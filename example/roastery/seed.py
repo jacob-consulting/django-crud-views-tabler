@@ -6,20 +6,32 @@ roastery; Sam only looks (Alex, as Owner, has every permission via dashboard's O
 """
 
 import random
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
+from catalog.models import Beans
 from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
-
-from catalog.models import Beans
 from sales.models import Order, OrderState
 
 from .models import CuppingScore, CuppingSession, GreenLot, RoastBatch
 
-# code, origin index (catalog seed ORIGINS), producer, variety, process, harvest, kg bought, kg on hand, €/kg, days ago, base score
+# code, origin index (catalog seed ORIGINS), producer, variety, process, harvest, kg bought, kg on hand, €/kg,
+# days ago, base score
 LOTS = [
-    ("CO-24-017", 0, "Finca El Paraíso (Diego Bermúdez)", "Pink Bourbon", "washed", 2024, "700", "690", "13.40", 95, 7.75),
+    (
+        "CO-24-017",
+        0,
+        "Finca El Paraíso (Diego Bermúdez)",
+        "Pink Bourbon",
+        "washed",
+        2024,
+        "700",
+        "690",
+        "13.40",
+        95,
+        7.75,
+    ),
     ("ET-24-003", 1, "Kochere washing station", "Heirloom", "natural", 2024, "450", "310", "12.10", 120, 8.0),
     ("KE-24-009", 2, "Gatomboya cooperative", "SL28, SL34", "washed", 2024, "300", "75", "14.80", 80, 7.75),
     ("BR-24-021", 3, "Fazenda Santa Luzia", "Yellow Catuaí", "natural", 2024, "1200", "880", "5.90", 140, 7.25),
@@ -29,7 +41,12 @@ LOTS = [
 ]
 
 TASTERS_BY_SESSION = [("alex", "kim"), ("kim", "alex", "sam"), ("alex", "kim"), ("kim", "sam")]
-NOTES = ["", "Sweet, clean cup; the acidity opens as it cools.", "Slightly papery at the start.", "Resubmit after resting a week."]
+NOTES = [
+    "",
+    "Sweet, clean cup; the acidity opens as it cools.",
+    "Slightly papery at the start.",
+    "Resubmit after resting a week.",
+]
 
 BATCHES = 30
 
@@ -50,11 +67,23 @@ def seed(rng: random.Random, world: dict) -> None:
     lots = []
     on_hand_after = {}  # the stock each lot should show once the batches below have drawn theirs
     for code, o, producer, variety, process, year, bought, on_hand, price, days, base in LOTS:
-        lots.append((GreenLot.objects.create(
-            code=code, origin=origins[o], producer=producer, variety=variety, process=process, harvest_year=year,
-            kg_purchased=Decimal(bought), kg_on_hand=Decimal(bought), price_per_kg=Decimal(price),
-            arrived_on=today - timedelta(days=days),
-        ), base))
+        lots.append(
+            (
+                GreenLot.objects.create(
+                    code=code,
+                    origin=origins[o],
+                    producer=producer,
+                    variety=variety,
+                    process=process,
+                    harvest_year=year,
+                    kg_purchased=Decimal(bought),
+                    kg_on_hand=Decimal(bought),
+                    price_per_kg=Decimal(price),
+                    arrived_on=today - timedelta(days=days),
+                ),
+                base,
+            )
+        )
         on_hand_after[code] = Decimal(on_hand)
 
     sessions = []
@@ -65,7 +94,8 @@ def seed(rng: random.Random, world: dict) -> None:
             )
             for taster in TASTERS_BY_SESSION[(n + s) % len(TASTERS_BY_SESSION)]:
                 CuppingScore.objects.create(
-                    session=session, taster=users[taster],
+                    session=session,
+                    taster=users[taster],
                     **{name: snap(base + rng.uniform(-0.5, 0.75)) for name in CuppingScore.ATTRIBUTES},
                 )
             sessions.append(session)
@@ -89,9 +119,12 @@ def seed(rng: random.Random, world: dict) -> None:
         green = Decimal(rng.choice([8, 10, 12, 12, 15, 15, 20]))
         loss = Decimal(str(round(rng.uniform(0.12, 0.17), 3)))
         batch = RoastBatch.objects.create(
-            lot=lot, roasted_on=today - timedelta(days=(BATCHES - n) * 2 + rng.randint(0, 1)),
-            profile=PROFILES[lot_index], green_kg=green,
-            roasted_kg=(green * (1 - loss)).quantize(Decimal("0.1")), roaster=users["kim"] if n % 4 else users["alex"],
+            lot=lot,
+            roasted_on=today - timedelta(days=(BATCHES - n) * 2 + rng.randint(0, 1)),
+            profile=PROFILES[lot_index],
+            green_kg=green,
+            roasted_kg=(green * (1 - loss)).quantize(Decimal("0.1")),
+            roaster=users["kim"] if n % 4 else users["alex"],
         )
         pool = open_orders if n >= BATCHES * 2 // 3 else done_orders
         if pool:

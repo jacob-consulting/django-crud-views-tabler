@@ -1,6 +1,6 @@
+from crud_views.lib.icons import _get_renderers, _icon_str, get_icons
 from django.core.checks import CheckMessage, Tags, Warning, register
 
-from crud_views.lib.icons import _get_renderers, _icon_str, get_icons
 from crud_views_tabler.icons import render
 from django_tabler.icons import ICONS
 

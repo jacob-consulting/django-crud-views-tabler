@@ -1,9 +1,10 @@
 import json
 import re
 from datetime import timedelta
-from html import escape, unescape
 from decimal import Decimal
+from html import escape, unescape
 
+from catalog.models import Beans, Equipment, Origin
 from crud_views_widget_typeahead.lookups import get_lookup
 from crud_views_workflow.models import WorkflowInfo
 from django.contrib.contenttypes.models import ContentType
@@ -14,7 +15,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from catalog.models import Beans, Equipment, Origin
 from sales.models import Address, Customer, Order, OrderLine, OrderState
 from sales.permissions import grant_customer
 
@@ -22,9 +22,7 @@ from .test_customers import SalesTestCase
 
 
 def page_heading(response):
-    return re.search(
-        r'<h[1-6]\b[^>]*class="page-title"[^>]*>(.*?)</h[1-6]>', response.content.decode(), re.S
-    ).group(1)
+    return re.search(r'<h[1-6]\b[^>]*class="page-title"[^>]*>(.*?)</h[1-6]>', response.content.decode(), re.S).group(1)
 
 
 def history(order):
@@ -38,9 +36,15 @@ class OrderTestCase(SalesTestCase):
     def setUpTestData(cls):
         super().setUpTestData()
         origin = Origin.objects.first()
-        cls.huila = Beans.objects.create(name="Test Huila", slug="t-huila", sku="T-1", price=Decimal("16.50"), origin=origin)
-        cls.cerrado = Beans.objects.create(name="Test Cerrado", slug="t-cerrado", sku="T-2", price=Decimal("12.80"), origin=origin)
-        cls.dripper = Equipment.objects.create(name="Test dripper", slug="t-dripper", sku="T-3", price=Decimal("28.00"), brand="Hario")
+        cls.huila = Beans.objects.create(
+            name="Test Huila", slug="t-huila", sku="T-1", price=Decimal("16.50"), origin=origin
+        )
+        cls.cerrado = Beans.objects.create(
+            name="Test Cerrado", slug="t-cerrado", sku="T-2", price=Decimal("12.80"), origin=origin
+        )
+        cls.dripper = Equipment.objects.create(
+            name="Test dripper", slug="t-dripper", sku="T-3", price=Decimal("28.00"), brand="Hario"
+        )
         cls.tier_b = Customer.objects.filter(kind="wholesale", price_tier="B").first()
         cls.mine = cls.granted.first()  # one of Sam's customers
 
@@ -56,8 +60,12 @@ class OrderTestCase(SalesTestCase):
 
     @staticmethod
     def lines_post(prefix, rows, initial=0):
-        data = {f"{prefix}-TOTAL_FORMS": str(len(rows)), f"{prefix}-INITIAL_FORMS": str(initial),
-                f"{prefix}-MIN_NUM_FORMS": "0", f"{prefix}-MAX_NUM_FORMS": "1000"}
+        data = {
+            f"{prefix}-TOTAL_FORMS": str(len(rows)),
+            f"{prefix}-INITIAL_FORMS": str(initial),
+            f"{prefix}-MIN_NUM_FORMS": "0",
+            f"{prefix}-MAX_NUM_FORMS": "1000",
+        }
         for i, row in enumerate(rows):
             data.update({f"{prefix}-{i}-{key}": value for key, value in row.items()})
         return data
@@ -83,9 +91,12 @@ class OrderFormTests(OrderTestCase):
                 self.assertIn('<legend class="cv-tabler-section-legend">', html)
                 for field in ("product", "quantity"):
                     self.assertRegex(html, rf'<label[^>]*for="id_lines-[^"]+-{field}"')
-                # finding 20: upstream's QuerysetConditions disables grind and bag size unless the row's product is coffee
+                # finding 20: upstream's QuerysetConditions disables grind and bag size unless the row's product is
+                # coffee
                 for field in ("grind", "bag_size"):
-                    cell = re.search(rf'<div[^>]*cv-data-toggle-group[^>]*>\s*<div id="div_id_lines-[^"]+-0-{field}"', html)
+                    cell = re.search(
+                        rf'<div[^>]*cv-data-toggle-group[^>]*>\s*<div id="div_id_lines-[^"]+-0-{field}"', html
+                    )
                     self.assertIsNotNone(cell, field)
                     self.assertIn('cv-data-toggle-kind="queryset"', cell.group(0))
                     self.assertIn("cv-data-toggle-disable-only", cell.group(0))
@@ -107,18 +118,20 @@ class OrderFormTests(OrderTestCase):
         self.assertIn("Ensure this value is greater than or equal to 1.", html)
 
     def test_nested_create_heading_names_customer(self):
-        self.tier_b.name = 'Roast <script>alert(1)</script> & Co'
+        self.tier_b.name = "Roast <script>alert(1)</script> & Co"
         self.tier_b.save(update_fields=["name"])
         self.login()
         response = self.client.get(reverse("order-create", kwargs={"customer_pk": self.tier_b.pk}))
         self.assertEqual(response.status_code, 200)
         heading = page_heading(response)
-        self.assertEqual(" ".join(unescape(strip_tags(heading)).split()), "New order for Roast <script>alert(1)</script> & Co")
+        self.assertEqual(
+            " ".join(unescape(strip_tags(heading)).split()), "New order for Roast <script>alert(1)</script> & Co"
+        )
         self.assertIn(escape(self.tier_b.name), heading)
         self.assertNotIn("<script>", heading)
 
     def test_invalid_nested_create_keeps_customer_heading(self):
-        self.tier_b.name = 'Roast <script>alert(1)</script> & Co'
+        self.tier_b.name = "Roast <script>alert(1)</script> & Co"
         self.tier_b.save(update_fields=["name"])
         self.login()
         response = self.client.post(
@@ -128,7 +141,9 @@ class OrderFormTests(OrderTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("requested_roast_date", response.context["form"].errors)
         heading = page_heading(response)
-        self.assertEqual(" ".join(unescape(strip_tags(heading)).split()), "New order for Roast <script>alert(1)</script> & Co")
+        self.assertEqual(
+            " ".join(unescape(strip_tags(heading)).split()), "New order for Roast <script>alert(1)</script> & Co"
+        )
         self.assertIn(escape(self.tier_b.name), heading)
         self.assertNotIn("<script>", heading)
 
@@ -167,10 +182,14 @@ class OrderFormTests(OrderTestCase):
         # the form clears them itself (upstream's conditional group), not only OrderLine.save()
         from sales.forms import OrderLineForm
 
-        form = OrderLineForm(None, data={"product": self.dripper.pk, "grind": "espresso", "bag_size": "1kg", "quantity": "1"})
+        form = OrderLineForm(
+            None, data={"product": self.dripper.pk, "grind": "espresso", "bag_size": "1kg", "quantity": "1"}
+        )
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual((form.cleaned_data["grind"], form.cleaned_data["bag_size"]), ("", ""))
-        form = OrderLineForm(None, data={"product": self.huila.pk, "grind": "espresso", "bag_size": "1kg", "quantity": "1"})
+        form = OrderLineForm(
+            None, data={"product": self.huila.pk, "grind": "espresso", "bag_size": "1kg", "quantity": "1"}
+        )
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual((form.cleaned_data["grind"], form.cleaned_data["bag_size"]), ("espresso", "1kg"))
 
@@ -181,8 +200,10 @@ class OrderFormTests(OrderTestCase):
         prefix = f"lines-{order.pk}-0"
         url = reverse("order-update", kwargs=self.order_kwargs(order))
         self.assertContains(self.client.get(url), f'name="{prefix}-TOTAL_FORMS"')
-        rows = [{"id": line.pk, "product": self.huila.pk, "grind": "whole", "bag_size": "1kg", "quantity": "5"},
-                {"product": self.dripper.pk, "quantity": "1"}]
+        rows = [
+            {"id": line.pk, "product": self.huila.pk, "grind": "whole", "bag_size": "1kg", "quantity": "5"},
+            {"product": self.dripper.pk, "quantity": "1"},
+        ]
         data = {**self.order_post(order.customer, [], notes="Ring twice."), **self.lines_post(prefix, rows, initial=1)}
         self.assertEqual(self.client.post(url, data).status_code, 302)
         order.refresh_from_db()
@@ -206,7 +227,9 @@ class OrderFormTests(OrderTestCase):
         rows = [{"id": draft.lines.get().pk, "product": self.huila.pk, "quantity": "2", "DELETE": "on"}]
         prefix = f"lines-{draft.pk}-0"
         data = {**self.order_post(draft.customer, []), **self.lines_post(prefix, rows, initial=1)}
-        self.assertEqual(self.client.post(reverse("order-update", kwargs=self.order_kwargs(draft)), data).status_code, 302)
+        self.assertEqual(
+            self.client.post(reverse("order-update", kwargs=self.order_kwargs(draft)), data).status_code, 302
+        )
 
     def test_ship_to_is_limited_to_the_customers_addresses(self):
         # Sam holds view_address model-wide: the form must not offer (or accept) other customers' addresses
@@ -223,7 +246,10 @@ class OrderFormTests(OrderTestCase):
     def test_create_form_uses_the_datepicker(self):
         self.login()
         html = self.client.get(reverse("order-create", kwargs={"customer_pk": self.tier_b.pk})).content.decode()
-        self.assertRegex(html, r'name="requested_roast_date"[^>]*xdsoft-datetime-config|xdsoft-datetime-config[^>]*name="requested_roast_date"')
+        self.assertRegex(
+            html,
+            r'name="requested_roast_date"[^>]*xdsoft-datetime-config|xdsoft-datetime-config[^>]*name="requested_roast_date"',
+        )
 
 
 class OrderWorkflowTests(OrderTestCase):
@@ -244,15 +270,21 @@ class OrderWorkflowTests(OrderTestCase):
     def test_workflow_happy_path(self):
         self.login()
         order = self.make_order()
-        for transition, state in (("wf_confirm", "confirmed"), ("wf_roast", "roasted"), ("wf_ship", "shipped"),
-                                  ("wf_deliver", "delivered")):
+        for transition, state in (
+            ("wf_confirm", "confirmed"),
+            ("wf_roast", "roasted"),
+            ("wf_ship", "shipped"),
+            ("wf_deliver", "delivered"),
+        ):
             response = self.workflow(order, transition)
             self.assertRedirects(response, reverse("order-detail", kwargs=self.order_kwargs(order)))
             order.refresh_from_db()
             self.assertEqual(order.state, state)
         self.assertIsNotNone(order.shipped_at)
-        self.assertEqual(list(history(order).order_by("timestamp").values_list("transition", flat=True)),
-                         ["wf_confirm", "wf_roast", "wf_ship", "wf_deliver"])
+        self.assertEqual(
+            list(history(order).order_by("timestamp").values_list("transition", flat=True)),
+            ["wf_confirm", "wf_roast", "wf_ship", "wf_deliver"],
+        )
         html = self.client.get(reverse("order-detail", kwargs=self.order_kwargs(order))).content.decode()
         self.assertIn("data-order-history", html)
         self.assertIn("Mark delivered", html)
@@ -305,7 +337,9 @@ class OrderWorkflowTests(OrderTestCase):
         self.assertIn("steps steps-counter", html)
         self.assertRegex(html, r'class="step-item active"[^>]*>Draft<')
         self.assertIn('data-transition="wf_confirm"', html)
-        self.assertIn(f'href="{reverse("order-workflow", kwargs=self.order_kwargs(order))}" data-transition="wf_cancel"', html)
+        self.assertIn(
+            f'href="{reverse("order-workflow", kwargs=self.order_kwargs(order))}" data-transition="wf_cancel"', html
+        )
         self.assertIn('class="badge bg-secondary-lt"', html)  # the theme's light workflow badge
 
     def test_shipped_order_edit_is_disabled_and_forbidden(self):
@@ -313,7 +347,10 @@ class OrderWorkflowTests(OrderTestCase):
         order = self.make_order(state=OrderState.SHIPPED)
         html = self.client.get(reverse("order-list", kwargs={"customer_pk": order.customer_id})).content.decode()
         row = re.search(rf"<tr\b(?:(?!</tr>).)*>{order.number}</a>(?:(?!</tr>).)*</tr>", html, re.S).group(0)
-        self.assertRegex(row, r'<button[^>]*cv-key="update"[^>]*data-cv-disabled="state"|<button[^>]*data-cv-disabled="state"[^>]*cv-key="update"')
+        self.assertRegex(
+            row,
+            r'<button[^>]*cv-key="update"[^>]*data-cv-disabled="state"|<button[^>]*data-cv-disabled="state"[^>]*cv-key="update"',
+        )
         for name in ("order-update", "order-delete"):
             url = reverse(name, kwargs=self.order_kwargs(order))
             self.assertEqual(self.client.get(url).status_code, 403, name)
@@ -369,7 +406,9 @@ class OrderPageTests(OrderTestCase):
         # "new order" picks the customer and continues in the nested editor
         html = self.client.get(reverse("orders-create")).content.decode()
         self.assertIn("data-cv-typeahead-select", html)
-        response = self.client.post(reverse("orders-create"), {"customer": str(self.mine.pk), "requested_roast_date": ""})
+        response = self.client.post(
+            reverse("orders-create"), {"customer": str(self.mine.pk), "requested_roast_date": ""}
+        )
         order = Order.objects.latest("number")
         self.assertRedirects(response, reverse("order-update", kwargs=self.order_kwargs(order)))
         self.assertEqual((order.customer, order.state), (self.mine, OrderState.DRAFT))
@@ -384,7 +423,9 @@ class OrderPageTests(OrderTestCase):
         grant_customer(self.sam, viewable, actions=("view",))
         self.login("sam")
         before = Order.objects.count()
-        response = self.client.post(reverse("orders-create"), {"customer": str(viewable.pk), "requested_roast_date": ""})
+        response = self.client.post(
+            reverse("orders-create"), {"customer": str(viewable.pk), "requested_roast_date": ""}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertIn("You may not place orders for this customer.", response.context["form"].errors["customer"])
         self.assertEqual(Order.objects.count(), before)
@@ -431,7 +472,9 @@ class OrderPageTests(OrderTestCase):
         response = self.client.post(url, {"requested_roast_date": ""})
         copy = Order.objects.latest("number")
         self.assertNotEqual(copy.pk, source.pk)
-        self.assertEqual([str(message) for message in get_messages(response.wsgi_request)], [f"Created {copy} from {source}"])
+        self.assertEqual(
+            [str(message) for message in get_messages(response.wsgi_request)], [f"Created {copy} from {source}"]
+        )
         destination = reverse("order-detail", kwargs=self.order_kwargs(copy))
         self.assertRedirects(response, destination, fetch_redirect_response=False)
         self.assertContains(self.client.get(destination), escape(f"Created {copy} from {source}"))
@@ -456,12 +499,23 @@ class OrderRoleTests(OrderTestCase):
             # cross-parent: Sam's customer in the URL, someone else's order
             cross = {"customer_pk": self.mine.pk, "pk": theirs.pk}
             self.assertEqual(self.client.get(reverse(name, kwargs=cross)).status_code, 404, name)
-        self.assertEqual(self.client.post(reverse("order-create", kwargs={"customer_pk": self.other.pk}), {}).status_code, 403)
+        self.assertEqual(
+            self.client.post(reverse("order-create", kwargs={"customer_pk": self.other.pk}), {}).status_code, 403
+        )
         # POSTs are refused as well, and change nothing
         count = Order.objects.count()
-        for kwargs, expected in ((self.order_kwargs(theirs), 403), ({"customer_pk": self.mine.pk, "pk": theirs.pk}, 404)):
-            self.assertEqual(self.client.post(reverse("order-workflow", kwargs=kwargs), {"transition": "wf_confirm"}).status_code, expected)
-            self.assertEqual(self.client.post(reverse("order-duplicate", kwargs=kwargs), {"requested_roast_date": ""}).status_code, expected)
+        for kwargs, expected in (
+            (self.order_kwargs(theirs), 403),
+            ({"customer_pk": self.mine.pk, "pk": theirs.pk}, 404),
+        ):
+            self.assertEqual(
+                self.client.post(reverse("order-workflow", kwargs=kwargs), {"transition": "wf_confirm"}).status_code,
+                expected,
+            )
+            self.assertEqual(
+                self.client.post(reverse("order-duplicate", kwargs=kwargs), {"requested_roast_date": ""}).status_code,
+                expected,
+            )
         theirs.refresh_from_db()
         self.assertEqual(theirs.state, OrderState.DRAFT)
         self.assertEqual(Order.objects.count(), count)
@@ -492,11 +546,18 @@ class OrderRoleTests(OrderTestCase):
         self.assertNotIn(f'href="{reverse("order-update", kwargs=self.order_kwargs(confirmed))}', html)
         # no step to take on a draft: the workflow action is disabled, its URL refused
         self.assertEqual(self.client.get(reverse("order-workflow", kwargs=self.order_kwargs(draft))).status_code, 403)
-        self.assertEqual(self.client.post(reverse("order-workflow", kwargs=self.order_kwargs(confirmed)),
-                                          {"transition": "wf_cancel", "comment": "no"}).status_code, 200)
+        self.assertEqual(
+            self.client.post(
+                reverse("order-workflow", kwargs=self.order_kwargs(confirmed)),
+                {"transition": "wf_cancel", "comment": "no"},
+            ).status_code,
+            200,
+        )
         confirmed.refresh_from_db()
         self.assertEqual(confirmed.state, OrderState.CONFIRMED)
-        response = self.client.post(reverse("order-workflow", kwargs=self.order_kwargs(confirmed)), {"transition": "wf_roast"})
+        response = self.client.post(
+            reverse("order-workflow", kwargs=self.order_kwargs(confirmed)), {"transition": "wf_roast"}
+        )
         self.assertEqual(response.status_code, 302)
         confirmed.refresh_from_db()
         self.assertEqual(confirmed.state, OrderState.ROASTED)
@@ -509,4 +570,6 @@ class OrderRoleTests(OrderTestCase):
     def test_nav_has_orders_for_every_role(self):
         for username in ("alex", "sam", "kim"):
             self.login(username)
-            self.assertContains(self.client.get(reverse("dashboard:index")), reverse("orders-list"), msg_prefix=username)
+            self.assertContains(
+                self.client.get(reverse("dashboard:index")), reverse("orders-list"), msg_prefix=username
+            )

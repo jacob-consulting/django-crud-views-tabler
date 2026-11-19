@@ -26,10 +26,13 @@ class CrudViewsTablerConfig(AppConfig):
         from crud_views.lib.view.label_mode import register_label_mode_defaults
 
         register_label_mode_defaults({"form": "both"})
-        register_button_classes({
-            key: value for key, value in TABLER_BUTTON_CLASSES.items()
-            if not key.startswith("workflow:") or self.apps.is_installed("crud_views_workflow")
-        })
+        register_button_classes(
+            {
+                key: value
+                for key, value in TABLER_BUTTON_CLASSES.items()
+                if not key.startswith("workflow:") or self.apps.is_installed("crud_views_workflow")
+            }
+        )
         register_assets(
             "crud_views_tabler",
             js=["crud_views_tabler/tabler-adapters.js"],

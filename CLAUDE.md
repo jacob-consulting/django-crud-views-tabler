@@ -4,13 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A Django 6.1 / Python 3.14 project ("Acme Admin") that grows two reusable packages under `src/` and a demo project
-under `example/` that exercises them:
+The distribution **django-crud-views-tabler** (PyPI; repo `jacob-consulting/django-crud-views-tabler`, docs on Read the
+Docs): two reusable packages under `src/` and a demo project under `example/` that exercises them. Supported: Python
+3.12–3.15 × Django 5.2, 6.0, 6.1 (the nox matrix); local development runs Python 3.14 / Django 6.1.
 
 - `src/django_tabler/`: Tabler 1.6.1 page shell (loaded from the jsDelivr CDN), layouts, sign-in page, `{% load tabler %}`
   icon tags, Tabler icon SVG paths (`icons.py`), the end-user layout switch, **and** the django-crispy-forms template
-  pack `crispy_tabler` (`templates/crispy_tabler/` + `django_tabler.crispy`). Must not depend on django-crud-views;
-  only the crispy pack needs the `crispy` extra.
+  pack `crispy_tabler` (`templates/crispy_tabler/` + `django_tabler.crispy`). Must not import django-crud-views (a test greps
+  the package), although the distribution depends on it.
 - `src/crud_views_tabler/`: Tabler theme for django-crud-views. Depends on `django_tabler`.
 - `example/`: the Acme Roasters demo: `config/` (settings, the "Show code" collector `showcode.py`, tag libraries
   `showcode` and `acme_nav` registered in `TEMPLATES['OPTIONS']['libraries']` because `config` is not an app, date
@@ -23,35 +24,40 @@ under `example/` that exercises them:
 django-crud-views and django-crud-views-extensions come from the sibling checkouts `../django-crud-views` and
 `../django-crud-views-extensions` as editable path dependencies (`[tool.uv.sources]`), because the theme tracks
 unreleased upstream features. Upstream changes there can break the theme's tests. Both checkouts are read-only for
-this repo: gaps are worked around here and logged in `docs/crud_views_upstream_findings_roastery.md`.
+this repo: gaps are worked around here and logged in `dev/crud_views_upstream_findings_roastery.md`. nox, CI and the
+Render demo cannot see the checkouts: until django-crud-views 1.0.0rc1 is on PyPI they install it from GitHub `main`
+(`CRUD_VIEWS` in `noxfile.py`, `requirements/demo.txt`, both with `--no-sources`/no uv sources), and the declared floor
+stays `>=0.30`; `publish.yml` refuses to publish until the floor is `>=1.0.0rc1` (`scripts/check_release_floor.py`).
 
 ## Commands
 
 ```shell
-task up      # Taskfile.yaml: uv sync, migrate, superuser admin/admin, seed, runserver
+task up      # Taskfile.yaml: uv sync --extra examples --extra test --extra dev, migrate, superuser, seed, runserver
 task setup   # the same without runserver; idempotent
 task reset   # delete example/db.sqlite3 + example/media, then setup (asks first)
 task seed:reset   # seed_demo --reset: rebuild the demo data in place
 
 uv run python example/manage.py seed_demo [--reset] | seed_demo_showcase   # demo data by hand
 
-# Example apps' Django tests (the example's settings)
-uv run python example/manage.py test django_tabler dashboard sales catalog roastery shipping showcase
-uv run python example/manage.py test dashboard.tests.SomeTestCase.test_name   # single test
-# sales keeps its tests in a tests/ package (sales.tests.test_orders, ...), the other apps in tests.py
+# Example apps' tests: pytest-django from example/ (example/pytest.ini, settings config.settings)
+cd example && uv run pytest
+cd example && uv run pytest dashboard/tests.py -k some_name   # single test
+# sales keeps its tests in a tests/ package (sales/tests/test_orders.py, ...), the other apps in tests.py
 
-# crud_views_tabler theme tests (pytest, own settings and test app: tests/crud_views_tabler/)
-uv run --group test pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
+# package suites, each with its own settings
+uv run pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings   # theme (own test app)
+uv run pytest tests/django_tabler --ds tests.django_tabler.settings           # shell, packaging scripts
+uv run pytest                                                                 # crispy_tabler pack (default)
+uv run pytest tests/crispy_tabler/test_widgets.py -k some_name
 
-# crispy_tabler template pack (pytest, own settings: tests/crispy_tabler/settings.py)
-uv run --group test pytest
-uv run --group test pytest tests/crispy_tabler/test_widgets.py -k some_name
-
-task test    # all of the above plus the check
+task test          # all of the above plus the check, against the sibling checkouts
+task test:matrix   # uvx nox: tests-<py>(django='<dj>'), examples-<py>(django='<dj>'), package, docs
 uv run python example/manage.py check --fail-level WARNING   # includes crud_views_tabler.W001
 ```
 
-There is no configured linter/formatter.
+Lint: ruff with django-crud-views' configuration (`uv run ruff format . && uv run ruff check .`; pre-commit
+hook in `.pre-commit-config.yaml`). Docs: mkdocs (`uvx nox -s docs`, strict). Workflows in `.github/workflows/`
+(tests, lint, docs, publish, demo); the Render demo is `render.yaml` + `example/config/settings_demo.py`.
 
 `seed_demo` (demo accounts alex/sam/kim, password `demo`; apps listed in `SEED_APPS`, each with a `seed(rng, world)`)
 builds the whole roastery world and is deterministic for a `--seed` (dates are relative to today). It refuses with
@@ -73,7 +79,7 @@ defined once in `example/config/templatetags/acme_nav.py`. The example's `CRUD_V
 `project/crud_views.html`, which extends `crud_views_tabler/page.html` and adds the "Show code" panel (sources fetched
 from `/_code/<app_label>/` when it opens).
 
-**How the crud_views theme works** (details in `docs/crud_views_tabler.md`): django-crud-views has no theme setting.
+**How the crud_views theme works** (details in `docs/theme_internals.md`): django-crud-views has no theme setting.
 The theme is an app listed *before* `crud_views` in `INSTALLED_APPS`, so its `templates/crud_views/...` files shadow
 the stock Bootstrap 5 templates; anything not overridden falls through. No crud_views code is patched or subclassed.
 Overrides are deliberately limited to page *layout* (modal shell, form frame, table, card, alert, filter, card
@@ -92,15 +98,15 @@ content) — none renders a button. Everything else is registered in `CrudViewsT
 
 Prefer solving theme problems through upstream hooks (class keys, blocks, settings) rather than new template
 overrides; copied templates drift from upstream silently. Upstream asks and their status are tracked in
-`docs/crud_views_upstream_*.md`.
+`dev/crud_views_upstream_*.md`.
 
 **crispy_tabler pack.** The templates are vendored from crispy-bootstrap5 by `scripts/vendor_templates.py` (rewrites
 `bootstrap5/` includes to `crispy_tabler/`, adds a provenance comment, otherwise byte-identical). Six templates are
 hand-edited (`HAND_EDITED` in the script) and the script refuses to overwrite them without `--force`; files under
-`widget/` are pack-owned. `django_tabler/crispy/vendored.py:CRISPY_BOOTSTRAP5_VERSION` must match the `test` group's
+`widget/` are pack-owned. `django_tabler/crispy/vendored.py:CRISPY_BOOTSTRAP5_VERSION` must match the `test` extra's
 crispy-bootstrap5 pin — `test_pack_parity.py` fails otherwise. `django_tabler.crispy.layout` subclasses
 crispy-bootstrap5's `FloatingField`/`Switch`, so that distribution stays installed (but not in `INSTALLED_APPS`).
-`docs/crispy_tabler_coverage.md` documents which template branches the `showcase` demo form exercises.
+`docs/crispy_tabler.md` documents which template branches the `showcase` demo form exercises.
 
 **Layout switch.** The navbar gear (`layout_switch_menu.html` + `static/django_tabler/layout-switch.js`) stores the
 user's layout choice in `localStorage` using Tabler's own `tabler-*` keys. A project's *default* layout is the JSON
@@ -127,8 +133,9 @@ shows Tabler's base blue; the switch offers no colour choice.
   password `demo`. Brand "Acme Roasters", primary colour sienna `#a0522d` (`example/static/acme/acme.css`).
 - Theme fix order: an upstream hook (class keys, settings, blocks), then CSS in `crud_views_tabler.css`, then a new
   override template as a last resort. Every theme CSS rule or override, and every upstream bug or awkwardness, gets
-  an entry in `docs/crud_views_upstream_findings_roastery.md` in the same commit.
-- Design specs and implementation plans live in `docs/superpowers/{specs,plans}/`.
+  an entry in `dev/crud_views_upstream_findings_roastery.md` in the same commit.
+- Design specs and implementation plans live in `superpowers/{specs,plans}/`. `docs/` is the published user guide
+  (Read the Docs); maintainer notes live in `dev/`, which is not published.
 
 ## Tabler reference material
 

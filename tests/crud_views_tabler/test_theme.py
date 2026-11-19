@@ -3,10 +3,16 @@ import re
 import subprocess
 import sys
 from html.parser import HTMLParser
-from types import SimpleNamespace
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
+from crud_views.lib.button_classes import _get_default_button_classes, get_button_classes
+from crud_views.lib.crispy import CrispyDeleteForm
+from crud_views.lib.icons import DEFAULT_ICONS
+from crud_views.lib.icons import render_icon as cv_render_icon
+from crud_views.lib.view.label_mode import LABEL_MODES
+from crud_views.lib.view.variant import VARIANTS
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -19,12 +25,6 @@ from django.template.loader import get_template, render_to_string
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
-from crud_views.lib.button_classes import _get_default_button_classes, get_button_classes
-from crud_views.lib.crispy import CrispyDeleteForm
-from crud_views.lib.icons import DEFAULT_ICONS
-from crud_views.lib.icons import render_icon as cv_render_icon
-from crud_views.lib.view.label_mode import LABEL_MODES
-from crud_views.lib.view.variant import VARIANTS
 import crud_views_tabler
 from crud_views_tabler.buttons import TABLER_BUTTON_CLASSES
 from crud_views_tabler.icons import TABLER_ICONS, render
@@ -149,10 +149,14 @@ class ButtonClassTests(SimpleTestCase):
             "formset:control-danger": "btn btn-icon btn-danger",
             "conditional:legend": "cv-tabler-section-legend",
             "formset:legend": "cv-tabler-section-legend",
-            **{f"workflow:badge-{colour}": f"badge bg-{colour}-lt" for colour in
-               ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")},
-            **{f"workflow:transition-{colour}": f"btn btn-{colour}" for colour in
-               ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")},
+            **{
+                f"workflow:badge-{colour}": f"badge bg-{colour}-lt"
+                for colour in ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")
+            },
+            **{
+                f"workflow:transition-{colour}": f"btn btn-{colour}"
+                for colour in ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")
+            },
             "workflow:history-table": "table table-vcenter",
             "manage:badge-model": "badge bg-secondary-lt",
             "manage:badge-resource": "badge bg-azure-lt",
@@ -165,8 +169,10 @@ class ButtonClassTests(SimpleTestCase):
             "manage:help": "btn btn-sm",
             **{f"manage:trace-{state}": "badge bg-green-lt" for state in ("allowed", "passed")},
             "manage:trace-denied": "badge bg-red-lt",
-            **{f"manage:trace-{state}": "badge bg-yellow-lt" for state in
-               ("not-found", "login-redirect", "error", "no-such-route", "not-evaluated")},
+            **{
+                f"manage:trace-{state}": "badge bg-yellow-lt"
+                for state in ("not-found", "login-redirect", "error", "no-such-route", "not-evaluated")
+            },
             **{f"manage:trace-{state}": "badge bg-secondary-lt" for state in ("skipped", "not-reached")},
         }
         self.assertEqual(TABLER_BUTTON_CLASSES, expected)
@@ -246,7 +252,7 @@ class ThemeRenderingTests(TestCase):
         self.assertNotIn("fa-", owner + tabs)
 
     def test_emptying_the_navbar_block_drops_only_the_tabs(self):
-        # docs/crud_views_tabler.md: a project drops the tabs by overriding the cv_navbar block; the owner row stays
+        # docs/theme_internals.md: a project drops the tabs by overriding the cv_navbar block; the owner row stays
         response = self.client.get(reverse("customer-detail", kwargs={"pk": self.customer.pk}))
         source = '{% extends "crud_views_tabler/page.html" %}{% block cv_navbar %}{% endblock %}'
         html = engines["django"].from_string(source).render(response.context_data, response.wsgi_request)
@@ -275,11 +281,11 @@ class ThemeRenderingTests(TestCase):
 
     def test_table_pagination_uses_the_semantic_arrows(self):
         html = self.client.get(reverse("customer-list")).content.decode()
-        footer = html[html.index('class="pagination'):]
+        footer = html[html.index('class="pagination') :]
         self.assertIn(str(svg("chevron-right")), footer[:2000])
         with override_settings(CRUD_VIEWS_ICONS={"page-next": "tabler:arrow-left"}):
             html = self.client.get(reverse("customer-list")).content.decode()
-        self.assertIn(str(svg("arrow-left")), html[html.index('class="pagination'):][:2000])
+        self.assertIn(str(svg("arrow-left")), html[html.index('class="pagination') :][:2000])
 
     def test_table_pagination_matches_upstream_accessibility(self):
         # upstream Phase 05 (pagination parity): a labelled <nav> landmark, the current page as a non-link, the
@@ -319,6 +325,7 @@ class ThemeRenderingTests(TestCase):
 
     def test_tooltip_adapter_places_toolbar_tooltips_below(self):
         from django.contrib.staticfiles import finders
+
         with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
             source = f.read()
         self.assertIn("cv.bootstrapAdapters(() => globalThis.tabler)", source)
@@ -330,6 +337,7 @@ class ThemeRenderingTests(TestCase):
         # crud_views/js/adapters.js's bootstrapAdapters returns a `tab:` entry using component(ns, "Tab"), which
         # the object-detail tabs.js initialises through (#328); the theme assigns the whole set, so no tab shim.
         from django.contrib.staticfiles import finders
+
         with open(finders.find("crud_views/js/adapters.js"), encoding="utf-8") as f:
             core = f.read()
         self.assertRegex(core, r'tab: \{\s*init\(el\) \{ component\(ns, "Tab"\)')
@@ -342,6 +350,7 @@ class ThemeRenderingTests(TestCase):
         # crud_views' init guards Bootstrap 5.3 tooltip transitions that outlive dispose() (06.8); the theme must
         # delegate to it rather than call Tooltip.getOrCreateInstance itself, or it silently drops that guard.
         from django.contrib.staticfiles import finders
+
         with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
             source = f.read()
         self.assertIn("const init = cv.adapters.tooltip.init;", source)
@@ -351,6 +360,7 @@ class ThemeRenderingTests(TestCase):
     def test_tooltip_adapter_keeps_upstream_lifecycle(self):
         # Only init is replaced, so crud_views' hide(el) / dispose(el) (#205) keep resolving tabler.Tooltip.
         from django.contrib.staticfiles import finders
+
         with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
             source = f.read()
         self.assertNotRegex(source, r"cv\.adapters\.tooltip\s*=")
@@ -381,8 +391,13 @@ class ThemeRenderingTests(TestCase):
     def test_alerts_go_through_the_theme_frame_only(self):
         # upstream #250: every alert renders through tags/alert.html; the theme overrides that frame and nothing else
         self.assertIn("crud_views_tabler", get_template("crud_views/tags/alert.html").origin.name)
-        for name in ("tags/messages.html", "snippets/delete/protection_errors.html",
-                     "snippets/delete/related_objects.html", "snippets/alert/text.html", "snippets/alert/list.html"):
+        for name in (
+            "tags/messages.html",
+            "snippets/delete/protection_errors.html",
+            "snippets/delete/related_objects.html",
+            "snippets/alert/text.html",
+            "snippets/alert/list.html",
+        ):
             self.assertNotIn("crud_views_tabler", get_template(f"crud_views/{name}").origin.name, name)
 
     def test_protection_errors_render_as_tabler_alert(self):
@@ -398,9 +413,13 @@ class ThemeRenderingTests(TestCase):
     def test_related_objects_alerts_get_the_tabler_layout(self):
         html = render_to_string(
             "crud_views/snippets/delete/related_objects.html",
-            {"has_protected_objects": True, "protected_objects": ["Order 7"], "related_summary": {"order": 2},
-             "related_summary_items": ["order: 2"],
-             "related_objects": []},
+            {
+                "has_protected_objects": True,
+                "protected_objects": ["Order 7"],
+                "related_summary": {"order": 2},
+                "related_summary_items": ["order: 2"],
+                "related_objects": [],
+            },
         )
         self.assertEqual(html.count('<div class="alert-icon">'), 2)
         self.assertEqual(html.count('class="alert-heading"'), 2)
@@ -493,7 +512,7 @@ class ThemeRenderingTests(TestCase):
             html = self.client.get(reverse("customer-list")).content.decode()
         self.assertIn('id="filter-pinned"', html)
         self.assertNotIn('id="cv-filter-toggle"', html)
-        self.assertIn("<svg", html[html.index('id="filter-pinned"'):][:800])  # the card header's filter icon
+        self.assertIn("<svg", html[html.index('id="filter-pinned"') :][:800])  # the card header's filter icon
 
     def test_action_tooltips_are_initialised_by_crud_views(self):
         html = self.client.get(reverse("customer-list")).content.decode()
@@ -531,17 +550,28 @@ class ThemeRenderingTests(TestCase):
     def test_upstream_templates_are_not_overridden(self):
         # Near copies (spacing or markup Tabler does not need) and every template whose only job was button classes,
         # the primary action or the tooltip marker: the class table and crud_views' leaves cover those.
-        for name in ("crud_views/modal/content.html", "crud_views/tags/actions_menu_item_label.html",
-                     "crud_views/tags/breadcrumb.html", "crud_views/tags/context_action.html",
-                     "crud_views/tags/list_action.html", "crud_views/tags/card_action.html",
-                     "crud_views/tags/context_actions.html", "crud_views/columns/actions.html",
-                     "crud_views/tags/actions_menu_toggle.html", "crud_views/tags/context_action_filter.html",
-                     "crud_views/snippets/card_order.html"):
+        for name in (
+            "crud_views/modal/content.html",
+            "crud_views/tags/actions_menu_item_label.html",
+            "crud_views/tags/breadcrumb.html",
+            "crud_views/tags/context_action.html",
+            "crud_views/tags/list_action.html",
+            "crud_views/tags/card_action.html",
+            "crud_views/tags/context_actions.html",
+            "crud_views/columns/actions.html",
+            "crud_views/tags/actions_menu_toggle.html",
+            "crud_views/tags/context_action_filter.html",
+            "crud_views/snippets/card_order.html",
+        ):
             self.assertNotIn("crud_views_tabler", get_template(name).origin.name, name)
         with self.assertRaises(TemplateDoesNotExist):
             get_template("crud_views/tags/list_action.inner.html")
-        for name in ("crud_views/tags/button/action.html", "crud_views/tags/button/container.html",
-                     "crud_views/tags/button/menu_item.html", "crud_views/tags/button/menu_item_label.html"):
+        for name in (
+            "crud_views/tags/button/action.html",
+            "crud_views/tags/button/container.html",
+            "crud_views/tags/button/menu_item.html",
+            "crud_views/tags/button/menu_item_label.html",
+        ):
             self.assertNotIn("crud_views_tabler", get_template(name).origin.name, name)
 
     def test_menu_items_use_the_fixed_width_icon_slot(self):
@@ -668,6 +698,7 @@ class CardThemeTests(TestCase):
         from unittest import mock
 
         from crud_views.lib.settings import crud_views_settings
+
         # crud_views reads the setting once into crud_views_settings; its own tests patch that object the same way
         with mock.patch.object(crud_views_settings, "header_level", 1):
             html = self.get(cv_filter="1")
@@ -677,7 +708,7 @@ class CardThemeTests(TestCase):
 
     def test_icon_only_card_action_has_a_crud_views_tooltip(self):
         html = self.get()
-        delete = re.search(r'<a\b[^>]*/delete/\?cv_from=card[^>]*>', html).group(0)  # the label_mode="icon" action
+        delete = re.search(r"<a\b[^>]*/delete/\?cv_from=card[^>]*>", html).group(0)  # the label_mode="icon" action
         self.assertIn("btn-icon", delete)
         self.assertIn('data-cv-tooltip="card"', delete)
         self.assertNotIn('data-bs-toggle="tooltip"', delete)
@@ -712,17 +743,20 @@ class IconCheckTests(TestCase):
 class MessagesParityTests(SimpleTestCase):
     def assert_message_parity(self, plain, themed):
         from html.parser import HTMLParser
+
         class Hooks(HTMLParser):
             def __init__(self):
                 super().__init__()
                 self.alerts = 0
                 self.buttons = []
+
             def handle_starttag(self, tag, attrs):
                 attrs = dict(attrs)
                 if attrs.get("role") == "alert":
                     self.alerts += 1
                 if tag == "button":
                     self.buttons.append(attrs)
+
         native, crud = Hooks(), Hooks()
         native.feed(plain)
         crud.feed(themed)
@@ -736,10 +770,13 @@ class MessagesParityTests(SimpleTestCase):
         for button in crud.buttons:
             self.assertEqual(button.get("data-cv-alert-dismiss"), "")
             self.assertNotIn("data-bs-dismiss", button)
+
         def normalized(value):
             return re.sub(r">\s+<", "><", re.sub(r"\s+", " ", value)).strip()
-        self.assertEqual(normalized(plain.replace('data-bs-dismiss="alert"', 'data-cv-alert-dismiss=""')),
-                         normalized(themed))
+
+        self.assertEqual(
+            normalized(plain.replace('data-bs-dismiss="alert"', 'data-cv-alert-dismiss=""')), normalized(themed)
+        )
 
     def test_parity_rejects_wrong_missing_dual_hooks_and_unrelated_changes(self):
         messages = [Message(constants.INFO, "unchanged body")]
@@ -748,10 +785,10 @@ class MessagesParityTests(SimpleTestCase):
         self.assert_message_parity(native, crud)
         for changed in (
             crud.replace('data-cv-alert-dismiss=""', 'data-cv-alert-dismiss="wrong"'),
-            crud.replace('data-cv-alert-dismiss=""', ''),
+            crud.replace('data-cv-alert-dismiss=""', ""),
             crud.replace('data-cv-alert-dismiss=""', 'data-cv-alert-dismiss="" data-bs-dismiss="alert"'),
             crud.replace('role="alert"', 'role="status"'),
-            crud.replace('unchanged body', 'changed body'),
+            crud.replace("unchanged body", "changed body"),
         ):
             with self.subTest(changed=changed), self.assertRaises(AssertionError):
                 self.assert_message_parity(native, changed)
@@ -790,7 +827,9 @@ class HeadingRepeatsTabTests(SimpleTestCase):
     def repeats(header, items, navbar=True):
         from crud_views_tabler.templatetags.crud_views_tabler import cv_tabler_heading_repeats_tab
 
-        context = Context({"view": SimpleNamespace(cv_header=header), "cv_navbar": {"items": items} if navbar else None})
+        context = Context(
+            {"view": SimpleNamespace(cv_header=header), "cv_navbar": {"items": items} if navbar else None}
+        )
         return cv_tabler_heading_repeats_tab(context)
 
     def test_heading_equal_to_the_active_tab_repeats(self):
@@ -821,7 +860,8 @@ class BareTableTests(SimpleTestCase):
         self.assertNotRegex(css, r"table\.table \{\s*display: block")
 
     def test_manage_page_no_longer_scrolls_the_content_container(self):
-        # Finding 35: the structured manage page (#366) wraps its tables in .table-responsive; the finding-25 rule is gone
+        # Finding 35: the structured manage page (#366) wraps its tables in .table-responsive; the finding-25 rule is
+        # gone
         css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
         self.assertNotIn("#cv-ancestor-policy", css)
 
@@ -844,12 +884,17 @@ class BareTableTests(SimpleTestCase):
         self.assertRegex(css, r"\.cv-tabler-owner ~ \.row \.page-title \{\s*font-size: 1rem;")
         self.assertEqual(
             {key: value for key, value in TABLER_BUTTON_CLASSES.items() if key.startswith("navbar:")},
-            {"navbar:nav": "nav nav-bordered flex-wrap column-gap-4 row-gap-1", "navbar:item": "nav-item mw-100 ms-0",
-             "navbar:link": "nav-link mw-100 text-break gap-2"},
+            {
+                "navbar:nav": "nav nav-bordered flex-wrap column-gap-4 row-gap-1",
+                "navbar:item": "nav-item mw-100 ms-0",
+                "navbar:link": "nav-link mw-100 text-break gap-2",
+            },
         )
+
 
 class ThemeAdoptionTests(TestCase):
     """Native form floor, exact registrations and real action rendering contracts."""
+
     @classmethod
     def setUpTestData(cls):
         cls.actor = get_user_model().objects.create_superuser("adoption", "adoption@example.invalid", None)
@@ -860,11 +905,13 @@ class ThemeAdoptionTests(TestCase):
 
     def controls(self, markup):
         from html.parser import HTMLParser
+
         class Controls(HTMLParser):
             def __init__(self):
                 super().__init__()
                 self.rows = []
                 self.current = None
+
             def handle_starttag(self, tag, attrs):
                 attrs = dict(attrs)
                 if tag in ("button", "a"):
@@ -873,13 +920,16 @@ class ThemeAdoptionTests(TestCase):
                     self.current["paths"].append(attrs.get("d"))
                 elif self.current is not None and tag == "span" and "visually-hidden" in attrs.get("class", ""):
                     self.current["hidden"] = True
+
             def handle_data(self, data):
                 if self.current is not None:
                     self.current["text"] += data
+
             def handle_endtag(self, tag):
                 if tag in ("button", "a") and self.current is not None:
                     self.rows.append(self.current)
                     self.current = None
+
         parser = Controls()
         parser.feed(str(markup))
         return parser.rows
@@ -890,21 +940,31 @@ class ThemeAdoptionTests(TestCase):
         from crispy_forms.layout import Layout
         from crispy_forms.utils import render_crispy_form
         from crud_views.lib.crispy.buttons import Button, Submit
-        from crud_views.lib.views.list import ListViewFilterFormHelper
         from crud_views.lib.view import CrudView
+        from crud_views.lib.views.list import ListViewFilterFormHelper
+
         class Owner(CrudView):
             cv_abstract = True
-            cv_form_actions_label_mode = ({key: owner_mode for key in
-                ("submit", "delete", "cancel", "filter-submit", "filter-reset")} if owner_mode else {}) | (
-                {"cancel": kind_mode} if kind_mode else {})
+            cv_form_actions_label_mode = (
+                dict.fromkeys(("submit", "delete", "cancel", "filter-submit", "filter-reset"), owner_mode)
+                if owner_mode
+                else {}
+            ) | ({"cancel": kind_mode} if kind_mode else {})
+
         owner = Owner()
         form = ProbeForm(initial={"x": "initial"})
         form.cv_view = owner
         helper = FormHelper()
         helper.form_tag = False
         kwargs = {} if destination == "absent" else {"data_cv_cancel_url": None if destination == "none" else ""}
-        helper.layout = Layout("x", FormActions(Submit("save", "Save"), Submit("delete", "Delete", slot="form:delete"),
-                                               Button("cancel", "Cancel", tag=tag, **kwargs)))
+        helper.layout = Layout(
+            "x",
+            FormActions(
+                Submit("save", "Save"),
+                Submit("delete", "Delete", slot="form:delete"),
+                Button("cancel", "Cancel", tag=tag, **kwargs),
+            ),
+        )
         filtered = ProbeForm(initial={"x": "initial"})
         filtered.helper = ListViewFilterFormHelper(view=owner, request=RequestFactory().get("/"))
         filtered.helper.layout = Layout("x")
@@ -914,14 +974,25 @@ class ThemeAdoptionTests(TestCase):
 
     def test_registered_floor_exact_maps_and_native_action_modes(self):
         from crud_views.lib.view.label_mode import default_label_mode
+
         with override_settings(CRUD_VIEWS_LABEL_MODE_DEFAULTS={}):
             self.assertEqual(default_label_mode("form"), "both")
-        self.assertEqual({name: TABLER_ICONS[name] for name in ("save", "cancel", "filter-reset")},
-                         {"save": "tabler:check", "cancel": "tabler:arrow-left", "filter-reset": "tabler:filter-x"})
-        self.assertEqual({name: TABLER_BUTTON_CLASSES[name] for name in
-                          ("form:actions", "form:filter-actions", "alert:dismissible", "alert:close")},
-                         {"form:actions": "d-flex flex-wrap gap-2", "form:filter-actions": "d-flex flex-wrap gap-1",
-                          "alert:dismissible": "alert-dismissible fade show", "alert:close": "btn-close"})
+        self.assertEqual(
+            {name: TABLER_ICONS[name] for name in ("save", "cancel", "filter-reset")},
+            {"save": "tabler:check", "cancel": "tabler:arrow-left", "filter-reset": "tabler:filter-x"},
+        )
+        self.assertEqual(
+            {
+                name: TABLER_BUTTON_CLASSES[name]
+                for name in ("form:actions", "form:filter-actions", "alert:dismissible", "alert:close")
+            },
+            {
+                "form:actions": "d-flex flex-wrap gap-2",
+                "form:filter-actions": "d-flex flex-wrap gap-1",
+                "alert:dismissible": "alert-dismissible fade show",
+                "alert:close": "btn-close",
+            },
+        )
         for mode in ("both", "icon", "label"):
             rows, markup = self.render_actions(mode)
             self.assertEqual(len(rows), 5)
@@ -940,6 +1011,7 @@ class ThemeAdoptionTests(TestCase):
 
     def test_missing_each_new_mapping_fails_native_render_assertion(self):
         from crud_views.lib import icons
+
         mappings = (("save", 0, "check"), ("cancel", 2, "arrow-left"), ("filter-reset", 4, "filter-x"))
         for name, position, glyph in mappings:
             with self.subTest(name=name), mock.patch.dict(icons._THEME_ICONS), override_settings(CRUD_VIEWS_ICONS={}):
@@ -960,14 +1032,19 @@ class ThemeAdoptionTests(TestCase):
                         self.assertEqual(cancel["attrs"]["type"], "button")
                         self.assertNotIn("href", cancel["attrs"])
                         self.assertEqual("data-cv-cancel-url" in cancel["attrs"], destination == "empty")
-                        self.assertEqual(cancel["attrs"].get("data-cv-cancel-url"),
-                                         "" if destination == "empty" else None)
+                        self.assertEqual(
+                            cancel["attrs"].get("data-cv-cancel-url"), "" if destination == "empty" else None
+                        )
                         self.assertEqual(cancel["text"].strip(), "Cancel")
                         self.assertEqual(cancel["paths"], [] if mode == "label" else ICONS["arrow-left"])
 
     def test_real_create_update_delete_and_filter_pages_have_native_controls(self):
-        for name, args in (("customer-create", []), ("customer-update", [self.customer.pk]),
-                           ("customer-delete", [self.customer.pk]), ("customer-list", [])):
+        for name, args in (
+            ("customer-create", []),
+            ("customer-update", [self.customer.pk]),
+            ("customer-delete", [self.customer.pk]),
+            ("customer-list", []),
+        ):
             with self.subTest(name=name):
                 response = self.client.get(reverse(name, args=args))
                 self.assertEqual(response.status_code, 200)
@@ -980,8 +1057,8 @@ class ThemeAdoptionTests(TestCase):
 
 class WorkflowBadgeTests(SimpleTestCase):
     def badge(self, colour="success"):
-        from django.db.models import TextChoices
         from crud_views_workflow.lib.mixins import WorkflowModelMixin
+        from django.db.models import TextChoices
 
         class States(TextChoices):
             DONE = "done", '<Done "now"> {{ untouched }}'
@@ -994,19 +1071,25 @@ class WorkflowBadgeTests(SimpleTestCase):
 
     def test_badge_uses_current_upstream_source(self):
         import crud_views_workflow.lib.mixins as mixins
-        upstream = Path(os.environ.get("CV_WORKFLOW_UPSTREAM_SRC", Path(__file__).resolve().parents[3] /
-                                      "django-crud-views/src")).resolve()
+
+        # The installed crud_views_workflow (sibling checkout locally, git main under nox); CV_WORKFLOW_UPSTREAM_SRC
+        # pins a specific source tree. Either way the badge template must come from that same tree, not a theme copy.
+        installed = Path(mixins.__file__).resolve().parents[2]
+        upstream = Path(os.environ.get("CV_WORKFLOW_UPSTREAM_SRC", installed)).resolve()
         self.assertEqual(Path(mixins.__file__).resolve(), upstream / "crud_views_workflow/lib/mixins.py")
-        self.assertEqual(Path(get_template("crud_views_workflow/badge.html").origin.name).resolve(),
-                         upstream / "crud_views_workflow/templates/crud_views_workflow/badge.html")
+        self.assertEqual(
+            Path(get_template("crud_views_workflow/badge.html").origin.name).resolve(),
+            upstream / "crud_views_workflow/templates/crud_views_workflow/badge.html",
+        )
 
     def test_all_state_colours_are_light_badges(self):
         from crud_views_workflow.lib.enums import BadgeEnum
+
         for colour in BadgeEnum:
             with self.subTest(colour=colour):
                 html = self.badge(colour)
                 self.assertIn(f'class="badge bg-{colour}-lt"', html)
-                self.assertIn('&lt;Done &quot;now&quot;&gt; {{ untouched }}', html)
+                self.assertIn("&lt;Done &quot;now&quot;&gt; {{ untouched }}", html)
                 self.assertNotIn("<Done", html)
 
     def test_history_table_matches_the_theme_list_table(self):
@@ -1014,14 +1097,17 @@ class WorkflowBadgeTests(SimpleTestCase):
 
     def test_project_classes_override_theme_including_disabled_values(self):
         for value in ("", None, 'custom" onmouseover="bad'):
-            with self.subTest(value=value), override_settings(CRUD_VIEWS_BUTTON_CLASSES={"workflow:badge-success": value}):
+            with (
+                self.subTest(value=value),
+                override_settings(CRUD_VIEWS_BUTTON_CLASSES={"workflow:badge-success": value}),
+            ):
                 html = self.badge()
-                expected = 'custom&quot; onmouseover=&quot;bad' if value else ""
+                expected = "custom&quot; onmouseover=&quot;bad" if value else ""
                 self.assertIn(f'class="{expected}"', html)
                 self.assertNotIn(' onmouseover="', html)
 
     def test_optional_workflow_and_ready_orders_in_isolated_processes(self):
-        script = '''
+        script = """
 import sys
 from django.conf import settings
 from tests.crud_views_tabler import settings as test_settings
@@ -1046,7 +1132,7 @@ else:
     with override_settings(CRUD_VIEWS_BUTTON_CLASSES={"workflow:badge-success": "project"}):
         assert get_button_classes()["workflow:badge-success"] == "project"
 assert not any(check.id == "crud_views.W362" for check in run_checks())
-'''
+"""
         for order in ("absent", "before", "after"):
             with self.subTest(order=order):
                 result = subprocess.run([sys.executable, "-c", script, order], capture_output=True, text=True)
@@ -1078,10 +1164,10 @@ class WorkflowMarkup(HTMLParser):
 
 class WorkflowPresentationTests(SimpleTestCase):
     def render_workflow(self, choices=True, history=True, invalid=False, modal=False, settings_classes=None):
-        from django.contrib.auth.models import AnonymousUser
         from crud_views.lib.view import CrudView
         from crud_views_workflow.lib.enums import WorkflowComment
         from crud_views_workflow.lib.forms import WorkflowForm
+        from django.contrib.auth.models import AnonymousUser
 
         class Owner(CrudView):
             cv_abstract = True
@@ -1095,33 +1181,54 @@ class WorkflowPresentationTests(SimpleTestCase):
         owner.request = request
         # WorkflowForm.clean() asks the view's object for business blockers (upstream #322); this one has none
         owner.object = SimpleNamespace(workflow_check_transition=lambda name, *, user: None)
-        form = WorkflowForm(owner, data={"transition": "finish", "comment": ""} if invalid else None,
-                            choices=[("finish", '<Finish "now">')] if choices else [],
-                            transition_comments={"finish": WorkflowComment.REQUIRED})
+        form = WorkflowForm(
+            owner,
+            data={"transition": "finish", "comment": ""} if invalid else None,
+            choices=[("finish", '<Finish "now">')] if choices else [],
+            transition_comments={"finish": WorkflowComment.REQUIRED},
+        )
         if invalid:
             self.assertFalse(form.is_valid())
             form.add_error(None, '<Invalid "workflow">')
-        rows = [dict(transition_label="<Finish>", user=SimpleNamespace(get_full_name=lambda: "<Actor>"),
-                     state_old_badge=WorkflowBadgeTests().badge(), state_new_badge=WorkflowBadgeTests().badge(),
-                     comment="<script>bad</script>")] if history else []
+        rows = (
+            [
+                {
+                    "transition_label": "<Finish>",
+                    "user": SimpleNamespace(get_full_name=lambda: "<Actor>"),
+                    "state_old_badge": WorkflowBadgeTests().badge(),
+                    "state_new_badge": WorkflowBadgeTests().badge(),
+                    "comment": "<script>bad</script>",
+                }
+            ]
+            if history
+            else []
+        )
         context = {"form": form, "has_workflow_choices": choices, "object": SimpleNamespace(workflow_data=rows)}
-        template = "crud_views/view_custom_form.content.html" if modal else "crud_views_workflow/view_workflow.content.html"
+        template = (
+            "crud_views/view_custom_form.content.html" if modal else "crud_views_workflow/view_workflow.content.html"
+        )
         with override_settings(CRUD_VIEWS_BUTTON_CLASSES=settings_classes or {}):
             markup = render_to_string(template, context, request=request)
         return markup, WorkflowMarkup(markup)
 
     def test_actual_template_and_pack_origins(self):
         theme = Path(crud_views_tabler.__file__).resolve().parent
-        self.assertEqual(Path(get_template("crud_views/snippets/form_frame.html").origin.name),
-                         theme / "templates/crud_views/snippets/form_frame.html")
+        self.assertEqual(
+            Path(get_template("crud_views/snippets/form_frame.html").origin.name),
+            theme / "templates/crud_views/snippets/form_frame.html",
+        )
         import crud_views_workflow
+
         upstream = Path(crud_views_workflow.__file__).resolve().parent
         for leaf in ("action", "history", "content"):
             name = f"crud_views_workflow/view_workflow.{leaf}.html"
             self.assertEqual(Path(get_template(name).origin.name), upstream / "templates" / name)
         import django_tabler
-        self.assertEqual(Path(get_template("crispy_tabler/field.html").origin.name),
-                         Path(django_tabler.__file__).resolve().parent / "templates/crispy_tabler/field.html")
+
+        self.assertEqual(
+            Path(get_template("crispy_tabler/field.html").origin.name),
+            Path(django_tabler.__file__).resolve().parent / "templates/crispy_tabler/field.html",
+        )
 
     def test_action_frame_history_order_and_error_ownership(self):
         for invalid in (False, True):
@@ -1137,7 +1244,9 @@ class WorkflowPresentationTests(SimpleTestCase):
                 table = tree.select("table")[0]
                 wrapper = table.parents[-1]
                 self.assertEqual(wrapper.attrs["class"], "table-responsive")
-                self.assertEqual([node.tag for node in tree.nodes if node.parents and node.parents[-1] is wrapper], ["table"])
+                self.assertEqual(
+                    [node.tag for node in tree.nodes if node.parents and node.parents[-1] is wrapper], ["table"]
+                )
                 self.assertNotIn(wrapper, form.parents)
                 self.assertNotIn(wrapper, headings[0].parents)
                 self.assertLess(tree.nodes.index(table), tree.nodes.index(form))
@@ -1174,8 +1283,9 @@ class WorkflowPresentationTests(SimpleTestCase):
     def test_history_wrapper_and_table_classes_are_independent(self):
         for wrapper_class in ("table-responsive", "custom-wrap", "", None):
             for table_class in ("table", "custom-table", "", None):
-                markup, tree = self.render_workflow(settings_classes={"workflow:history-wrapper": wrapper_class,
-                                                                     "workflow:history-table": table_class})
+                _markup, tree = self.render_workflow(
+                    settings_classes={"workflow:history-wrapper": wrapper_class, "workflow:history-table": table_class}
+                )
                 table = tree.select("table")[0]
                 self.assertEqual(table.attrs["class"], table_class or "")
                 self.assertEqual(table.parents[-1].attrs["class"], wrapper_class or "")

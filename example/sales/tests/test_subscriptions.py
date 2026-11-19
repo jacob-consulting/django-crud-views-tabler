@@ -2,11 +2,11 @@ from datetime import date, timedelta
 from html import escape
 from html.parser import HTMLParser
 
+from catalog.models import Subscription
 from django.contrib.messages import get_messages
 from django.urls import reverse
 
-from catalog.models import Subscription
-from sales.models import Customer, CustomerSubscription, Order, OrderState
+from sales.models import CustomerSubscription, Order, OrderState
 from sales.services import run_subscriptions
 
 from .test_customers import SalesTestCase
@@ -27,7 +27,22 @@ class LabelText(HTMLParser):
     def handle_starttag(self, tag, attrs):
         if self.css_class in dict(attrs).get("class", "").split():
             self.labels.append("")
-        if tag not in {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}:
+        if tag not in {
+            "area",
+            "base",
+            "br",
+            "col",
+            "embed",
+            "hr",
+            "img",
+            "input",
+            "link",
+            "meta",
+            "param",
+            "source",
+            "track",
+            "wbr",
+        }:
             self.stack.append((tag, self.css_class in dict(attrs).get("class", "").split()))
 
     def handle_endtag(self, tag):
@@ -54,8 +69,11 @@ class SubscriptionTestCase(SalesTestCase):
 
     def subscribe(self, customer, product=None, days=0, active=True):
         return CustomerSubscription.objects.create(
-            customer=customer, product=product or self.weekly, started_on=TODAY - timedelta(days=60),
-            next_delivery=TODAY + timedelta(days=days), is_active=active,
+            customer=customer,
+            product=product or self.weekly,
+            started_on=TODAY - timedelta(days=60),
+            next_delivery=TODAY + timedelta(days=days),
+            is_active=active,
         )
 
 
@@ -76,7 +94,7 @@ class RunSubscriptionsTests(SubscriptionTestCase):
         orders = run_subscriptions(TODAY, self.world["users"]["alex"])
         self.assertEqual(len(orders), 2)
         self.assertEqual(Order.objects.count(), before + 2)
-        for order, sub in zip(orders, (due_a, due_b)):
+        for order, sub in zip(orders, (due_a, due_b), strict=True):
             self.assertEqual(order.state, OrderState.DRAFT)
             self.assertEqual(order.customer, sub.customer)
             (line,) = order.lines.all()
@@ -114,7 +132,9 @@ class SubscriptionViewTests(SubscriptionTestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(label_text(response, "page-title"), titles)
                 if name == "subscription-list":
-                    self.assertRegex(response.content.decode(), r'aria-current="true">(?:<svg.*?</svg>)?\s*Subscriptions</a>')
+                    self.assertRegex(
+                        response.content.decode(), r'aria-current="true">(?:<svg.*?</svg>)?\s*Subscriptions</a>'
+                    )
                 breadcrumbs = label_text(response, "breadcrumb-item")
                 self.assertIn("Subscriptions", breadcrumbs)
                 self.assertNotIn("Customer subscriptions", breadcrumbs)
@@ -129,7 +149,9 @@ class SubscriptionViewTests(SubscriptionTestCase):
                     kwargs["pk"] = sub.pk
                 response = self.client.get(reverse(f"subscription-{action}", kwargs=kwargs))
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(label_text(response, "page-title"), [str(self.mine), "Subscription"])  # owner h1, view title
+                self.assertEqual(
+                    label_text(response, "page-title"), [str(self.mine), "Subscription"]
+                )  # owner h1, view title
                 breadcrumbs = label_text(response, "breadcrumb-item")
                 self.assertIn("Subscriptions", breadcrumbs)
                 self.assertNotIn("Customer subscriptions", breadcrumbs)
@@ -183,8 +205,12 @@ class SubscriptionViewTests(SubscriptionTestCase):
         self.assertNotContains(response, escape(self.other.name))
         self.assertEqual(list(response.context["table"].data.data), [mine])
         # the nested list of someone else's customer: 403; his own: 200
-        self.assertEqual(self.client.get(reverse("subscription-list", kwargs={"customer_pk": self.other.pk})).status_code, 403)
-        self.assertEqual(self.client.get(reverse("subscription-list", kwargs={"customer_pk": self.mine.pk})).status_code, 200)
+        self.assertEqual(
+            self.client.get(reverse("subscription-list", kwargs={"customer_pk": self.other.pk})).status_code, 403
+        )
+        self.assertEqual(
+            self.client.get(reverse("subscription-list", kwargs={"customer_pk": self.mine.pk})).status_code, 200
+        )
         kwargs = {"customer_pk": self.other.pk, "pk": theirs.pk}
         self.assertEqual(self.client.get(reverse("subscription-update", kwargs=kwargs)).status_code, 403)
         cross = {"customer_pk": self.mine.pk, "pk": theirs.pk}  # his customer in the URL, someone else's subscription
@@ -196,11 +222,21 @@ class SubscriptionViewTests(SubscriptionTestCase):
         data = {"product": self.weekly.pk, "started_on": "2026-11-04", "next_delivery": "2026-11-11", "is_active": "on"}
         self.assertEqual(self.client.post(url, data).status_code, 302)
         sub = CustomerSubscription.objects.get(customer=self.mine)
-        self.assertEqual(self.client.post(reverse("subscription-update", kwargs={"customer_pk": self.mine.pk, "pk": sub.pk}),
-                                          {**data, "next_delivery": "2026-11-18"}).status_code, 302)
+        self.assertEqual(
+            self.client.post(
+                reverse("subscription-update", kwargs={"customer_pk": self.mine.pk, "pk": sub.pk}),
+                {**data, "next_delivery": "2026-11-18"},
+            ).status_code,
+            302,
+        )
         sub.refresh_from_db()
         self.assertEqual(sub.next_delivery, date(2026, 11, 18))
-        self.assertEqual(self.client.get(reverse("subscription-delete", kwargs={"customer_pk": self.mine.pk, "pk": sub.pk})).status_code, 403)
+        self.assertEqual(
+            self.client.get(
+                reverse("subscription-delete", kwargs={"customer_pk": self.mine.pk, "pk": sub.pk})
+            ).status_code,
+            403,
+        )
         denied = reverse("subscription-create", kwargs={"customer_pk": self.other.pk})
         self.assertEqual(self.client.post(denied, data).status_code, 403)
 
@@ -208,14 +244,25 @@ class SubscriptionViewTests(SubscriptionTestCase):
         sub = self.subscribe(self.other, days=2)
         self.login("kim")
         self.assertEqual(self.client.get(reverse("subscriptions-list")).status_code, 200)
-        self.assertEqual(self.client.get(reverse("subscription-list", kwargs={"customer_pk": self.other.pk})).status_code, 200)
-        self.assertEqual(self.client.get(reverse("subscription-create", kwargs={"customer_pk": self.other.pk})).status_code, 403)
-        self.assertEqual(self.client.get(reverse("subscription-update", kwargs={"customer_pk": self.other.pk, "pk": sub.pk})).status_code, 403)
+        self.assertEqual(
+            self.client.get(reverse("subscription-list", kwargs={"customer_pk": self.other.pk})).status_code, 200
+        )
+        self.assertEqual(
+            self.client.get(reverse("subscription-create", kwargs={"customer_pk": self.other.pk})).status_code, 403
+        )
+        self.assertEqual(
+            self.client.get(
+                reverse("subscription-update", kwargs={"customer_pk": self.other.pk, "pk": sub.pk})
+            ).status_code,
+            403,
+        )
 
     def test_nav_and_customer_link(self):
         for username in ("alex", "sam", "kim"):
             self.login(username)
-            self.assertContains(self.client.get(reverse("dashboard:index")), reverse("subscriptions-list"), msg_prefix=username)
+            self.assertContains(
+                self.client.get(reverse("dashboard:index")), reverse("subscriptions-list"), msg_prefix=username
+            )
 
 
 class SeedSubscriptionTests(SalesTestCase):
@@ -237,12 +284,20 @@ class SubscriptionOrderEditTests(SubscriptionTestCase):
         self.login()
         url = reverse("order-update", kwargs={"customer_pk": order.customer_id, "pk": order.pk})
         prefix = f"lines-{order.pk}-0"
-        data = {"ship_to": str(order.ship_to_id or order.customer.addresses.first().pk), "requested_roast_date": "",
-                "notes": "", f"{prefix}-TOTAL_FORMS": "1", f"{prefix}-INITIAL_FORMS": "1",
-                f"{prefix}-MIN_NUM_FORMS": "0", f"{prefix}-MAX_NUM_FORMS": "1000",
-                f"{prefix}-0-id": str(line.pk), f"{prefix}-0-product": str(line.product_id),
-                f"{prefix}-0-grind": line.grind, f"{prefix}-0-bag_size": line.bag_size,
-                f"{prefix}-0-quantity": str(line.quantity)}
+        data = {
+            "ship_to": str(order.ship_to_id or order.customer.addresses.first().pk),
+            "requested_roast_date": "",
+            "notes": "",
+            f"{prefix}-TOTAL_FORMS": "1",
+            f"{prefix}-INITIAL_FORMS": "1",
+            f"{prefix}-MIN_NUM_FORMS": "0",
+            f"{prefix}-MAX_NUM_FORMS": "1000",
+            f"{prefix}-0-id": str(line.pk),
+            f"{prefix}-0-product": str(line.product_id),
+            f"{prefix}-0-grind": line.grind,
+            f"{prefix}-0-bag_size": line.bag_size,
+            f"{prefix}-0-quantity": str(line.quantity),
+        }
         self.assertEqual(self.client.post(url, data).status_code, 302)
         self.assertEqual(order.lines.count(), 1)
         self.assertEqual(order.lines.get().product_id, line.product_id)

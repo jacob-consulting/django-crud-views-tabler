@@ -1,8 +1,8 @@
 """Layout objects whose Bootstrap originals cannot be fixed from a template."""
 
-from crispy_forms.bootstrap import UneditableField as BootstrapUneditableField
 from crispy_bootstrap5.bootstrap5 import FloatingField as BootstrapFloatingField
 from crispy_bootstrap5.bootstrap5 import Switch as BootstrapSwitch
+from crispy_forms.bootstrap import UneditableField as BootstrapUneditableField
 
 
 class UneditableField(BootstrapUneditableField):
@@ -15,9 +15,7 @@ class UneditableField(BootstrapUneditableField):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Swap the class in place so a css_class argument is kept.
-        self.attrs["class"] = self.attrs["class"].replace(
-            "uneditable-input", "form-control-plaintext"
-        )
+        self.attrs["class"] = self.attrs["class"].replace("uneditable-input", "form-control-plaintext")
 
 
 class FloatingField(BootstrapFloatingField):

@@ -12,7 +12,7 @@ produced (theme CSS and override templates, workarounds in the demo, upstream bu
 `path:line`, what the theme does today and a severity) are in
 [crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md), not filed yet. The tooltip
 recipe below is finding #2 there. One new override (`crud_views_workflow/badge.html`, finding #4) and three CSS rules
-(#5, #21, #31) came with the demo; see [crud_views_tabler.md](crud_views_tabler.md#overridden-templates).
+(#5, #21, #31) came with the demo; see [theme_internals.md](../docs/theme_internals.md#overridden-templates).
 
 ## Update 2026-11-04: pre-1.0 tidy-up against upstream eac0c21
 
@@ -38,7 +38,7 @@ recorded; all three were stale expectations, the rendered pages were right.
 - **06.7 (Cancel keeps the origin query).** Nothing to do: the theme overrides no form or button template.
 - **Tests:** 117, OK; pytest 34, OK; `manage.py check --fail-level WARNING` clean. In Chromium: toolbar tooltips open
   below, row tooltips above, three delete-modal open/close cycles with no console errors.
-- **Overrides:** still the eight listed in [crud_views_tabler.md](crud_views_tabler.md#overridden-templates). #240
+- **Overrides:** still the eight listed in [theme_internals.md](../docs/theme_internals.md#overridden-templates). #240
   (modal shell classes) and #242 (filter card) were closed as not planned, so `modal/shell.html` and the two filter
   templates stay. Open upstream: #210 (jQuery-free `formset.js`) and #211 (stale-override detection).
 
@@ -106,7 +106,7 @@ Point by point, with the evidence behind "none":
   `ContextButton.variant` and `CardAction.variant` override per button. The part of the question that asked for a
   *visible label* on the primary action was settled the other way: the stock leaf keeps the label visually hidden
   and the maintainer accepted the icon-only blue button (recorded in
-  [crud_views_tabler.md](crud_views_tabler.md#header-and-actions)).
+  [theme_internals.md](../docs/theme_internals.md#header-and-actions)).
 - **5.** Option D landed for buttons and the leaf contract is documented (`docs/reference/buttons.md:178, 193`).
   Nothing was built for the drift problem itself: no template marker, no system check, and no contract
   documentation for the templates a theme still overrides.
@@ -127,7 +127,7 @@ Point by point, with the evidence behind "none":
    the theme uses `:icon` keys since 2026-10-22.** `card:tertiary` carries
    `btn-icon` because the demo's only tertiary card action is the icon-only delete; a project with a labelled
    tertiary card button has to override the key
-   ([crud_views_tabler.md](crud_views_tabler.md#card-views), "limitation"). `cv_label_visible` is already part of
+   ([theme_internals.md](../docs/theme_internals.md#card-views), "limitation"). `cv_label_visible` is already part of
    the leaf contract (`lib/view/button_data.py:51`); it just never reaches `{% cv_button_class cv_location
    cv_variant %}`. This limitation appeared *with* #201 and is not in the questions document. **Filed as
    [#209](https://github.com/jacob-consulting/django-crud-views/issues/209)** (2026-10-21), weighing a label-mode

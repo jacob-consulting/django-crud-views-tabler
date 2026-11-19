@@ -3,8 +3,8 @@ import re
 from django import forms
 
 from django_tabler.crispy.fields import ColorField, PlaintextField, RangeField
-from django_tabler.templatetags.crispy_tabler_field import is_color, is_range
 from django_tabler.crispy.widgets import ColorInput, PlaintextInput, RangeInput
+from django_tabler.templatetags.crispy_tabler_field import is_color, is_range
 from tests.crispy_tabler.helpers import render_field
 
 

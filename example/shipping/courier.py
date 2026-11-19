@@ -51,7 +51,11 @@ def fetch_shipments(orders=None) -> list[dict]:
     """One payload per shipped or delivered order, newest first; ``orders`` narrows the source queryset."""
     if orders is None:
         orders = Order.objects.all()
-    orders = orders.filter(state__in=[OrderState.SHIPPED, OrderState.DELIVERED]).select_related("customer").order_by("-number")
+    orders = (
+        orders.filter(state__in=[OrderState.SHIPPED, OrderState.DELIVERED])
+        .select_related("customer")
+        .order_by("-number")
+    )
     payloads = []
     for order in orders:
         delivered = order.state == OrderState.DELIVERED

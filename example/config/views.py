@@ -10,14 +10,30 @@ from .showcode import collect_shell_files, collect_sources_for_app, collect_them
 THEME_PACKAGES = ("django_tabler", "crud_views_tabler")
 
 THEME_GUIDE_URL = "https://django-crud-views.readthedocs.io/en/latest/reference/theme/"
-THEME_DOC_URL = "https://github.com/alexander-jacob/tabler-test/blob/main/docs/crud_views_tabler.md"
+THEME_DOC_URL = "https://django-crud-views-tabler.readthedocs.io/en/latest/theme_internals/"
 
 #: how the theme's files are grouped on the page, in this order
 GROUPS = (
-    ("python", "Registration", "apps.py registers button classes, label modes and icons; checks.py flags missing icons."),
-    ("templates", "Templates", "Page base and layout overrides. They shadow the stock templates; none renders a button."),
-    ("static", "CSS and JavaScript", "A few CSS fixes and the adapter that hands crud_views Tabler's Bootstrap components."),
-    ("settings", "Settings", "The settings.py lines that switch the theme on; INSTALLED_APPS is shown, and counted, whole for its order."),
+    (
+        "python",
+        "Registration",
+        "apps.py registers button classes, label modes and icons; checks.py flags missing icons.",
+    ),
+    (
+        "templates",
+        "Templates",
+        "Page base and layout overrides. They shadow the stock templates; none renders a button.",
+    ),
+    (
+        "static",
+        "CSS and JavaScript",
+        "A few CSS fixes and the adapter that hands crud_views Tabler's Bootstrap components.",
+    ),
+    (
+        "settings",
+        "Settings",
+        "The settings.py lines that switch the theme on; INSTALLED_APPS is shown, and counted, whole for its order.",
+    ),
 )
 
 

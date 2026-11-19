@@ -39,15 +39,18 @@ task seed:reset   # seed_demo --reset: rebuild the demo data in place
 
 uv run python example/manage.py seed_demo [--reset] | seed_demo_showcase   # demo data by hand
 
+# Always run test suites on all cores: pytest -n auto (pytest-xdist; task test and nox do). Single-core only for
+# one test or a -k selection.
+
 # Example apps' tests: pytest-django from example/ (example/pytest.ini, settings config.settings)
-cd example && uv run pytest
+cd example && uv run pytest -n auto
 cd example && uv run pytest dashboard/tests.py -k some_name   # single test
 # sales keeps its tests in a tests/ package (sales/tests/test_orders.py, ...), the other apps in tests.py
 
 # package suites, each with its own settings
-uv run pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings   # theme (own test app)
-uv run pytest tests/django_tabler --ds tests.django_tabler.settings           # shell, packaging scripts
-uv run pytest                                                                 # crispy_tabler pack (default)
+uv run pytest -n auto tests/crud_views_tabler --ds tests.crud_views_tabler.settings   # theme (own test app)
+uv run pytest -n auto tests/django_tabler --ds tests.django_tabler.settings           # shell, packaging scripts
+uv run pytest -n auto                                                         # crispy_tabler pack (default)
 uv run pytest tests/crispy_tabler/test_widgets.py -k some_name
 
 task test          # all of the above plus the check, against the sibling checkouts

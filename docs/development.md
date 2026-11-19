@@ -46,10 +46,10 @@ task test:matrix   # the nox matrix, as CI runs it
 `task test` runs, with `uv run`:
 
 ```shell
-pytest                                                              # tests/crispy_tabler
-pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
-pytest tests/django_tabler --ds tests.django_tabler.settings
-cd example && pytest                                                # the demo apps
+pytest -n auto                                                        # tests/crispy_tabler
+pytest -n auto tests/crud_views_tabler --ds tests.crud_views_tabler.settings
+pytest -n auto tests/django_tabler --ds tests.django_tabler.settings
+cd example && pytest -n auto                                         # the demo apps
 python example/manage.py check --fail-level WARNING
 ```
 

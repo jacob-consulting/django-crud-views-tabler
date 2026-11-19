@@ -77,10 +77,10 @@ tasks:
   test:
     desc: Run every test suite (crispy pack, theme, example apps) and the system check
     cmds:
-      - uv run pytest
-      - uv run pytest tests/crud_views_tabler --ds tests.crud_views_tabler.settings
-      - uv run pytest tests/django_tabler --ds tests.django_tabler.settings
-      - cd example && uv run pytest
+      - uv run pytest -n auto
+      - uv run pytest -n auto tests/crud_views_tabler --ds tests.crud_views_tabler.settings
+      - uv run pytest -n auto tests/django_tabler --ds tests.django_tabler.settings
+      - cd example && uv run pytest -n auto
       - "{{.MANAGE}} check --fail-level WARNING"
 
   test:matrix:

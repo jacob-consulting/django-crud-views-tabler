@@ -1,5 +1,12 @@
 # django-crud-views-tabler
 
+[![Tests](https://github.com/jacob-consulting/django-crud-views-tabler/actions/workflows/tests.yml/badge.svg)](https://github.com/jacob-consulting/django-crud-views-tabler/actions/workflows/tests.yml)
+[![Lint](https://github.com/jacob-consulting/django-crud-views-tabler/actions/workflows/lint.yml/badge.svg)](https://github.com/jacob-consulting/django-crud-views-tabler/actions/workflows/lint.yml)
+[![Coverage](https://codecov.io/gh/jacob-consulting/django-crud-views-tabler/branch/main/graph/badge.svg)](https://codecov.io/gh/jacob-consulting/django-crud-views-tabler)
+[![Docs](https://readthedocs.org/projects/django-crud-views-tabler/badge/?version=latest)](https://django-crud-views-tabler.readthedocs.io/en/latest/)
+[![License](https://img.shields.io/github/license/jacob-consulting/django-crud-views-tabler)](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/LICENSE)
+[![Demo](https://github.com/jacob-consulting/django-crud-views-tabler/actions/workflows/demo.yml/badge.svg)](https://django-crud-views-tabler-demo.onrender.com)
+
 Current version: 0.1.0
 
 A [Tabler](https://tabler.io) 1.6.1 theme for [django-crud-views](https://github.com/jacob-consulting/django-crud-views).

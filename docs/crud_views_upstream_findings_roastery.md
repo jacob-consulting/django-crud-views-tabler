@@ -1009,9 +1009,9 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
 
 ### 36. The object navbar has no class keys
 
-- **Status: DONE upstream** — [issue #384](https://github.com/jacob-consulting/django-crud-views/issues/384) on the upstream branch
-  `gsd/phase-06.40.1-viewset-navigation-theme-class-keys-and-owner-heading-layout` (phase 06.40.1, head
-  `83824dc6`, checked out as the editable dependency; no PR or merge yet on 2026-11-19).
+- **Status: DONE upstream** — [issue #384](https://github.com/jacob-consulting/django-crud-views/issues/384) closed by
+  [PR #386](https://github.com/jacob-consulting/django-crud-views/pull/386) (phase 06.40.1, merge `985265cd`,
+  2026-11-19; not released yet). The editable dependency is upstream `main` at `1e773d22`.
   The three navbar templates take their classes from six ordinary keys (`navbar:wrapper`, `navbar:identity`,
   `navbar:nav`, `navbar:item`, `navbar:link`, `navbar:link-active`, defaults = the old classes), documented in
   `docs/reference/buttons.md` ("ViewSet Navigation classes") and `docs/reference/theme.md` ("Navbar class
@@ -1077,9 +1077,9 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
 
 ### 38. ViewSet Navigation's contract forbids the identity as the page heading
 
-- **Status: DONE upstream** — [issue #384](https://github.com/jacob-consulting/django-crud-views/issues/384) on the upstream branch
-  `gsd/phase-06.40.1-viewset-navigation-theme-class-keys-and-owner-heading-layout` (phase 06.40.1, head
-  `83824dc6`, checked out as the editable dependency; no PR or merge yet on 2026-11-19).
+- **Status: DONE upstream** — [issue #384](https://github.com/jacob-consulting/django-crud-views/issues/384) closed by
+  [PR #386](https://github.com/jacob-consulting/django-crud-views/pull/386) (phase 06.40.1, merge `985265cd`,
+  2026-11-19; not released yet). The editable dependency is upstream `main` at `1e773d22`.
   `docs/reference/theme.md` now lets a theme compose an owner-as-page-heading layout from `cv_navbar.label`, the icon
   renderer and `cv_navbar_items`, keeping the view title, actions, blocks and an ordinary header without a bar;
   `docs/reference/navbar.md` ("Owner as page heading") publishes the recipe: breadcrumb once, owner `h1`, items,

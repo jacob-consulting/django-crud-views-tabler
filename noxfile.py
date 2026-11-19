@@ -7,8 +7,20 @@ files, modules) fail the tests. Local day-to-day runs use `task test` against th
 import nox
 
 PYTHON_VERSIONS = ["3.12", "3.13", "3.14", "3.15"]
-# The LTS and the latest release only.
-DJANGO_VERSIONS = ["5.2", "6.1"]
+# The two LTS releases and the latest release.
+DJANGO_VERSIONS = ["4.2", "5.2", "6.1"]
+
+
+def crispy_bootstrap5(django):
+    """The crispy-bootstrap5 release for a Django version: both are in CRISPY_BOOTSTRAP5_COMPATIBLE (vendored.py)."""
+    return "crispy-bootstrap5==2026.3" if django == "4.2" else "crispy-bootstrap5==2026.9"
+
+
+def skip_unsupported(session, django):
+    # Django 4.2 does not support Python 3.14+
+    if django == "4.2" and session.python in ("3.14", "3.15"):
+        session.skip(f"Django 4.2 does not support Python {session.python}")
+
 
 # The theme tracks django-crud-views features that are not on PyPI yet. Remove this (here and in
 # requirements/demo.txt) once django-crud-views 1.0.0rc1 is released, and raise the floor in pyproject.toml to
@@ -46,7 +58,8 @@ SUITES = [
 def tests(session, django):
     # One resolver transaction, so the git django-crud-views is the one installed. --no-sources: ignore the sibling
     # checkouts of [tool.uv.sources], as CI and pip users do.
-    session.install("--no-sources", f"django~={django}.0", CRUD_VIEWS, ".[test]")
+    skip_unsupported(session, django)
+    session.install("--no-sources", f"django~={django}.0", crispy_bootstrap5(django), CRUD_VIEWS, ".[test]")
 
     env = {"PYTHONPATH": ""}
     session.run("python", "-c", _INSTALLED_PROJECT_ORIGIN, env=env)
@@ -68,8 +81,15 @@ def tests(session, django):
 @nox.parametrize("django", DJANGO_VERSIONS)
 def examples(session, django):
     # requirements/demo.txt too: proves the Render build's requirements resolve together with the package.
+    skip_unsupported(session, django)
     session.install(
-        "--no-sources", f"django~={django}.0", CRUD_VIEWS, ".[examples,test]", "-r", "requirements/demo.txt"
+        "--no-sources",
+        f"django~={django}.0",
+        crispy_bootstrap5(django),
+        CRUD_VIEWS,
+        ".[examples,test]",
+        "-r",
+        "requirements/demo.txt",
     )
 
     env = {"PYTHONPATH": ""}

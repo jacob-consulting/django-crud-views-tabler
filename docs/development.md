@@ -60,7 +60,7 @@ The nox sessions (`noxfile.py`) build and install the distribution, so a packagi
 - `package`: builds wheel and sdist and runs `scripts/check_dist.py`;
 - `docs`: `mkdocs build --strict`.
 
-The matrix is Python 3.12–3.15 × Django 5.2, 6.1. Until django-crud-views 1.0.0rc1 is on PyPI, nox (and the
+The matrix is Python 3.12–3.15 × Django 4.2, 5.2, 6.1 (Django 4.2 only on Python 3.12 and 3.13). Until django-crud-views 1.0.0rc1 is on PyPI, nox (and the
 Render demo) install django-crud-views from its GitHub `main` (`CRUD_VIEWS` in `noxfile.py`,
 `requirements/demo.txt`).
 
@@ -74,8 +74,10 @@ uv run ruff format . && uv run ruff check .
 
 `scripts/vendor_templates.py` copies the templates from the installed crispy-bootstrap5 into
 `src/django_tabler/templates/crispy_tabler/`, rewriting `bootstrap5/` includes. Six templates are hand-edited and are
-not overwritten without `--force`. `django_tabler/crispy/vendored.py:CRISPY_BOOTSTRAP5_VERSION` must equal the
-`crispy-bootstrap5` pin of the `test` extra; `tests/crispy_tabler/test_pack_parity.py` fails otherwise.
+not overwritten without `--force`. `django_tabler/crispy/vendored.py:CRISPY_BOOTSTRAP5_VERSION` is the release the templates come from. The installed
+crispy-bootstrap5 must be one of `CRISPY_BOOTSTRAP5_COMPATIBLE`, the releases with byte-identical templates (2026.3,
+the newest on Django 4.2, and 2026.9); nox pins the right one per Django version, and
+`tests/crispy_tabler/test_pack_parity.py` compares the templates.
 
 ## Releasing
 

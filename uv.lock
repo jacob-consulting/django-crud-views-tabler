@@ -423,7 +423,6 @@ examples = [
     { name = "whitenoise" },
 ]
 test = [
-    { name = "crispy-bootstrap5" },
     { name = "cssselect" },
     { name = "lxml" },
     { name = "nox" },
@@ -438,10 +437,9 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "bump-my-version", marker = "extra == 'dev'" },
-    { name = "crispy-bootstrap5", specifier = ">=2026.9" },
-    { name = "crispy-bootstrap5", marker = "extra == 'test'", specifier = "==2026.9" },
+    { name = "crispy-bootstrap5", specifier = ">=2026.3" },
     { name = "cssselect", marker = "extra == 'test'" },
-    { name = "django", specifier = ">=5.2" },
+    { name = "django", specifier = ">=4.2" },
     { name = "django-crispy-forms", specifier = ">=2.3" },
     { name = "django-crud-views", editable = "../django-crud-views" },
     { name = "django-crud-views", extras = ["workflow", "polymorphic", "guardian", "ordered"], marker = "extra == 'examples'", editable = "../django-crud-views" },

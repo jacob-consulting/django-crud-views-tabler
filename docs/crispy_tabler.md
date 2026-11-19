@@ -3,7 +3,8 @@
 `crispy_tabler` is a [django-crispy-forms](https://django-crispy-forms.readthedocs.io/) template pack with Tabler
 markup, shipped in `django_tabler`. It is vendored from crispy-bootstrap5 2026.9: the templates are byte-identical
 except for the `bootstrap5/` include paths and six hand-edited templates, and a parity test fails when they drift
-from the installed crispy-bootstrap5.
+from the installed crispy-bootstrap5. crispy-bootstrap5 2026.3, the newest release on Django 4.2, has the same templates, so the
+pack renders identically on every supported Django version.
 
 ```python
 CRISPY_ALLOWED_TEMPLATE_PACKS = ("crispy_tabler",)

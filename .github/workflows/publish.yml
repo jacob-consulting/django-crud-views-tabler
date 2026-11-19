@@ -33,8 +33,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
       - run: 'pip install --require-hashes --only-binary :all: -r .github/requirements/ci.txt'
-      - run: nox -s "tests-${{ matrix.python-version }}(django='5.2')" "tests-${{ matrix.python-version }}(django='6.1')"
-      - run: nox -s "examples-${{ matrix.python-version }}(django='5.2')" "examples-${{ matrix.python-version }}(django='6.1')"
+      - run: nox -s "tests-${{ matrix.python-version }}(django='4.2')" "tests-${{ matrix.python-version }}(django='5.2')" "tests-${{ matrix.python-version }}(django='6.1')"
+      - run: nox -s "examples-${{ matrix.python-version }}(django='4.2')" "examples-${{ matrix.python-version }}(django='5.2')" "examples-${{ matrix.python-version }}(django='6.1')"
 
   docs:
     runs-on: ubuntu-latest

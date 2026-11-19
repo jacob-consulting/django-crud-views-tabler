@@ -5,6 +5,8 @@
 [![Coverage](https://codecov.io/gh/jacob-consulting/django-crud-views-tabler/branch/main/graph/badge.svg)](https://codecov.io/gh/jacob-consulting/django-crud-views-tabler)
 [![Docs](https://readthedocs.org/projects/django-crud-views-tabler/badge/?version=latest)](https://django-crud-views-tabler.readthedocs.io/en/latest/)
 [![License](https://img.shields.io/github/license/jacob-consulting/django-crud-views-tabler)](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14%20%7C%203.15-3776AB?logo=python&logoColor=white)](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/noxfile.py)
+[![Django](https://img.shields.io/badge/django-4.2%20%7C%205.2%20%7C%206.1-0C4B33?logo=django&logoColor=white)](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/noxfile.py)
 [![Demo](https://github.com/jacob-consulting/django-crud-views-tabler/actions/workflows/demo.yml/badge.svg)](https://django-crud-views-tabler-demo.onrender.com)
 
 Current version: 0.1.0

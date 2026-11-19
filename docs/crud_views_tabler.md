@@ -47,12 +47,23 @@ DJANGO_TABLES2_TEMPLATE = "crud_views/table/bootstrap5.html"  # the theme's tabl
 
 | crud_views | Tabler page |
 |---|---|
+| `cv_navbar.icon` + `cv_navbar.label`, `{% cv_navbar_items %}` (block `cv_navbar`) | top of `.page-header`, in the layout's `page_header_top` block: breadcrumb, owner avatar and `h1`, tabs; stock items template, no override |
 | `{% cv_breadcrumb %}` | `.breadcrumb` above the title |
 | `{% cv_header_icon %}` + `{% cv_header %}` | `.page-title` |
 | `{% cv_paragraph %}` | `.page-subtitle` |
 | `{% cv_context_actions object %}` | the page header's action area (`.btn-list`) |
 | `cv_filter`, `cv_content` blocks | `.page-body` |
 | `{% cv_css %}` / `{% cv_js %}` / `{% cv_config %}` | head / end of body / modal shell |
+
+ViewSet Navigation (upstream PR #383, open; the "object navbar") is opt-in per view. With a bar, the page header
+starts with the owner: the breadcrumb (moved up from the title row), an avatar with the owner ViewSet's header icon,
+the owner's name as the page's `h1`, and the section links as underline tabs. The view's own title row (title,
+subtitle, buttons) follows the tabs as a section heading, so overrides of `page_title`, `cv_context` and `actions`
+keep working; the browser title adds the owner's name. A view heading whose text equals the active tab's label is
+left out (tag `cv_tabler_heading_repeats_tab` in the theme's `crud_views_tabler` library); the subline and buttons
+stay, and a heading that says more ("Order #1073", "Edit order") stays. The `cv_navbar` block holds only the tabs and their
+`.cv-tabler-navbar` wrapper: emptying it drops the tabs and keeps the owner row; the tab CSS is scoped to that
+wrapper. `NavBar(template=...)` wrappers are not used (findings 36, 38). Without a bar the header is unchanged.
 
 A reusable theme could ship a default version of this page; the prototype keeps it in the project because the
 surrounding layout (navbar, footer) is the project's.

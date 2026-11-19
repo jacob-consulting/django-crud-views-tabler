@@ -9,9 +9,8 @@ import django_tables2 as tables
 from crispy_forms.layout import Layout, Row
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
 from crud_views.lib.crispy import Column3, Column4, CrispyDeleteForm, CrispyViewMixin
-from crud_views.lib.icons import Icon
 from crud_views.lib.table import LinkDetailColumn, Table
-from crud_views.lib.view import ChildContextButton
+from crud_views.lib.navbar import CrudViewNavBarMixin, NavBar, NavItem
 from crud_views.lib.views import ListViewTableFilterMixin, ListViewTableMixin, MessageMixin
 from crud_views.lib.views.list import ListViewFilterFormHelper
 from crud_views.lib.viewset import AncestorPolicy, context_buttons_default
@@ -39,11 +38,24 @@ cv_customer = GuardianViewSet(
     ancestor_policy=AncestorPolicy(accept_global_perms=True),
     context_buttons=[
         *context_buttons_default(),
-        ChildContextButton(key="orders", child_name="order", label_template_code="Orders"),
-        ChildContextButton(key="subscriptions", child_name="subscription", label_template_code="Subscriptions"),
-        ChildContextButton(key="addresses", child_name="address", label_template_code="Addresses"),
     ],
 )
+
+
+# The customer's sections, shown on its own pages and on every page nested under it (upstream object navbar, #381).
+customer_navbar = NavBar(
+    viewset="customer",
+    items=[
+        NavItem(key="detail", label=_("Details")),
+        NavItem(child="order"),
+        NavItem(child="subscription"),
+        NavItem(child="address"),
+    ],
+)
+
+
+class CustomerNavbarMixin(CrudViewNavBarMixin):
+    cv_navbar = customer_navbar
 
 
 class BreadcrumbMixin(CrudViewBreadcrumbMixin):
@@ -146,14 +158,15 @@ WHOLESALE_DISPLAY = [{"title": _("Details"), "icon": "tabler:building-store", "p
 CONSUMER_DISPLAY = [{"title": _("Details"), "icon": "tabler:building-store", "properties": [*_DETAILS, "notes"]}]
 
 
-class CustomerDetailView(GlobalPermsMixin, BreadcrumbMixin, ObjectDetailMixin, GuardianDetailViewPermissionRequired):
+class CustomerDetailView(CustomerNavbarMixin, GlobalPermsMixin, BreadcrumbMixin, ObjectDetailMixin, GuardianDetailViewPermissionRequired):
     cv_viewset = cv_customer
     cv_object_detail_layout = "split-card"
-    cv_header_template = "sales/snippets/customer_header.html"
-    cv_icon_header = Icon.NONE  # the header template draws the customer's avatar
+    # The customer's name is the page's h1 (ViewSet Navigation); this view titles its own section, like its tab
+    cv_header_template_code = "{% load i18n %}{% translate 'Details' %}"
+    cv_icon_header = "tabler:eye"
     cv_paragraph_template = "sales/snippets/customer_paragraph.html"
-    cv_context_actions = ["home", "update", "orders", "subscriptions", "addresses", "delete"]
-    cv_context_actions_inline = ["update", "orders", "subscriptions", "addresses"]
+    cv_context_actions = ["home", "update", "delete"]
+    cv_context_actions_inline = ["update"]
     cv_property_display = WHOLESALE_DISPLAY
 
     @property
@@ -182,7 +195,7 @@ class CustomerCreateView(
 
 
 class CustomerUpdateView(
-    GlobalPermsMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, GuardianUpdateViewPermissionRequired
+    CustomerNavbarMixin, GlobalPermsMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, GuardianUpdateViewPermissionRequired
 ):
     cv_viewset = cv_customer
     form_class = CustomerForm
@@ -195,7 +208,7 @@ class CustomerUpdateView(
 
 
 class CustomerDeleteView(
-    GlobalPermsMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, GuardianDeleteViewPermissionRequired
+    CustomerNavbarMixin, GlobalPermsMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, GuardianDeleteViewPermissionRequired
 ):
     cv_viewset = cv_customer
     form_class = CrispyDeleteForm

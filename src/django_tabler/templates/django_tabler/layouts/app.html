@@ -5,8 +5,12 @@
   {% include "django_tabler/includes/sidebar.html" %}
   {% include "django_tabler/includes/navbar.html" %}
   <div class="page-wrapper">
+    {# Empty here: a slot above the page header, e.g. for an object navbar that spans several pages. #}
+    {% block page_header_before %}{% endblock %}
     <div class="page-header d-print-none">
       <div class="container-xl">
+        {# Empty here: the top of the page header, above the title row, e.g. for an owner object's header and tabs. #}
+        {% block page_header_top %}{% endblock %}
         <div class="row g-2 align-items-center">
           {# Below md the title takes the whole row and the actions wrap below it, instead of squeezing the title. #}
           <div class="col-12 col-md">

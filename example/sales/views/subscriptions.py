@@ -38,6 +38,7 @@ from ..models import CustomerSubscription
 from ..permissions import customers_for
 from ..services import run_subscriptions
 from .addresses import BreadcrumbMixin
+from .customers import CustomerNavbarMixin
 
 cv_subscription = ViewSet(
     model=CustomerSubscription,
@@ -101,7 +102,7 @@ class SubscriptionFilterFormHelper(ListViewFilterFormHelper):
 # --------------------------------------------------------------------------- nested
 
 
-class SubscriptionListView(BreadcrumbMixin, ListViewTableMixin, ListViewPermissionRequired):
+class SubscriptionListView(CustomerNavbarMixin, BreadcrumbMixin, ListViewTableMixin, ListViewPermissionRequired):
     cv_viewset = cv_subscription
     table_class = SubscriptionTable
     cv_list_actions = ["update", "delete"]
@@ -112,20 +113,20 @@ class SubscriptionListView(BreadcrumbMixin, ListViewTableMixin, ListViewPermissi
 
 
 class SubscriptionCreateView(
-    BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewParentMixin, CreateViewPermissionRequired
+    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewParentMixin, CreateViewPermissionRequired
 ):
     cv_viewset = cv_subscription
     form_class = CustomerSubscriptionForm
     cv_message_template_code = _("Subscribed {{ object.customer }} to {{ object.product }}")
 
 
-class SubscriptionUpdateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
+class SubscriptionUpdateView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
     cv_viewset = cv_subscription
     form_class = CustomerSubscriptionForm
     cv_message_template_code = _("Updated the subscription of {{ object.customer }}")
 
 
-class SubscriptionDeleteView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
+class SubscriptionDeleteView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
     cv_viewset = cv_subscription
     form_class = CrispyDeleteForm
     cv_modal = True

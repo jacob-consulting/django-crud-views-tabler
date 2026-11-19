@@ -14,7 +14,7 @@ from django.contrib.messages import constants
 from django.contrib.messages.storage.base import Message
 from django.core.checks import run_checks
 from django.core.management import call_command
-from django.template import Context, Template, TemplateDoesNotExist
+from django.template import Context, Template, TemplateDoesNotExist, engines
 from django.template.loader import get_template, render_to_string
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
@@ -192,6 +192,56 @@ class ThemeRenderingTests(TestCase):
 
     def test_system_checks_pass(self):
         call_command("check", "--fail-level", "WARNING")
+
+    # ViewSet Navigation (PR #383): the owner header at the top of the page header, the view's title row below the tabs
+    def detail_html(self):
+        return self.client.get(reverse("customer-detail", kwargs={"pk": self.customer.pk})).content.decode()
+
+    def test_bar_page_builds_the_owner_header(self):
+        html = self.detail_html()
+        header = html[html.index('class="page-header') : html.index('class="page-body')]
+        order = [
+            header.index('class="breadcrumb'),
+            header.index("<h1"),
+            header.index('class="cv-tabler-navbar'),
+            header.index("<h2"),
+            header.index('cv-key="update"'),
+        ]
+        self.assertEqual(order, sorted(order))
+        self.assertRegex(header, r'<h1 class="page-title[^"]*">\s*Customer 03\s*</h1>')
+        self.assertEqual(header.count('<ol class="breadcrumb'), 1)
+        self.assertNotIn('class="cv-navbar ', html)  # the full wrapper tag is not used
+        self.assertIn('aria-label="Sections for Customer 03"', header)
+        self.assertRegex(header, r'class="nav-link[^"]* active" href="[^"]+" aria-current="true"')
+
+    def test_bar_page_title_names_the_owner(self):
+        self.assertRegex(self.detail_html(), r"<title>[^<]*· Customer 03 · ")
+
+    def test_owner_icon_is_a_tabler_svg(self):
+        html = self.detail_html()
+        header = html[html.index('class="page-header') : html.index('class="page-body')]
+        owner = header[header.index('class="avatar') : header.index("</h1>")]
+        tabs_start = header.index('class="cv-tabler-navbar')
+        tabs = header[tabs_start : header.index("</nav>", tabs_start)]
+        self.assertIn("<svg", owner)
+        self.assertIn("<svg", tabs)
+        self.assertNotIn("fa-", owner + tabs)
+
+    def test_emptying_the_navbar_block_drops_only_the_tabs(self):
+        # docs/crud_views_tabler.md: a project drops the tabs by overriding the cv_navbar block; the owner row stays
+        response = self.client.get(reverse("customer-detail", kwargs={"pk": self.customer.pk}))
+        source = '{% extends "crud_views_tabler/page.html" %}{% block cv_navbar %}{% endblock %}'
+        html = engines["django"].from_string(source).render(response.context_data, response.wsgi_request)
+        self.assertNotIn("cv-tabler-navbar", html)
+        self.assertNotIn('<nav aria-label="Sections', html)
+        self.assertIn("<h1", html)
+
+    def test_page_without_navbar_keeps_todays_header(self):
+        html = self.client.get(reverse("customer-list")).content.decode()
+        self.assertNotIn("cv-tabler-navbar", html)
+        self.assertNotIn("<h1", html)
+        header = html[html.index('class="page-header') : html.index('class="page-body')]
+        self.assertLess(header.index('class="breadcrumb'), header.index("<h2"))
 
     def test_list_uses_tabler_table_and_icons(self):
         html = self.client.get(reverse("customer-list")).content.decode()
@@ -715,6 +765,35 @@ class FilterToggleIconTests(SimpleTestCase):
         self.assertRegex(css, r"#cv-filter-toggle \[data-cv-filter-icon\]:not\(\[hidden\]\) \{\s*display: contents;")
 
 
+class HeadingRepeatsTabTests(SimpleTestCase):
+    """cv_tabler_heading_repeats_tab: with a bar, a view heading that says the same as the active tab is left out."""
+
+    @staticmethod
+    def repeats(header, items, navbar=True):
+        from crud_views_tabler.templatetags.crud_views_tabler import cv_tabler_heading_repeats_tab
+
+        context = Context({"view": SimpleNamespace(cv_header=header), "cv_navbar": {"items": items} if navbar else None})
+        return cv_tabler_heading_repeats_tab(context)
+
+    def test_heading_equal_to_the_active_tab_repeats(self):
+        items = [{"label": "Details", "active": False}, {"label": "Orders", "active": True}]
+        self.assertTrue(self.repeats("Orders", items))
+
+    def test_markup_and_whitespace_are_ignored(self):
+        self.assertTrue(self.repeats('<span class="x">\n  Orders </span>', [{"label": "Orders", "active": True}]))
+
+    def test_heading_that_says_more_does_not_repeat(self):
+        self.assertFalse(self.repeats("Order #1073", [{"label": "Orders", "active": True}]))
+
+    def test_inactive_tab_with_the_same_label_does_not_count(self):
+        items = [{"label": "Orders", "active": False}, {"label": "Details", "active": True}]
+        self.assertFalse(self.repeats("Orders", items))
+
+    def test_no_active_tab_or_no_bar_never_repeats(self):
+        self.assertFalse(self.repeats("Orders", [{"label": "Orders", "active": False}]))
+        self.assertFalse(self.repeats("Orders", [{"label": "Orders", "active": True}], navbar=False))
+
+
 class BareTableTests(SimpleTestCase):
     def test_workflow_no_longer_scrolls_the_whole_content_container(self):
         css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
@@ -736,6 +815,15 @@ class BareTableTests(SimpleTestCase):
             r"\[data-cv-manage\] \{\s*--bs-secondary-color: var\(--tblr-secondary-color\);\s*"
             r"--bs-secondary-text-emphasis: var\(--tblr-secondary-text-emphasis\);",
         )
+
+    def test_object_navbar_pills_look_like_tabs(self):
+        # Finding 36: upstream's pills restyled as Tabler underline tabs; Tabler's .nav-link is a flex row, which
+        # drops the space between icon and label
+        css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
+        self.assertRegex(css, r"\.cv-tabler-navbar \.nav-link \{\s*gap: \.375rem;")
+        self.assertRegex(css, r"\.cv-tabler-navbar \.nav-pills[^{]*\{[^}]*border-bottom")
+        self.assertNotIn("--tblr-nav-pills-link-active-color", css)
+
 
 class ThemeAdoptionTests(TestCase):
     """Native form floor, exact registrations and real action rendering contracts."""

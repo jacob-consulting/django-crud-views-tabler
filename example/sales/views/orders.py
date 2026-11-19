@@ -34,6 +34,7 @@ from ..forms import ORDER_FORMSETS, OrderForm, OrderStartForm
 from ..models import Order, OrderState
 from ..permissions import customers_for
 from .addresses import BreadcrumbMixin
+from .customers import CustomerNavbarMixin
 
 cv_order = ViewSet(
     model=Order,
@@ -118,7 +119,7 @@ class OrderFilterFormHelper(ListViewFilterFormHelper):
 # --------------------------------------------------------------------------- nested: list / detail
 
 
-class OrderListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired):
+class OrderListView(CustomerNavbarMixin, BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired):
     cv_viewset = cv_order
     table_class = OrderTable
     filterset_class = OrderFilter
@@ -130,7 +131,7 @@ class OrderListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixi
         return super().get_queryset().select_related("customer").prefetch_related("lines")
 
 
-class OrderDetailView(BreadcrumbMixin, DetailViewPermissionRequired):
+class OrderDetailView(CustomerNavbarMixin, BreadcrumbMixin, DetailViewPermissionRequired):
     """Steps bar, line items, delivery card with totals, history; the possible transitions are header buttons."""
 
     cv_viewset = cv_order
@@ -157,6 +158,7 @@ class OrderDetailView(BreadcrumbMixin, DetailViewPermissionRequired):
 
 
 class OrderCreateView(
+    CustomerNavbarMixin,
     BreadcrumbMixin,
     CrispyViewMixin,
     FormSetMixin,
@@ -174,7 +176,7 @@ class OrderCreateView(
 
 
 class OrderUpdateView(
-    EditableOrderMixin, BreadcrumbMixin, CrispyViewMixin, FormSetMixin, MessageMixin, UpdateViewPermissionRequired
+    CustomerNavbarMixin, EditableOrderMixin, BreadcrumbMixin, CrispyViewMixin, FormSetMixin, MessageMixin, UpdateViewPermissionRequired
 ):
     cv_viewset = cv_order
     form_class = OrderForm
@@ -189,7 +191,7 @@ class OrderUpdateView(
 
 
 class OrderDeleteView(
-    EditableOrderMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired
+    CustomerNavbarMixin, EditableOrderMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired
 ):
     cv_viewset = cv_order
     form_class = CrispyDeleteForm

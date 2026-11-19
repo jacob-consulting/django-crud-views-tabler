@@ -84,7 +84,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 20 | [No per-row conditional fields in formsets](#20-formsets-have-no-per-row-conditional-fields) | annoyance | **DONE** upstream #360 / PR #367; order lines use `QuerysetConditions` on the product's kind; `ProductSelect`, `clean()` and the row script removed |
 | 21 | [Bare `<legend>` in toggle groups and formsets](#21-toggle-groups-and-formsets-render-a-bare-legend) | cosmetic | **DONE** #346 / PR #352; both legend hooks use the theme's `cv-tabler-section-legend` class |
 | 22 | [Compact formset repeats labels on every row](#22-a-compact-table-like-formset-repeats-its-labels-on-every-row) | cosmetic | **DONE** #347 / PR #348; cupping scores use shared headings and labelled mobile rows |
-| 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child tabs evaluated in #363 (phase 06.33): keep downstream, context buttons stay |
+| 23 | [Guardian child views need their own gate; no child tabs](#23-child-viewsets-under-a-guardian-parent-need-their-own-gate-no-page-tabs-for-children) | annoyance | parent gate implemented upstream (#336) and adopted (`CustomerGrantMixin` removed); child sections: upstream ViewSet Navigation (#381, PR #383 open) adopted for the customer as an owner header with tabs, the three child buttons removed |
 | 24 | [Custom no-object permission needs an undocumented recipe](#24-a-no-object-custom-form-needs-an-undocumented-recipe-for-its-own-permission) | annoyance | **DONE** upstream #341 (PR #343); existing demo permission recipe documented and verified; startup check clean |
 | 25 | [Manage pages were open to every user under DEBUG](#25-manage-pages-were-open-to-every-signed-in-user-while-debug-was-on) | annoyance | **DONE** upstream #361 / PR #365 (access); alex is the only manage-group member; table overflow fixed by #366 (`.table-responsive`), theme overflow rule removed |
 | 26 | [`Table` forces `sequence` and always adds the actions column](#26-table-forces-sequence-and-always-adds-the-actions-column) | annoyance | resolved #337: tables declare `Meta.sequence` (the `__init__` workaround is gone); `Meta.exclude = ("actions",)` drops the column |
@@ -97,6 +97,9 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | **DONE** upstream #362 / PR #364; order transitions show their variant and icon; theme registers `workflow:transition-<variant>` |
 | 34 | [Compact formsets reject custom `Select` subclasses](#34-compact-formsets-reject-custom-select-subclasses) | cosmetic | **DONE** upstream #349 / PR #350; order lines use compact mode with the marked `ProductSelect` |
 | 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | **DONE** upstream #366 / PR #373 (+ #370, #372); theme registers Tabler classes for `manage:*` and maps the page's `--bs-secondary-*`; users and the Access check card shown; shipment Resource manage page |
+| 36 | [Object navbar has no class keys](#36-the-object-navbar-has-no-class-keys) | cosmetic | stock items template kept; CSS scoped to the theme's wrapper turns the pills into underline tabs and sizes the view title below them |
+| 37 | [Object navbar checks each item with a fresh Guardian checker](#37-the-object-navbar-checks-each-item-with-a-fresh-guardian-checker) | cosmetic | nothing; eight extra queries per nested page for a grant-only user |
+| 38 | [ViewSet Navigation's contract forbids the identity as the page heading](#38-viewset-navigations-contract-forbids-the-identity-as-the-page-heading) | cosmetic | owner header (avatar, name as h1, tabs) at the top of the page header anyway; view title row kept below the tabs |
 
 ---
 
@@ -621,8 +624,11 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   view under a Guardian parent needs the parent's `view` (read) or `change` (write) object grant, which is the
   suggested "inherit the parent's grants" mode. `GuardianParentPermissionMixin` still exists, but the
   `cv_guardian_parent_*` fields and `_guardian_child_composition_error` are gone (breaking change, see
-  `docs/migrating-1.0.md`). **Not addressed:** the tab/nav rendering of child viewsets on the parent detail page
-  (`ChildContextButton` is still the only way).
+  `docs/migrating-1.0.md`). The tab/nav rendering of child viewsets was not part of #336; it is implemented as the
+  opt-in object navbar for [issue #381](https://github.com/jacob-consulting/django-crud-views/issues/381) on the
+  upstream branch `gsd/phase-06.40-object-navbar-opt-in-section-navigation-381` (phase 06.40), renamed "ViewSet
+  Navigation" in its docs. On 2026-11-19 the branch became PR #383, which is open, so this is not a release or a
+  merge yet.
 - **Adopted here:** the parent gate is upstream's ancestor guard; `CustomerGrantMixin` is removed from every
   nested sales view. The customer viewset declares `AncestorPolicy(accept_global_perms=True)`
   (`example/sales/views/customers.py`), so Owner and Roasters pass the gate with their model permissions. The
@@ -630,14 +636,31 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   made `manage.py check` fail with `viewset.E268`, so each has an action pair: `address` `make_default`
   (`nearest="change"`, `higher="view"`), `order` `duplicate` (`change`/`view`) and `order` `workflow`
   (`view`/`view`). `sales/tests/test_access.py` (`AccessMatrixTests`) pins the nested access per role and passed
-  unchanged after the removal. Orders, Subscriptions and Addresses remain context buttons on the customer page.
+  unchanged after the removal. Orders, Subscriptions and Addresses stayed context buttons on the customer page until
+  2026-11-19 (see "Child sections adopted here" below).
 - **Child tabs evaluated, keep downstream:** [issue #363](https://github.com/jacob-consulting/django-crud-views/issues/363)
   (phase 06.33, label `P06.33`, still open as the tracking issue) ran the tabs half as a bounded experiment in this repo
   only: a persistent customer section bar (Details, Orders, Addresses, Subscriptions) across thirteen existing
   full-page routes, with header and card placements, on the branch `experiment/customer-section-navigation-06-33`
   (not merged into `main`, on purpose: baseline and experiment stay side by side). The maintainer's outcome,
   recorded in the issue's last comment: comparison "pass", decision **"keep downstream"**: no upstream navigation API
-  for now, and `main` keeps the context buttons.
+  for now, and `main` keeps the context buttons. Superseded by #381 (next entry); the experiment branch stays
+  unmerged and none of its code is used.
+- **Child sections adopted here (2026-11-19):** `customer_navbar` (`NavBar`, items Details, Orders, Subscriptions,
+  Addresses) and `CustomerNavbarMixin` in `example/sales/views/customers.py`. The mixin is on the customer's
+  detail, update and delete views and on every nested order, address and subscription view (twenty views; the
+  delete modals omit the bar by themselves). It is not on `AddressMakeDefaultView`, which renders no page, nor on
+  the top-level `orders` and `subscriptions` ViewSets, which are not children of the customer. The three
+  `ChildContextButton`s are removed; the customer page keeps Edit and Delete. The bar first sat above the page
+  header (`{% cv_navbar %}` in the layout's `page_header_before` block). Later on 2026-11-19 it became an owner
+  header at the top of the page header: `crud_views_tabler/page.html` fills the layout's `page_header_top` block
+  with the breadcrumb, an avatar with the customer ViewSet's icon, the customer's name as the page's `h1` and the
+  sections as underline tabs (`{% cv_navbar_items %}`, PR #383's component tag, stock template). The view's own
+  title row follows the tabs as a section heading (findings 36, 38). The customer detail view is titled "Details"
+  with the tab's eye icon (its avatar header snippet is gone), so the name shows once, as the page's `h1`.
+  `sales/tests/test_navbar.py` pins the items, the active section per page, the pages without a bar, escaping, and
+  that each of alex, sam and kim sees exactly the sections they can open. In this demo every role opens either all
+  four sections of a customer or none of its pages, so a partly filtered bar is not exercised.
 
 - **What happened:** `GuardianParentPermissionMixin` requires the child views to carry per-object Guardian grants on
   the child rows too, so a child with a plain `ViewSet` (addresses) is not covered by the parent's grants. Also, the
@@ -985,6 +1008,72 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
 - **What we did before #366:** nothing; the theme's finding-25 rule scrolled the manage content below 768 px.
 - **Severity:** cosmetic.
 
+### 36. The object navbar has no class keys
+
+- **What happened:** the object navbar (#381, phase 06.40 branch) writes its classes into its three templates:
+  `cv-navbar mb-3` on the wrapper, `cv-navbar-identity mb-2 fw-medium mw-100 text-break` on the identity and
+  `nav nav-pills flex-wrap gap-1`, `nav-item mw-100`, `nav-link mw-100 text-break` on the items. The reference says
+  "No new button-class keys are introduced". Every other themed surface (buttons, cards, workflow, manage page)
+  takes its classes from `register_button_classes()`; here a theme that wants, say, Tabler's underline tabs has
+  only CSS or a template override.
+- **Where:** `src/crud_views/templates/crud_views/tags/navbar.html`, `navbar_identity.html`, `navbar_items.html`;
+  `docs/reference/navbar.md` ("Placement and overrides").
+- **What we do:** keep the stock items template and its Bootstrap classes, no override. The theme's page template
+  places `{% cv_navbar_items %}` (since PR #383, open) in its own wrapper `.cv-tabler-navbar d-print-none` inside the
+  owner header (finding 38), and CSS scoped to that wrapper in `crud_views_tabler.css` turns the pills into Tabler
+  underline tabs:
+  - `.cv-tabler-navbar .nav-link { gap: .375rem }`: Tabler's `.nav-link` is a flex row, so the space the template
+    writes between icon and label collapses and the two touch (browser check on 2026-11-19).
+  - `.cv-tabler-navbar .nav-pills` gets a bottom border and a horizontal gap; its links lose the pill background
+    and radius and get a transparent 2px bottom border, secondary text colour and body colour on hover; the active
+    link takes the link colour (lightened by Tabler in dark mode, where the plain primary sienna is too dim, about
+    2.9:1) and its border in that colour. This replaces the two pill rules of the first adoption (the icon gap and
+    `--tblr-nav-pills-link-active-color`), since the bar moved from above the page header into it.
+  - `.cv-tabler-owner ~ .row .page-title { font-size: 1rem }`: the view's own title row follows the owner header
+    and reads as a section heading below the tabs.
+
+  Without class keys the tabs are CSS imitating `nav-tabs`; a class key would let the theme write `nav nav-tabs`.
+- **Suggested upstream change:** class keys such as `navbar:wrapper`, `navbar:identity`, `navbar:nav`,
+  `navbar:item` and `navbar:link` (with `navbar:link-active`), defaulting to today's classes.
+- **Severity:** cosmetic.
+
+### 37. The object navbar checks each item with a fresh Guardian checker
+
+- **What happened:** for a user who reaches a customer through Guardian object grants (sam), the bar adds eight
+  queries to a nested page: on the customer's order list 26 instead of 18 with the bar switched off (second
+  request, caches warm; measured on 2026-11-19). The branch review identified them as four pairs of user and group
+  object-permission lookups, one pair per item, all for the same owner object, and found the bar is built once per
+  request (the theme's `{% if cv_navbar %}` plus the tag do not build it twice). Upstream documents the cause: "Guardian admission creates fresh checkers", two
+  permission SELECTs per Guardian item in its cost table.
+- **Where:** `src/crud_views/lib/navbar.py` (`_build`, the per-item access and admission calls);
+  `docs/reference/navbar.md` ("Measured costs").
+- **What we do:** nothing; four items on a demo page are cheap.
+- **Suggested upstream change:** share one Guardian `ObjectPermissionChecker` for the owner across the items of a
+  bar, so the cost stays at one pair of lookups however many items it has.
+- **Severity:** cosmetic.
+
+### 38. ViewSet Navigation's contract forbids the identity as the page heading
+
+- **What happened:** the template contract says "The identity must not become another page heading or replace the
+  existing view header/actions." The demo wants the owner object as the page: avatar and customer name as the
+  page title, the sections as tabs under it, the view's own title row (title, subtitle, buttons) as a section
+  heading below the tabs, as CRMs and GitHub do. The contract reads that layout as out of bounds, and the identity
+  leaf (`navbar_identity.html`, a `div`) cannot be a heading without an override. Related: the component tags
+  ignore `NavBar(template=...)` by design, so a per-bar wrapper has no effect in a layout that places
+  `{% cv_navbar_items %}` instead of `{% cv_navbar %}`.
+- **Where:** `docs/reference/theme.md` ("ViewSet Navigation templates"), `docs/reference/navbar.md` ("Per-bar
+  wrapper"); PR #383 (open).
+- **What we do:** the theme's `page.html` fills the layout's new `page_header_top` block when `cv_navbar` is set:
+  breadcrumb, an `avatar` with `cv_navbar.icon`, `<h1 class="page-title">` with `cv_navbar.label` (documented context
+  fields, no leaf used), then the tabs (`cv_navbar_items`, finding 36). The view's title row stays where it is, so
+  project overrides of `page_title`, `cv_context` and `actions` keep working; the view keeps its header and buttons,
+  only below the tabs. A view heading that says the same as the active tab (customer "Details", the nested lists) is
+  left out, since the tab says it; its subline and buttons stay (theme tag `cv_tabler_heading_repeats_tab`, exact
+  text match). The browser `<title>` reads "Orders · Bean & Bloom Café · …". Per-bar wrappers are not used.
+- **Suggested upstream change:** allow a theme to show the identity as the page heading when the view header
+  stays (reword the contract), or ship an identity variant that is a heading.
+- **Severity:** cosmetic.
+
 ---
 
 ## Not shown in the demo
@@ -995,8 +1084,9 @@ Features from the spec's feature map that were dropped or reduced, with the reas
   and the project default `tabs-vertical` (products and the rest). `card-rows` is not used.
 - **`ConditionalFormSet`:** not used. The spec's "grind/bag size only for beans" is a per-row toggle, done with
   `QuerysetConditions` since #360 (#20). No formset in the domain switches as a whole.
-- **Tabs for a customer's orders, addresses and subscriptions** (mockup): context buttons to the nested lists instead
-  (#23). A section bar was tried on an unmerged experiment branch (#363) and kept downstream.
+- **Tabs for a customer's orders, addresses and subscriptions** (mockup): shown since 2026-11-19 as upstream's ViewSet
+  Navigation: full-page links as tabs under the customer's name at the top of the page header (#23). Green lots and their cupping sessions keep context buttons
+  on purpose, so the demo shows both styles.
 - **Typeahead product picker in order lines:** a plain select (upstream's queryset conditions need a stock `Select`); the typeahead is the
   customer picker on the top-level order create. Per-row typeahead plus the per-row disable script was not worth it
   for ~30 products.

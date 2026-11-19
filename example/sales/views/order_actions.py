@@ -18,10 +18,11 @@ from django.utils.translation import gettext_lazy as _
 from ..forms import OrderDuplicateForm
 from ..models import Order, OrderLine
 from .addresses import BreadcrumbMixin
+from .customers import CustomerNavbarMixin
 from .orders import ORDER_CONTEXT_ACTIONS, cv_order
 
 
-class OrderWorkflowView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, WorkflowViewPermissionRequired):
+class OrderWorkflowView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, WorkflowViewPermissionRequired):
     cv_viewset = cv_order
     form_class = WorkflowForm
     cv_transition_presentation = "buttons"
@@ -37,7 +38,7 @@ class OrderWorkflowView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, Workflow
         return obj is None or obj.workflow_has_any_possible_transition(user)
 
 
-class OrderPackingSlipView(BreadcrumbMixin, DetailViewPermissionRequired):
+class OrderPackingSlipView(CustomerNavbarMixin, BreadcrumbMixin, DetailViewPermissionRequired):
     cv_viewset = cv_order
     cv_key = "packing_slip"
     cv_path = "packing-slip"
@@ -50,7 +51,7 @@ class OrderPackingSlipView(BreadcrumbMixin, DetailViewPermissionRequired):
     cv_context_actions = ["detail", "packing_slip"]
 
 
-class OrderDuplicateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, CustomFormViewPermissionRequired):
+class OrderDuplicateView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, CustomFormViewPermissionRequired):
     """A new draft for the same customer with the same lines, at today's prices."""
 
     cv_viewset = cv_order

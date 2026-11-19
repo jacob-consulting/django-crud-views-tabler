@@ -194,14 +194,16 @@ class CustomerViewTests(SalesTestCase):
         form = self.client.get(reverse("customer-update", kwargs={"pk": customer.pk})).content.decode()
         self.assertIn("ISO country code, e.g. DE.", form)
 
-    def test_detail_header_shows_the_avatar_not_the_viewset_icon(self):
+    def test_detail_view_title_is_details(self):
+        # the customer's name is the page's h1 (ViewSet Navigation); the detail view is titled like its tab, so the
+        # theme leaves the heading out and keeps the subline
         self.login()
         customer = Customer.objects.first()
         html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
-        heading = html[html.index('class="page-title"'):]
-        heading = heading[:heading.index("</h2>")]
-        self.assertIn(f">{customer.initials}<", heading)
-        self.assertNotIn("<svg", heading)
+        page = html[html.index('class="page-header') : html.index('class="page-body')]
+        self.assertNotIn("<h2", page)
+        self.assertIn("page-subtitle", page)
+        self.assertIn(f"<title>Details · {customer.name}", html.replace("&amp;", "&").replace("&#x27;", "'"))
 
     def test_consumer_detail_has_no_wholesale_terms(self):
         self.login()

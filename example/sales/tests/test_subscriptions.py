@@ -103,11 +103,18 @@ class SubscriptionViewTests(SubscriptionTestCase):
     def test_subscription_lists_use_viewset_names(self):
         self.subscribe(self.mine)
         self.login()
-        for name, kwargs in (("subscriptions-list", {}), ("subscription-list", {"customer_pk": self.mine.pk})):
+        # the nested list sits under the customer's header; its heading repeats the active tab, so the tab names it
+        pages = (
+            ("subscriptions-list", {}, ["Subscriptions"]),
+            ("subscription-list", {"customer_pk": self.mine.pk}, [str(self.mine)]),
+        )
+        for name, kwargs, titles in pages:
             with self.subTest(name=name):
                 response = self.client.get(reverse(name, kwargs=kwargs))
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(label_text(response, "page-title"), ["Subscriptions"])
+                self.assertEqual(label_text(response, "page-title"), titles)
+                if name == "subscription-list":
+                    self.assertRegex(response.content.decode(), r'aria-current="true">(?:<svg.*?</svg>)?\s*Subscriptions</a>')
                 breadcrumbs = label_text(response, "breadcrumb-item")
                 self.assertIn("Subscriptions", breadcrumbs)
                 self.assertNotIn("Customer subscriptions", breadcrumbs)
@@ -122,7 +129,7 @@ class SubscriptionViewTests(SubscriptionTestCase):
                     kwargs["pk"] = sub.pk
                 response = self.client.get(reverse(f"subscription-{action}", kwargs=kwargs))
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(label_text(response, "page-title"), ["Subscription"])
+                self.assertEqual(label_text(response, "page-title"), [str(self.mine), "Subscription"])  # owner h1, view title
                 breadcrumbs = label_text(response, "breadcrumb-item")
                 self.assertIn("Subscriptions", breadcrumbs)
                 self.assertNotIn("Customer subscriptions", breadcrumbs)

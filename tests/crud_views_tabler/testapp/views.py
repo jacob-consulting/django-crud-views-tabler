@@ -2,6 +2,7 @@ import django_tables2 as tables
 import django_filters
 from crispy_forms.layout import Layout, Row
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
+from crud_views.lib.navbar import CrudViewNavBarMixin, NavBar, NavItem
 from crud_views.lib.crispy import Column4, Column6, Column12, CrispyDeleteForm, CrispyModelForm, CrispyViewMixin
 from crud_views.lib.table import LinkDetailColumn, Table
 from crud_views.lib.table.columns import NaturalTimeColumn
@@ -23,6 +24,13 @@ from crud_views.lib.viewset import ViewSet
 from .models import Customer
 
 cv_customer = ViewSet(model=Customer, name="customer", icon_header="tabler:building-store")
+
+customer_navbar = NavBar(viewset="customer", items=[NavItem(key="detail"), NavItem(key="update")])
+
+
+class CustomerNavbarMixin(CrudViewNavBarMixin):
+    cv_navbar = customer_navbar
+
 
 class BreadcrumbMixin(CrudViewBreadcrumbMixin):
     pass
@@ -94,7 +102,7 @@ class CustomerCardListView(BreadcrumbMixin, ListViewTableFilterMixin, CardListVi
     paginate_by = 12
 
 
-class CustomerDetailView(BreadcrumbMixin, DetailViewPermissionRequired):
+class CustomerDetailView(CustomerNavbarMixin, BreadcrumbMixin, DetailViewPermissionRequired):
     cv_viewset = cv_customer
     template_name = "testapp/customer_detail.html"
 
@@ -107,7 +115,7 @@ class CustomerCreateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateV
     cv_message_template_code = "Created »{{ object }}«"
 
 
-class CustomerUpdateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
+class CustomerUpdateView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
     cv_viewset = cv_customer
     form_class = CustomerForm
     cv_cancel_keys = ["list", "card", "detail"]

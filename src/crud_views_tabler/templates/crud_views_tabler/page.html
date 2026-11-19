@@ -1,11 +1,26 @@
 {% extends "django_tabler/layouts/app.html" %}
-{% load crud_views %}
+{% load crud_views crud_views_tabler %}
 {# Base template for every django-crud-views page (CRUD_VIEWS_EXTENDS): maps the crud_views blocks onto the Tabler page. #}
-{% block title %}{% cv_header %}{% endblock %}
+{% block title %}{% cv_header %}{% if cv_navbar %} · {{ cv_navbar.label }}{% endif %}{% endblock %}
 {% block extra_head %}{% cv_css %}{% endblock %}
-{% block breadcrumb %}{% cv_breadcrumb %}{% endblock %}
-{# The page title follows CRUD_VIEWS_HEADER_LEVEL (h2 while it is unset), like the stock header. #}
-{% block page_heading %}{% cv_heading "header" level=2 class="page-title" %}{% block page_title %}<span class="d-inline-flex align-items-center gap-2">{% cv_header_icon %}{% cv_header %}</span>{% endblock %}{% endcv_heading %}{% endblock %}
+{# ViewSet Navigation (upstream PR #383): with a bar, the owner's header (breadcrumb, avatar, name as h1, the section #}
+{# tabs) sits at the top of the page header and the view's own title row follows the tabs as a section heading. #}
+{# The title row's blocks stay in place, so overrides of page_title, cv_context and actions keep working. #}
+{# The cv_navbar block holds only the tabs; the stock items template is used, no override (findings 36, 38). #}
+{% block page_header_top %}{% if cv_navbar %}
+<div class="cv-tabler-owner">
+  {% cv_breadcrumb %}
+  <div class="d-flex align-items-center gap-3 mt-2 mb-3">
+    {% if cv_navbar.icon %}<span class="avatar avatar-md bg-primary-lt">{% cv_icon cv_navbar.icon %}</span>{% endif %}
+    <h1 class="page-title text-break">{{ cv_navbar.label }}</h1>
+  </div>
+  {% block cv_navbar %}<div class="cv-tabler-navbar d-print-none mb-3">{% cv_navbar_items %}</div>{% endblock %}
+</div>
+{% endif %}{% endblock %}
+{% block breadcrumb %}{% if not cv_navbar %}{% cv_breadcrumb %}{% endif %}{% endblock %}
+{# The page title follows CRUD_VIEWS_HEADER_LEVEL (h2 while it is unset), like the stock header. With a bar, a #}
+{# heading that says the same as the active tab is left out; its subline and buttons stay. #}
+{% block page_heading %}{% cv_tabler_heading_repeats_tab as repeats_tab %}{% if not repeats_tab %}{% cv_heading "header" level=2 class="page-title" %}{% block page_title %}<span class="d-inline-flex align-items-center gap-2">{% cv_header_icon %}{% cv_header %}</span>{% endblock %}{% endcv_heading %}{% endif %}{% endblock %}
 {% block subtitle %}{% block cv_paragraph %}<div class="page-subtitle mt-1">{% cv_paragraph %}</div>{% endblock cv_paragraph %}{% endblock %}
 {% block actions %}{% block cv_context %}{% cv_context_actions object %}{% endblock cv_context %}{% endblock %}
 {% block messages %}{% cv_messages %}{% endblock %}

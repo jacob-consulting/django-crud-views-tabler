@@ -63,9 +63,9 @@ Taskfile's `seed:showcase` guards against that with a `status:` check that skips
 ## Architecture
 
 **Template chain.** `django_tabler/base.html` ← `django_tabler/layouts/app.html` (navbar/sidebar, Tabler page header
-with blocks `breadcrumb`, `page_heading` (wraps `page_title`), `subtitle`, `actions`, `messages`, `content`) ← `crud_views_tabler/page.html`,
-which is `CRUD_VIEWS_EXTENDS` and maps crud_views tags/blocks (`cv_header`, `cv_context_actions`, `cv_filter`,
-`cv_content`, `cv_css`/`cv_js`) onto those blocks. Projects customise branding by overriding
+with blocks `page_header_before` (empty, above the header), `page_header_top` (top of the header, above the title row), `breadcrumb`, `page_heading` (wraps `page_title`), `subtitle`, `actions`, `messages`, `content`) ← `crud_views_tabler/page.html`,
+which is `CRUD_VIEWS_EXTENDS` and maps crud_views tags/blocks (`cv_navbar_items` for ViewSet Navigation, `cv_header`, `cv_context_actions`,
+`cv_filter`, `cv_content`, `cv_css`/`cv_js`) onto those blocks. Projects customise branding by overriding
 `django_tabler/includes/{site_name,nav_menu,brand,head,layout_defaults}.html` (the example does so in `example/templates/`).
 `nav_menu.html` is included by both navigations with `nav_layout` `"horizontal"` (top bar) or `"vertical"`
 (sidebar); the example renders its sections as dropdowns in the top bar and as headings in the sidebar, from the menu

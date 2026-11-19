@@ -25,6 +25,7 @@ from django.utils.translation import gettext_lazy as _
 
 from ..forms import AddressForm
 from ..models import Address
+from .customers import CustomerNavbarMixin
 
 cv_address = ViewSet(
     model=Address,
@@ -52,14 +53,14 @@ class AddressTable(Table):
         return mark_safe('<span class="badge bg-green-lt">Default</span>') if record.is_default else ""
 
 
-class AddressListView(BreadcrumbMixin, ListViewTableMixin, ListViewPermissionRequired):
+class AddressListView(CustomerNavbarMixin, BreadcrumbMixin, ListViewTableMixin, ListViewPermissionRequired):
     cv_viewset = cv_address
     table_class = AddressTable
     cv_list_actions = ["detail", "make_default", "update", "delete"]
     cv_list_actions_inline = ["detail"]
 
 
-class AddressDetailView(BreadcrumbMixin, ObjectDetailViewPermissionRequired):
+class AddressDetailView(CustomerNavbarMixin, BreadcrumbMixin, ObjectDetailViewPermissionRequired):
     cv_viewset = cv_address
     cv_property_display = [
         {
@@ -71,20 +72,20 @@ class AddressDetailView(BreadcrumbMixin, ObjectDetailViewPermissionRequired):
 
 
 class AddressCreateView(
-    BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewParentMixin, CreateViewPermissionRequired
+    CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewParentMixin, CreateViewPermissionRequired
 ):
     cv_viewset = cv_address
     form_class = AddressForm
     cv_message_template_code = _("Created address “{{ object.label }}”")
 
 
-class AddressUpdateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
+class AddressUpdateView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, UpdateViewPermissionRequired):
     cv_viewset = cv_address
     form_class = AddressForm
     cv_message_template_code = _("Updated address “{{ object.label }}”")
 
 
-class AddressDeleteView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
+class AddressDeleteView(CustomerNavbarMixin, BreadcrumbMixin, CrispyViewMixin, MessageMixin, DeleteViewPermissionRequired):
     cv_viewset = cv_address
     form_class = CrispyDeleteForm
     cv_modal = True

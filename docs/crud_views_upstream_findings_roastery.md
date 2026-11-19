@@ -97,7 +97,7 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | **DONE** upstream #362 / PR #364; order transitions show their variant and icon; theme registers `workflow:transition-<variant>` |
 | 34 | [Compact formsets reject custom `Select` subclasses](#34-compact-formsets-reject-custom-select-subclasses) | cosmetic | **DONE** upstream #349 / PR #350; order lines use compact mode with the marked `ProductSelect` |
 | 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | **DONE** upstream #366 / PR #373 (+ #370, #372); theme registers Tabler classes for `manage:*` and maps the page's `--bs-secondary-*`; users and the Access check card shown; shipment Resource manage page |
-| 36 | [Object navbar has no class keys](#36-the-object-navbar-has-no-class-keys) | cosmetic | **DONE** upstream #384: six `navbar:*` keys; theme registers `navbar:nav` = `nav nav-bordered flex-wrap column-gap-4`, `navbar:item` with `ms-0` and `navbar:link` with `gap-2`; the pill-to-tab CSS is gone, only the active colour and the view title size remain |
+| 36 | [Object navbar has no class keys](#36-the-object-navbar-has-no-class-keys) | cosmetic | **DONE** upstream #384: six `navbar:*` keys; theme registers `navbar:nav` = `nav nav-bordered flex-wrap column-gap-4 row-gap-1`, `navbar:item` with `ms-0` and `navbar:link` with `gap-2`; the pill-to-tab CSS is gone, only the active colour and the view title size remain |
 | 37 | [Object navbar checks each item with a fresh Guardian checker](#37-the-object-navbar-checks-each-item-with-a-fresh-guardian-checker) | cosmetic | **descoped**: tracked upstream as #385 (open); nothing here, eight extra queries per nested page for a grant-only user |
 | 38 | [ViewSet Navigation's contract forbids the identity as the page heading](#38-viewset-navigations-contract-forbids-the-identity-as-the-page-heading) | cosmetic | **DONE** upstream #384: contract reworded, owner-as-page-heading recipe published; the theme's owner header (avatar, name as h1, tabs, view title as h2) already matches it, no change |
 
@@ -1016,12 +1016,13 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
   `navbar:nav`, `navbar:item`, `navbar:link`, `navbar:link-active`, defaults = the old classes), documented in
   `docs/reference/buttons.md` ("ViewSet Navigation classes") and `docs/reference/theme.md` ("Navbar class
   registration").
-- **Adopted here:** `TABLER_BUTTON_CLASSES` sets `navbar:nav` to `nav nav-bordered flex-wrap column-gap-4`
+- **Adopted here:** `TABLER_BUTTON_CLASSES` sets `navbar:nav` to `nav nav-bordered flex-wrap column-gap-4 row-gap-1`
   (Tabler's underline tabs, as in the dashboard's `tasks.html`), `navbar:item` to `nav-item mw-100 ms-0` and
   `navbar:link` to `nav-link mw-100 text-break gap-2` (`gap-2` replaces the old `gap: .375rem` rule: Tabler's
   `.nav-link` is a flex row). `nav-bordered` spaces its tabs with `margin-inline-start` on every item after the
   first, so a row wrapped on a narrow screen started indented (browser check on 2026-11-19 at 375px); the column
-  gap on the list with `ms-0` on the items spaces them evenly and lets a wrapped row start flush. The active key
+  gap on the list with `ms-0` on the items spaces them evenly and lets a wrapped row start flush. `row-gap-1`
+  keeps a wrapped row off the active underline of the row above. The active key
   keeps upstream's default; wrapper and identity are not registered because the theme's page renders neither leaf. The four rules
   that restyled the pills are deleted. Remaining CSS in `crud_views_tabler.css`:
   - `.cv-tabler-navbar .nav-link.active`: colour and underline in `--tblr-link-color`. Tabler's `nav-bordered`

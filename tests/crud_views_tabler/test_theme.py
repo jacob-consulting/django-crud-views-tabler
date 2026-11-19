@@ -142,7 +142,7 @@ class ButtonClassTests(SimpleTestCase):
             "alert:close": "btn-close",
             "card-order:toggle": "btn btn-icon",
             "card-order:container": "btn-group",
-            "navbar:nav": "nav nav-bordered flex-wrap column-gap-4",
+            "navbar:nav": "nav nav-bordered flex-wrap column-gap-4 row-gap-1",
             "navbar:item": "nav-item mw-100 ms-0",
             "navbar:link": "nav-link mw-100 text-break gap-2",
             "formset:control": "btn btn-icon",
@@ -219,7 +219,7 @@ class ThemeRenderingTests(TestCase):
         # Upstream #384's navbar:* keys: Tabler's underline tabs instead of the stock pills
         # nav-bordered spaces tabs with margin-inline-start on every item after the first, which indents a wrapped row
         # (browser check at 375px): a column gap on the list instead, no item margin
-        self.assertIn('<ul class="nav nav-bordered flex-wrap column-gap-4">', header)
+        self.assertIn('<ul class="nav nav-bordered flex-wrap column-gap-4 row-gap-1">', header)
         sections = header[header.index('<nav aria-label="Sections') :]
         sections = sections[: sections.index("</nav>")]
         self.assertGreater(sections.count("<li "), 1)
@@ -844,7 +844,7 @@ class BareTableTests(SimpleTestCase):
         self.assertRegex(css, r"\.cv-tabler-owner ~ \.row \.page-title \{\s*font-size: 1rem;")
         self.assertEqual(
             {key: value for key, value in TABLER_BUTTON_CLASSES.items() if key.startswith("navbar:")},
-            {"navbar:nav": "nav nav-bordered flex-wrap column-gap-4", "navbar:item": "nav-item mw-100 ms-0",
+            {"navbar:nav": "nav nav-bordered flex-wrap column-gap-4 row-gap-1", "navbar:item": "nav-item mw-100 ms-0",
              "navbar:link": "nav-link mw-100 text-break gap-2"},
         )
 

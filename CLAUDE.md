@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The distribution **django-crud-views-tabler** (PyPI; repo `jacob-consulting/django-crud-views-tabler`, docs on Read the
 Docs): two reusable packages under `src/` and a demo project under `example/` that exercises them. Supported: Python
-3.12–3.15 × Django 5.2, 6.0, 6.1 (the nox matrix); local development runs Python 3.14 / Django 6.1.
+3.12–3.15 × Django 5.2, 6.1 (the nox matrix); local development runs Python 3.14 / Django 6.1.
 
 - `src/django_tabler/`: Tabler 1.6.1 page shell (loaded from the jsDelivr CDN), layouts, sign-in page, `{% load tabler %}`
   icon tags, Tabler icon SVG paths (`icons.py`), the end-user layout switch, **and** the django-crispy-forms template

@@ -60,7 +60,7 @@ The nox sessions (`noxfile.py`) build and install the distribution, so a packagi
 - `package`: builds wheel and sdist and runs `scripts/check_dist.py`;
 - `docs`: `mkdocs build --strict`.
 
-The matrix is Python 3.12–3.15 × Django 5.2, 6.0, 6.1. Until django-crud-views 1.0.0rc1 is on PyPI, nox (and the
+The matrix is Python 3.12–3.15 × Django 5.2, 6.1. Until django-crud-views 1.0.0rc1 is on PyPI, nox (and the
 Render demo) install django-crud-views from its GitHub `main` (`CRUD_VIEWS` in `noxfile.py`,
 `requirements/demo.txt`).
 

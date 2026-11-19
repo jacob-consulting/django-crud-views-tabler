@@ -14,7 +14,7 @@ distribution, `django-crud-views-tabler`, ships two Django apps:
 
 Tabler's CSS and JavaScript load from the jsDelivr CDN; nothing from Tabler is bundled.
 
-Supported: Python 3.12–3.15, Django 5.2, 6.0 and 6.1, django-crud-views 1.0.
+Supported: Python 3.12–3.15, Django 5.2 and 6.1, django-crud-views 1.0.
 
 - [Installation](installation.md): settings, in the order they matter.
 - [Branding](branding.md) and [Layouts](layouts.md): site name, logo, menu, default layout.

@@ -19,7 +19,7 @@ One distribution, two Django apps:
   sign-in page, `{% load tabler %}` icon tags, an end-user layout switch, and `crispy_tabler`, a django-crispy-forms
   template pack.
 
-Python 3.12–3.15, Django 5.2, 6.0 and 6.1. Tabler loads from the jsDelivr CDN.
+Python 3.12–3.15, Django 5.2 and 6.1. Tabler loads from the jsDelivr CDN.
 
 - Documentation: https://django-crud-views-tabler.readthedocs.io/
 - Source and issues: https://github.com/jacob-consulting/django-crud-views-tabler
@@ -132,7 +132,7 @@ local development only.
 
 ```shell
 task test          # all suites against the sibling checkouts, plus the system check
-task test:matrix   # nox: Python 3.12–3.15 x Django 5.2/6.0/6.1 against the built package, as CI
+task test:matrix   # nox: Python 3.12–3.15 x Django 5.2/6.1 against the built package, as CI
 ```
 
 Everything the demo needed beyond upstream hooks (theme CSS, override templates, workarounds) is listed, with upstream

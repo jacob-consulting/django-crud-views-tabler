@@ -7,7 +7,8 @@ files, modules) fail the tests. Local day-to-day runs use `task test` against th
 import nox
 
 PYTHON_VERSIONS = ["3.12", "3.13", "3.14", "3.15"]
-DJANGO_VERSIONS = ["5.2", "6.0", "6.1"]
+# The LTS and the latest release only.
+DJANGO_VERSIONS = ["5.2", "6.1"]
 
 # The theme tracks django-crud-views features that are not on PyPI yet. Remove this (here and in
 # requirements/demo.txt) once django-crud-views 1.0.0rc1 is released, and raise the floor in pyproject.toml to

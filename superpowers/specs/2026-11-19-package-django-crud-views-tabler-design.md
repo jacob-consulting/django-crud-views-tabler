@@ -34,7 +34,7 @@ publishes to PyPI, and deploys the demo to Render, with docs live on Read the Do
 
 ## Anti-goals
 
-- Shipping licensed Tabler archive files (`~/projects/tabler/`) or secrets, in the wheel, the sdist, or the public
+- Shipping licensed Tabler archive files (`<tabler archives>/`) or secrets, in the wheel, the sdist, or the public
   history.
 - Publishing a release that only works with an unreleased django-crud-views: PyPI release waits for crud-views 1.0.0rc1.
 - Patching or forking django-crud-views or django-crud-views-extensions (both stay read-only for this repo).

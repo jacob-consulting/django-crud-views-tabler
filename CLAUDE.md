@@ -139,7 +139,8 @@ shows Tabler's base blue; the switch offers no colour choice.
 
 ## Tabler reference material
 
-`~/projects/tabler/` holds the extracted paid Tabler archives (each next to its `.zip`, outside this repo):
+The maintainer keeps the extracted paid Tabler archives in a local directory outside this repo (`<tabler archives>`,
+each next to its `.zip`; ask for the path, it is not recorded here):
 
 - `tabler-1.6.1/dashboard/`: the Tabler 1.6.1 dashboard pages (one `.html` per page, e.g. `alerts.html`,
   `all-elements.html`), the reference markup for how components should look

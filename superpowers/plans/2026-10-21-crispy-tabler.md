@@ -12,13 +12,13 @@
 
 ## Global Constraints
 
-- New repository: `/home/alex/projects/alex/crispy-tabler`. Distribution `crispy-tabler`, Django app and template pack `crispy_tabler`, `src/` layout, setuptools backend, MIT, English.
+- New repository: `../crispy-tabler`. Distribution `crispy-tabler`, Django app and template pack `crispy_tabler`, `src/` layout, setuptools backend, MIT, English.
 - Python ≥ 3.12; Django ≥ 5.2 only — **not** 4.2. crispy-bootstrap5 2026.9 and django-crispy-forms 2.7 both declare `Requires-Dist: django>=5.2`.
-- Vendoring source is crispy-bootstrap5 **2026.9**, read from `/home/alex/projects/alex/tabler-test/.venv/lib/python3.14/site-packages/crispy_bootstrap5/templates/bootstrap5/`.
+- Vendoring source is crispy-bootstrap5 **2026.9**, read from `<repo>/.venv/lib/python3.14/site-packages/crispy_bootstrap5/templates/bootstrap5/`.
 - The pack must contain these 42 template names and no others in wave 1: `accordion-group.html accordion.html betterform.html display_form.html errors_formset.html errors.html field.html inputs.html multifield.html table_inline_formset.html uni_form.html uni_formset.html whole_uni_form.html whole_uni_formset.html` plus under `layout/`: `alert.html attrs.html baseinput.html button.html buttonholder.html checkboxselectmultiple_inline.html column.html div.html field_errors.html field_errors_block.html field_file.html field_with_buttons.html fieldset.html floating_field.html formactions.html help_text.html help_text_and_errors.html inline_field.html modal.html multifield.html prepended_appended_text.html radio_checkbox_select.html radioselect_inline.html row.html switch.html tab-link.html tab.html uneditable_input.html` (plus `widget/` for the package's own widgets).
 - **No `bootstrap5` string anywhere under `src/crispy_tabler/templates/`.** A test enforces this.
 - The package must not import `crud_views`, and must not ship CSS.
-- Tabler class vocabulary is 1.6.1, verified against `/home/alex/projects/alex/tabler/tabler-1.6.1/dashboard/dist/css/tabler.css`.
+- Tabler class vocabulary is 1.6.1, verified against `<tabler archives>/tabler-1.6.1/dashboard/dist/css/tabler.css`.
 - Never write the name of the maintainer's internal reference package in any file, commit message or comment.
 - Acceptance surface: `/product/create/` in this demo, pinned by `catalog/tests.py`.
 
@@ -91,7 +91,7 @@ def test_vendored_version_matches_the_installed_crispy_bootstrap5():
 
 - [ ] **Step 3: Run it and watch it fail**
 
-Run: `cd /home/alex/projects/alex/crispy-tabler && uv run --extra test pytest tests/test_app.py -v`
+Run: `cd ../crispy-tabler && uv run --extra test pytest tests/test_app.py -v`
 Expected: collection error — `crispy_tabler` not importable.
 
 - [ ] **Step 4: Write `src/crispy_tabler/__init__.py` and `apps.py`**
@@ -108,14 +108,14 @@ In `tabler-test/pyproject.toml`, add `"crispy-tabler"` to `dependencies` and `cr
 
 - [ ] **Step 7: Verify the demo still passes with the new dependency present but unused**
 
-Run: `cd /home/alex/projects/alex/tabler-test && uv run python -c "import crispy_tabler; print(crispy_tabler.__file__)"` then `uv run python manage.py test`
+Run: `cd <repo> && uv run python -c "import crispy_tabler; print(crispy_tabler.__file__)"` then `uv run python manage.py test`
 Expected: the path points at `../crispy-tabler/src/crispy_tabler/__init__.py`; 68 tests OK.
 
 - [ ] **Step 8: Commit both repositories**
 
 ```bash
-cd /home/alex/projects/alex/crispy-tabler && git add -A && git commit -m "feat: package skeleton, Django app and vendoring provenance"
-cd /home/alex/projects/alex/tabler-test && git add pyproject.toml uv.lock && git commit -m "Demo: install crispy-tabler as an editable path dependency"
+cd ../crispy-tabler && git add -A && git commit -m "feat: package skeleton, Django app and vendoring provenance"
+cd <repo> && git add pyproject.toml uv.lock && git commit -m "Demo: install crispy-tabler as an editable path dependency"
 ```
 
 ---
@@ -419,7 +419,7 @@ git add -A && git commit -m "feat: plaintext, range and colour widgets with matc
 
 - [ ] **Step 3: Run the demo suite and watch the coverage markers fail**
 
-Run: `cd /home/alex/projects/alex/tabler-test && uv run python manage.py test catalog -v 1`
+Run: `cd <repo> && uv run python manage.py test catalog -v 1`
 Expected: failures in `test_input_group_floating_and_uneditable_paths` — it asserts `uneditable-input`, which the new pack deliberately no longer emits.
 
 - [ ] **Step 4: Update `catalog/tests.py` to assert the fixed markup**

@@ -24,7 +24,7 @@ Bootstrap's jQuery plugins after the fact. Both exist only because the package h
 
 This design moves the theme onto the upstream mechanisms, deletes what they make redundant, and updates the two
 documents that describe the theme and the questions it raised upstream. The upstream checkout is the sibling
-directory `/home/alex/projects/alex/django-crud-views` (branch `main`); the maintainer of both repos is the same
+directory `../django-crud-views` (branch `main`); the maintainer of both repos is the same
 person.
 
 ## What is broken against main today
@@ -138,7 +138,7 @@ The SVG markup stays exactly as today: `<svg xmlns="http://www.w3.org/2000/svg" 
 | `filter-close` | `filter-x` (new) | | `text-icon` | `file-text` (new) |
 | `language` | `language` (new) | | | |
 
-Path source: the local package `/home/alex/projects/alex/tabler/tabler-icons-3.41.0/svg/` (outline variants) or
+Path source: the local package `<tabler archives>/tabler-icons-3.41.0/svg/` (outline variants) or
 `https://cdn.jsdelivr.net/npm/@tabler/icons@3.34.0/icons/outline/<name>.svg` (all twelve names verified to exist
 there). Copy only the `<path d="…">` values; drop the invisible `M0 0h24v24H0z` background path if present, as the
 existing entries do.

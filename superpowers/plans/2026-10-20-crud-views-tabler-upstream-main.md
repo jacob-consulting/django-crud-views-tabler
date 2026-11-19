@@ -19,7 +19,7 @@
 - The SVG markup is exactly: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon {css}">` + one `<path d="…" />` per entry + `</svg>`; `class` is `"icon"` plus the extra classes, trimmed.
 - Anti-goals (grep-verified in Task 8): no Font Awesome class string, no `jquery`, no `cvt_icon`, no `<i class="{{ … }}">` left under `crud_views_tabler/`.
 - The `dashboard` app's `{% icon %}` tag keeps working through a plain `name -> SVG` function; it does not use the registry.
-- Upstream checkout: `/home/alex/projects/alex/django-crud-views`, branch `main` at commit 440ac55 (version 0.30.0 plus the unreleased #200). Upstream references used below live there: `src/crud_views/lib/icons.py`, `src/crud_views/lib/assets.py`, `src/crud_views/static/crud_views/js/adapters.js`, `src/crud_views/templates/crud_views/**`, `docs/reference/icons.md`, `docs/reference/javascript.md`, `tests/test1/test_filter.py`.
+- Upstream checkout: `../django-crud-views`, branch `main` at commit 440ac55 (version 0.30.0 plus the unreleased #200). Upstream references used below live there: `src/crud_views/lib/icons.py`, `src/crud_views/lib/assets.py`, `src/crud_views/static/crud_views/js/adapters.js`, `src/crud_views/templates/crud_views/**`, `docs/reference/icons.md`, `docs/reference/javascript.md`, `tests/test1/test_filter.py`.
 
 ## Review Focus
 
@@ -59,7 +59,7 @@ The test suite is red between Task 1 and the end of Task 2 (the dependency switc
 - Regenerate: `uv.lock`
 
 **Interfaces:**
-- Produces: `crud_views` importable from `/home/alex/projects/alex/django-crud-views/src/crud_views`, version `0.30.0`, with `static/crud_views/js/adapters.js` and `lib/icons.py` present. Every later task relies on this.
+- Produces: `crud_views` importable from `../django-crud-views/src/crud_views`, version `0.30.0`, with `static/crud_views/js/adapters.js` and `lib/icons.py` present. Every later task relies on this.
 
 - [ ] **Step 1: Point the dependency at the sibling checkout**
 
@@ -72,7 +72,7 @@ django-crud-views = { path = "../django-crud-views", editable = true }
 
 - [ ] **Step 2: Lock and sync**
 
-Run: `cd /home/alex/projects/alex/tabler-test && uv lock && uv sync`
+Run: `cd <repo> && uv lock && uv sync`
 Expected: `uv.lock` changes (the `django-crud-views` entry gets `source = { editable = "../django-crud-views" }` and `version = "0.30.0"`); `uv sync` reports the editable package installed and `django-crud-views==0.29.4` removed.
 
 - [ ] **Step 3: Verify what is installed**
@@ -83,7 +83,7 @@ Run:
 uv run python -c "import crud_views, pathlib; p = pathlib.Path(crud_views.__file__).resolve(); print(crud_views.__version__, p); assert 'django-crud-views/src' in str(p); assert (p.parent / 'static/crud_views/js/adapters.js').exists(); assert (p.parent / 'lib/icons.py').exists()"
 ```
 
-Expected: prints `0.30.0 /home/alex/projects/alex/django-crud-views/src/crud_views/__init__.py`, no assertion error.
+Expected: prints `0.30.0 ../django-crud-views/src/crud_views/__init__.py`, no assertion error.
 
 - [ ] **Step 4: System checks still pass**
 
@@ -687,7 +687,7 @@ In the section "How this was checked, and what was not", change the second bulle
 
 ```markdown
 - **Update 2026-10-20:** the "Status" block under each point was checked against the upstream checkout
-  (`/home/alex/projects/alex/django-crud-views`, branch `main` at 440ac55: 0.30.0 plus the unreleased #200) by diffing
+  (`../django-crud-views`, branch `main` at 440ac55: 0.30.0 plus the unreleased #200) by diffing
   `v0.29.4..main` for `src/crud_views/templates` and `src/crud_views/static` and reading `docs/reference/icons.md`
   and `docs/reference/javascript.md`. The original analysis and its file/line references remain for 0.29.4.
 ```

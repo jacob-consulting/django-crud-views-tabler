@@ -2,7 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
-First release as the `django-crud-views-tabler` distribution (formerly the private `tabler-test` project):
+First release as the `django-crud-views-tabler` distribution:
 
 - `crud_views_tabler`: Tabler 1.6.1 theme for django-crud-views.
 - `django_tabler`: Tabler page shell, layouts and layout switch, sign-in page, icon tags and the `crispy_tabler`

@@ -347,9 +347,9 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   details with actual values and sibling-field absence, stock visibility, all typed forms, permission denials,
   and checks of the real mapping plus invalid non-first Equipment/Subscription values/properties and restoration.
   `check --fail-level WARNING` passed with no issues (0 silenced). The tracer passed twice (1.037s and 0.932s).
-- **Provenance:** the execution-only `/tmp/dcv-phase0615-verification/run_catalog.py` validates explicit roots,
+- **Provenance:** the execution-only temporary `run_catalog.py` validates explicit roots,
   all five package import paths and required test IDs in the same process as each Django command. Core,
-  object-detail and polymorphic imports came from `/home/alex/projects/workspaces/cv-phase-06-15/django-crud-views/src`
+  object-detail and polymorphic imports came from a django-crud-views worktree's `src`
   at upstream `1d7a0c90e7b1f3c5f8ede748b41464bca05e4290`. Both configured widgets came from a clean detached
   checkout of `https://github.com/jacob-consulting/django-crud-views-extensions.git` at
   `0d84859a08b8bc706a877ce25c89da81d1321bfa`, project version 0.3.2. This is the historical report revision,

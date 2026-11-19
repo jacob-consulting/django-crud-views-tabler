@@ -28,7 +28,7 @@ django-crud-views-extensions (sibling checkout, `main`); django-tables2, django-
   `src/crud_views_tabler/static/crud_views_tabler/crud_views_tabler.css`, (3) new override template in
   `src/crud_views_tabler/templates/` as a last resort. Every (2)/(3), and every upstream bug or awkwardness, gets an
   entry in `docs/crud_views_upstream_findings_roastery.md` in the same commit.
-- New icons: copy the SVG path data from `~/projects/tabler/tabler-icons-3.49.0/svg/outline/<name>.svg` into
+- New icons: copy the SVG path data from `<tabler archives>/tabler-icons-3.49.0/svg/outline/<name>.svg` into
   `django_tabler.icons.ICONS`; never commit the archive. `manage.py check --fail-level WARNING` (incl.
   `crud_views_tabler.W001`) stays clean.
 - All pages require login; English only; demo brand “Acme Roasters”, primary colour sienna `#a0522d`.

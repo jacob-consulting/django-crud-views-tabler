@@ -21,7 +21,7 @@ django-crud-views main has moved past the commit the theme was last aligned with
   `data-cv-tooltip="<location>"` next to their `title`, and `tooltip.js` calls `cv.adapters.tooltip.init(el,
   {location})`. Upstream reference: `docs/reference/javascript.md#tooltips`.
 
-The sibling checkout `/home/alex/projects/alex/django-crud-views` is on `main` @ 4b62ed6. The demo installs it as an
+The sibling checkout `../django-crud-views` is on `main` @ 4b62ed6. The demo installs it as an
 editable path dependency, so no install step is needed.
 
 These two merges make most of the theme's action overrides unnecessary. The intent: **delete every override whose

@@ -28,7 +28,7 @@ location-aware Tabler tooltip.
 - The theme writes no `data-cv-tooltip` and no `data-bs-toggle="tooltip"`; upstream owns the marker.
 - No button class literal (`btn`) left in theme templates (grep gate in Task 5).
 - Every key the theme registers is in upstream's `DEFAULT_BUTTON_CLASSES`, so `crud_views.W362` never fires.
-- Upstream checkout: `/home/alex/projects/alex/django-crud-views`, `main` @ 4b62ed6. References: `src/crud_views/lib/button_classes.py`, `src/crud_views/lib/crispy/form.py` (`CrispyDeleteForm`), `src/crud_views/templates/crud_views/tags/button/*.html`, `src/crud_views/templates/crud_views/tags/card.html`, `docs/reference/buttons.md`, `docs/reference/javascript.md#tooltips`.
+- Upstream checkout: `../django-crud-views`, `main` @ 4b62ed6. References: `src/crud_views/lib/button_classes.py`, `src/crud_views/lib/crispy/form.py` (`CrispyDeleteForm`), `src/crud_views/templates/crud_views/tags/button/*.html`, `src/crud_views/templates/crud_views/tags/card.html`, `docs/reference/buttons.md`, `docs/reference/javascript.md#tooltips`.
 
 ## Review Focus
 

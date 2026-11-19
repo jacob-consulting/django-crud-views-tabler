@@ -69,7 +69,7 @@ Recorded because it is the question a reader will ask first:
 
 ## Current state
 
-- Demo repository `/home/alex/projects/alex/tabler-test`, branch `demo/catalog-form-coverage` @ `279832a`:
+- Demo repository `<repo>`, branch `demo/catalog-form-coverage` @ `279832a`:
   `crud_views_tabler` (theme app), `customers` and `catalog` (demo apps), 68 tests passing.
 - `config/settings.py`: `crispy_forms`, `crispy_bootstrap5` in `INSTALLED_APPS`;
   `CRISPY_TEMPLATE_PACK = 'bootstrap5'`, `CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'`.
@@ -83,7 +83,7 @@ Recorded because it is the question a reader will ask first:
 The first version ships a pack that is a drop-in replacement for `bootstrap5` on a Tabler page, with the six
 findings fixed.
 
-1. **The package.** A new repository at `/home/alex/projects/alex/crispy-tabler`: distribution `crispy-tabler`,
+1. **The package.** A new repository at `../crispy-tabler`: distribution `crispy-tabler`,
    one Django app `crispy_tabler`, `src/` layout, `pyproject.toml`, MIT `LICENSE`, `README.md`, its own test suite.
 2. **The pack.** All 42 template names from crispy-bootstrap5, vendored under
    `src/crispy_tabler/templates/crispy_tabler/`, with every internal include path rewritten to the new pack. No
@@ -152,7 +152,7 @@ Things that would mean the design was not followed, even if the result looked ri
   and rejected — it would change the template baseline the six findings were measured against.
 - django-crispy-forms ≥ 2.4, crispy-bootstrap5 pinned to a lower bound that the vendored templates were taken
   from, and recorded as such.
-- Tabler 1.6.1's class vocabulary. The checkout at `/home/alex/projects/alex/tabler/tabler-1.6.1` is the
+- Tabler 1.6.1's class vocabulary. The checkout at `<tabler archives>/tabler-1.6.1` is the
   reference: `dashboard/form-elements.html` and `dashboard/form-layout.html` for markup, `dashboard/dist/css/tabler.css`
   for which classes exist.
 - The demo repository stays the proving ground: `/product/create/` is the acceptance surface and `catalog/tests.py`

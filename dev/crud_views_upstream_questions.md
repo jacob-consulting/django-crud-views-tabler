@@ -11,7 +11,7 @@ their trade-offs.
 - **Not checked at the time of writing:** the upstream repository's current main branch, its issue tracker, discussions, or anything after
   0.29.4. Some of these points may already be discussed, decided or changed there.
 - **Update 2026-10-20:** the "Status" block under each point was checked against the upstream checkout
-  (`/home/alex/projects/alex/django-crud-views`, branch `main` at 440ac55: 0.30.0 plus the unreleased #200) by diffing
+  (`../django-crud-views`, branch `main` at 440ac55: 0.30.0 plus the unreleased #200) by diffing
   `v0.29.4..main` for `src/crud_views/templates` and `src/crud_views/static` and reading `docs/reference/icons.md`
   and `docs/reference/javascript.md`. The original analysis and its file/line references remain for 0.29.4.
 - **Update 2026-10-20 (later):** points 2, 4 and 5 got a second Status block for main @ 4b62ed6 (#201 button

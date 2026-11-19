@@ -66,7 +66,7 @@ its icon spans with `hidden` instead of `d-none` (#232), and five new `message-*
 
 ## What this was checked against (2026-10-21)
 
-- **Upstream:** `/home/alex/projects/alex/django-crud-views`, branch `main` at **5e36477** (#205, tooltip
+- **Upstream:** `../django-crud-views`, branch `main` at **5e36477** (#205, tooltip
   lifecycle). The last commit that touches `src/crud_views/templates` is **4b62ed6** (#204), so the template
   audit recorded in the questions document at 4b62ed6 still describes HEAD; `git show --stat 5e36477` touches
   JavaScript, tests and docs only.

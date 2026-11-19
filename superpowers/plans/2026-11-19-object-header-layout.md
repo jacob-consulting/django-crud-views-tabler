@@ -143,7 +143,7 @@ git commit -m "Theme: owner header for ViewSet Navigation (avatar, name, tabs ab
 **Files:**
 - Modify (only if the check finds defects): `src/crud_views_tabler/static/crud_views_tabler/crud_views_tabler.css`, finding 36, the CSS test.
 
-- [ ] **Step 1: Run the demo on a free port (not 8765; e.g. 8791)** with the existing database, log in as alex, and screenshot with Playwright (`PLAYWRIGHT_NODEJS_PATH=/home/alex/.nvm/versions/node/v24.21.0/bin/node`): customer detail, nested order list, order detail, nested order update; sidebar and top-bar layouts; light and dark; 1280 px and 375 px; print emulation of the packing slip. Compare with mockup option D/1 (`.superpowers/brainstorm/*/content/navbar-buttons.html`).
+- [ ] **Step 1: Run the demo on a free port (not 8765; e.g. 8791)** with the existing database, log in as alex, and screenshot with Playwright (`PLAYWRIGHT_NODEJS_PATH=<path to node>`): customer detail, nested order list, order detail, nested order update; sidebar and top-bar layouts; light and dark; 1280 px and 375 px; print emulation of the packing slip. Compare with mockup option D/1 (`.superpowers/brainstorm/*/content/navbar-buttons.html`).
 - [ ] **Step 2: Check:** tabs underline and active tab readable in light and dark (active text contrast ≥ 4.5:1 against the page); icon/label gap; tabs wrap at 375 px without horizontal scroll; owner row and view row aligned with the breadcrumb; view title visibly smaller than the owner name; no tabs or owner row in print.
 - [ ] **Step 3: Fix defects in CSS only**, each with its rule text pinned in the CSS test (RED first) and described in finding 36.
 - [ ] **Step 4: Run** `task test` (as in Task 2). Expected: exit 0.

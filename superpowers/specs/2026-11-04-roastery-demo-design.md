@@ -58,7 +58,7 @@ awful as an application. It is replaced.
   datetimepicker), as an editable path dependency like crud_views.
 - `src/django_tabler` must not depend on django-crud-views; `src/crud_views_tabler` must not require
   django-crud-views-extensions (anything for the extensions is optional, see below).
-- Tabler icon SVG paths come from `~/projects/tabler/tabler-icons-3.49.0/svg/` into `django_tabler.icons.ICONS`;
+- Tabler icon SVG paths come from `<tabler archives>/tabler-icons-3.49.0/svg/` into `django_tabler.icons.ICONS`;
   licensed archives are reference only, never committed wholesale.
 - All pages require login (`LoginRequiredMiddleware`), as today.
 

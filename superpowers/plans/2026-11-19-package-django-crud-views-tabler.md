@@ -18,7 +18,7 @@ django-ratelimit.
 **Spec:** `docs/superpowers/specs/2026-11-19-package-django-crud-views-tabler-design.md` (Task 6 moves it to
 `superpowers/specs/`).
 
-**Upstream reference (read-only):** `/home/alex/projects/alex/django-crud-views`. "Port X" below means: copy the
+**Upstream reference (read-only):** `../django-crud-views`. "Port X" below means: copy the
 upstream file, rename `crud_views*`/`examples/bootstrap5`/`project.` to this repo's names, drop what refers to
 features this plan excludes (Django 4.2, crispy/manage floor sessions, JS, Sonar, readme-examples).
 
@@ -36,7 +36,7 @@ features this plan excludes (Django 4.2, crispy/manage floor sessions, JS, Sonar
 - `publish.yml` must refuse to publish while the declared crud-views floor is below `1.0.0rc1`.
 - Tests always run against the installed distribution, never `src/` on the path.
 - `django_tabler` never imports `crud_views`. App code under `example/` never imports either package.
-- Nothing from `~/projects/tabler/` (licensed archives) enters the repo, wheel or sdist.
+- Nothing from `<tabler archives>/` (licensed archives) enters the repo, wheel or sdist.
 - `../django-crud-views` and `../django-crud-views-extensions` are read-only. A crud-views problem found here is
   worked around and logged in the findings log in the same commit (CLAUDE.md convention).
 - Ruff: upstream's configuration (line length 120, `select = ["E","F","I","UP","B","C4","SIM","RUF"]`).
@@ -330,7 +330,7 @@ def test_release_floor(tmp_path, spec, ok): ...
 
 - [ ] **Step 1: Scan** all history (`git log --all --name-only --format=` and `git rev-list --all | git ls-tree -r`)
   for: files under any `tabler-*/` path, `*.zip`, `*.woff*`, `*.png`/`*.jpg`/`*.svg` outside `example/static/acme/`,
-  `tabler*.css`/`tabler*.js` copies of the dist, and anything from `~/projects/tabler/` by content hash
+  `tabler*.css`/`tabler*.js` copies of the dist, and anything from `<tabler archives>/` by content hash
   (`git hash-object` the archive files, compare with all blob hashes).
 - [ ] **Step 2: Secrets:** `uvx gitleaks detect --log-opts=--all` (or docker); note the Django dev default
   `SECRET_KEY` in `example/config/settings.py` as expected-and-harmless if the demo overrides it.

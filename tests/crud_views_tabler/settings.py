@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import django
+
 BASE_DIR = Path(__file__).resolve().parent
 
 SECRET_KEY = "test-only-not-secret"
@@ -30,7 +32,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.auth.middleware.LoginRequiredMiddleware",
+    # Django 5.1+ only; these tests sign in with force_login and never test the redirect, so older Django skips it.
+    *(["django.contrib.auth.middleware.LoginRequiredMiddleware"] if django.VERSION >= (5, 1) else []),
     "django.contrib.messages.middleware.MessageMiddleware",
 ]
 

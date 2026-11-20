@@ -164,3 +164,22 @@ class LayoutDefaultsTests(SimpleTestCase):
         # since tabler-theme.js removes it for Tabler's default values
         self.assertRegex(js, r"if \(value === DEFAULTS\[key\]\) localStorage\.removeItem")
         self.assertRegex(js, r"if \(value === TABLER_DEFAULTS\[key\]\) document\.documentElement\.removeAttribute")
+
+
+def render_template(source: str) -> str:
+    return Template(source).render(Context())
+
+
+@override_settings(TABLER_ICON_ALIASES={"customer": "building-store"})
+class IconAliasTests(SimpleTestCase):
+    def test_alias_renders_the_mapped_icon(self):
+        self.assertEqual(
+            render_template('{% load tabler %}{% icon "customer" %}'),
+            render_template('{% load tabler %}{% icon "building-store" %}'),
+        )
+
+    def test_unaliased_name_renders_directly(self):
+        self.assertIn("<svg", render_template('{% load tabler %}{% icon "coffee" %}'))
+
+    def test_alias_keeps_the_css_class(self):
+        self.assertIn('class="icon icon-sm"', render_template('{% load tabler %}{% icon "customer" "icon-sm" %}'))

@@ -2,6 +2,7 @@ import json
 import re
 
 from django import template
+from django.conf import settings
 from django.contrib.messages import constants
 from django.template.loader import render_to_string
 from django.utils.html import format_html
@@ -24,7 +25,11 @@ AVATAR_COLORS = ["blue", "green", "purple", "azure", "orange", "pink", "teal", "
 
 @register.simple_tag
 def icon(name, css_class=""):
-    """Render a Tabler outline icon as inline SVG: {% icon "users" "icon-sm" %}."""
+    """Render a Tabler outline icon as inline SVG: {% icon "users" "icon-sm" %}.
+
+    ``name`` is resolved through ``settings.TABLER_ICON_ALIASES`` first; unknown names pass through unchanged.
+    """
+    name = getattr(settings, "TABLER_ICON_ALIASES", {}).get(name, name)
     return svg(name, css_class)
 
 

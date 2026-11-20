@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest import mock
 from urllib.parse import urlencode
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import Permission
@@ -13,6 +14,7 @@ from django.template.loader import render_to_string
 from django.test import SimpleTestCase, TestCase
 from django.urls import get_resolver, reverse
 from django.utils import timezone
+from django_fsm import FSMFieldMixin
 
 import crud_views_tabler
 import django_tabler
@@ -864,7 +866,6 @@ class IconVocabularyTests(SimpleTestCase):
         from catalog.models import Product
         from config.templatetags.acme_nav import DASHBOARD, MENU
         from crud_views.lib.viewset import _REGISTRY
-        from sales.models import Order
         from shipping.courier import EVENT_PLAN
 
         _ = get_resolver().url_patterns  # importing the URLconf registers every ViewSet
@@ -895,8 +896,13 @@ class IconVocabularyTests(SimpleTestCase):
         for cls in (Product, *subclasses(Product)):
             if "card_icon" in vars(cls):
                 used.append((f"{cls.__name__}.card_icon", cls.card_icon))
-        for transition in Order().get_all_state_transitions():
-            used.append((f"Order transition {transition.name}", (transition.custom or {}).get("icon")))
+        for model in apps.get_models():
+            for field in model._meta.get_fields():
+                if isinstance(field, FSMFieldMixin):
+                    for transition in field.get_all_transitions(model):
+                        used.append(
+                            (f"{model.__name__} transition {transition.name}", (transition.custom or {}).get("icon"))
+                        )
         for description, _location, _hours, icon in EVENT_PLAN:
             used.append((f"courier event {description}", icon))
         # the sidebar renders these through {% icon %}: a semantic name or a native Tabler name both work
@@ -917,6 +923,7 @@ class IconVocabularyTests(SimpleTestCase):
 
         used = self._used_icons()
         self.assertGreater(len(used), 40)
+        self.assertTrue([w for w, _v in used if " transition " in w], "no workflow transition icon collected")
         for where, value in used:
             resolved = resolve_icon(value)
             self.assertIsNotNone(resolved, f"{where}: {value!r}")

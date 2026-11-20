@@ -40,7 +40,7 @@ from django_tabler.crispy.layout import FloatingField, Switch, UneditableField
 
 from .models import ShowcaseCategory, ShowcaseItem, ShowcaseTag
 
-cv_showcaseitem = ViewSet(model=ShowcaseItem, name="showcaseitem", prefix="showcase", icon_header="tabler:package")
+cv_showcaseitem = ViewSet(model=ShowcaseItem, name="showcaseitem", prefix="showcase", icon_header="product")
 
 
 class BreadcrumbMixin(CrudViewBreadcrumbMixin):

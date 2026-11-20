@@ -12,11 +12,11 @@ from sales.models import Order, OrderState
 CARRIERS = ["DHL", "DPD", "UPS", "GLS"]
 # (description template, location, hours after shipping, icon); the first events always happen
 EVENT_PLAN = [
-    ("Shipment picked up at the roastery", "Acme Roasters, Bristol", 0, "tabler:package"),
-    ("Arrived at the origin parcel hub", "Bristol hub", 6, "tabler:truck-delivery"),
-    ("Departed the origin hub", "Bristol hub", 20, "tabler:truck-delivery"),
-    ("Out for delivery", "{city} depot", 52, "tabler:truck-delivery"),
-    ("Delivered", "{city}", 58, "tabler:circle-check"),
+    ("Shipment picked up at the roastery", "Acme Roasters, Bristol", 0, "picked-up"),
+    ("Arrived at the origin parcel hub", "Bristol hub", 6, "in-transit"),
+    ("Departed the origin hub", "Bristol hub", 20, "in-transit"),
+    ("Out for delivery", "{city} depot", 52, "in-transit"),
+    ("Delivered", "{city}", 58, "delivered"),
 ]
 TRANSIT_SPREAD = 3  # days from shipping to the estimated delivery
 

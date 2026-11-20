@@ -19,7 +19,7 @@ from .resources import Shipment
 cv_shipment = ViewSet(
     model=Shipment,
     name="shipment",
-    icon_header="tabler:truck-delivery",
+    icon_header="shipment",
     resource_permissions={"view": "sales.view_order"},
 )
 

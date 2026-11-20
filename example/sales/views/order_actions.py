@@ -45,7 +45,7 @@ class OrderPackingSlipView(CustomerNavbarMixin, BreadcrumbMixin, DetailViewPermi
     cv_key = "packing_slip"
     cv_path = "packing-slip"
     template_name = "sales/packing_slip.html"
-    cv_icon_action = "tabler:printer"
+    cv_icon_action = "packing-slip"
     cv_action_label_template_code = _("Packing slip")
     cv_action_short_label_template_code = _("Packing slip")
     cv_header_template_code = _("Packing slip · {{ object }}")
@@ -62,7 +62,7 @@ class OrderDuplicateView(
     cv_key = "duplicate"
     cv_path = "duplicate"
     cv_permission = "add"
-    cv_icon_action = "tabler:copy"
+    cv_icon_action = "duplicate"
     form_class = OrderDuplicateForm
     cv_action_label_template_code = _("Duplicate")
     cv_action_short_label_template_code = _("Duplicate")

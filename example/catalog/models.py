@@ -1,7 +1,7 @@
 """The roastery's catalog: one polymorphic ``Product`` with a table per kind (beans, equipment, subscription).
 
 The kinds share the commerce fields on ``Product``; each adds what only it has. ``card_color`` and ``card_icon`` are the
-type's look on the card list (a Tabler colour name, a ``tabler:`` icon).
+type's look on the card list (a Tabler colour name, a semantic icon name from ``config.icons``).
 """
 
 from decimal import Decimal
@@ -55,7 +55,7 @@ class Product(PolymorphicModel):
     description = models.TextField(blank=True)
 
     card_color = "secondary"
-    card_icon = "tabler:package"
+    card_icon = "product"
     show_stock = True  # subscriptions are not stocked
     # the conditional key of an order line's product select (sales.forms.LINE_PRODUCT): only beans take grind and bag
     order_line_kind = "product"
@@ -126,7 +126,7 @@ class Beans(Product):
 
     card_color = "orange"
     order_line_kind = "beans"
-    card_icon = "tabler:plant-2"
+    card_icon = "beans"
 
     class Meta:
         verbose_name = "beans"
@@ -156,7 +156,7 @@ class Equipment(Product):
 
     card_color = "azure"
     order_line_kind = "equipment"
-    card_icon = "tabler:tool"
+    card_icon = "equipment"
 
     class Meta:
         verbose_name = "equipment"
@@ -190,7 +190,7 @@ class Subscription(Product):
 
     card_color = "purple"
     order_line_kind = "subscription"
-    card_icon = "tabler:repeat"
+    card_icon = "subscription"
     show_stock = False
 
     class Meta:

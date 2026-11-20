@@ -40,8 +40,8 @@ from django.utils.translation import gettext_lazy as _
 from .forms import POLYMORPHIC_FORMS, CategoryForm, ProductContentTypeForm
 from .models import Beans, Category, Equipment, Product, Subscription
 
-cv_product = ViewSet(model=Product, name="product", icon_header="tabler:package")
-cv_category = ViewSet(model=Category, name="category", icon_header="tabler:category")
+cv_product = ViewSet(model=Product, name="product", icon_header="product")
+cv_category = ViewSet(model=Category, name="category", icon_header="category")
 
 
 class BreadcrumbMixin(CrudViewBreadcrumbMixin):
@@ -124,7 +124,7 @@ class ProductTableListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFil
     formhelper_class = ProductFilterFormHelper
     cv_context_actions = ["list", "table", "filter", "create_select"]
     cv_list_actions = ["detail", "update", "delete"]
-    cv_icon_action = "tabler:table"
+    cv_icon_action = "table-view"
 
 
 # --------------------------------------------------------------------------- products: create / update / delete
@@ -171,18 +171,18 @@ def commerce(model):
     stock = ["stock"] if model.show_stock else []
     return {
         "title": _("Commerce"),
-        "icon": "tabler:tags",
+        "icon": "pricing",
         "properties": ["sku", "price", *stock, x("is_active", badge=_ACTIVE_BADGE), "category"],
     }
 
 
-ABOUT = {"title": _("About"), "icon": "tabler:info-circle", "properties": ["description"]}
+ABOUT = {"title": _("About"), "icon": "about", "properties": ["description"]}
 
 PROPERTY_DISPLAY = {
     Beans: [
         {
             "title": _("Coffee"),
-            "icon": "tabler:plant-2",
+            "icon": "beans",
             "properties": [
                 "origin",
                 x("green_lot", title=_("Green lot")),
@@ -196,14 +196,14 @@ PROPERTY_DISPLAY = {
         ABOUT,
     ],
     Equipment: [
-        {"title": _("Equipment"), "icon": "tabler:tool", "properties": ["brand", "warranty_months", "weight_kg"]},
+        {"title": _("Equipment"), "icon": "equipment", "properties": ["brand", "warranty_months", "weight_kg"]},
         commerce(Equipment),
         ABOUT,
     ],
     Subscription: [
         {
             "title": _("Subscription"),
-            "icon": "tabler:repeat",
+            "icon": "subscription",
             "properties": [
                 "interval",
                 "bags_per_delivery",
@@ -241,7 +241,7 @@ class CategoryDetailView(BreadcrumbMixin, ObjectDetailViewPermissionRequired):
     cv_property_display = [
         {
             "title": _("Category"),
-            "icon": "tabler:category",
+            "icon": "category",
             "properties": ["name", {"path": "product_count", "title": _("Products")}],
         }
     ]

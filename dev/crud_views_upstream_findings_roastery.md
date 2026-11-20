@@ -1113,6 +1113,16 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
 
 ---
 
+### 39. App code should name icons by meaning, not by library
+
+Nothing to fix upstream: `crud_views.lib.icons` merges `DEFAULT_ICONS`, theme icons and `CRUD_VIEWS_ICONS` under any
+key, so a project can use `"customer"` and map it to `tabler:building-store`. The demo used to hard-code 47
+`tabler:<name>` strings, which made the "app never knows the theme" claim untrue. It now keeps one table,
+`example/config/icons.py` (`ACME_ICONS`, semantic name to Tabler name), feeding `CRUD_VIEWS_ICONS` and
+`TABLER_ICON_ALIASES`; `IconVocabularyTests` fails on any `"tabler:` string outside settings and that file. Pitfall
+worth documenting upstream: a semantic name missing from the table renders as a raw CSS class, silently.
+Cross-reference: CoreUI tracker U7 (`jacob-consulting/django-crud-views-coreui`).
+
 ## Not shown in the demo
 
 Features from the spec's feature map that were dropped or reduced, with the reason.

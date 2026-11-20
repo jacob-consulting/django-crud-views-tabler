@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest import mock
 from urllib.parse import urlencode
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import Permission
@@ -11,8 +12,9 @@ from django.contrib.staticfiles import finders
 from django.core.management import call_command
 from django.template.loader import render_to_string
 from django.test import SimpleTestCase, TestCase
-from django.urls import reverse
+from django.urls import get_resolver, reverse
 from django.utils import timezone
+from django_fsm import FSMFieldMixin
 
 import crud_views_tabler
 import django_tabler
@@ -828,3 +830,103 @@ def _package_sources():
     """Every .py file of django_tabler and crud_views_tabler: the theme's own code, wherever it is installed."""
     for package in (django_tabler, crud_views_tabler):
         yield from Path(package.__file__).parent.rglob("*.py")
+
+
+class IconVocabularyTests(SimpleTestCase):
+    """The app names icons by domain meaning; only settings and config/icons.py know the library."""
+
+    def test_example_code_names_no_library(self):
+        root = Path(settings.BASE_DIR)
+        allowed = {root / "config" / "settings.py", root / "config" / "icons.py"}
+        offenders = [
+            str(path.relative_to(root))
+            for path in root.rglob("*.py")
+            if path not in allowed
+            and re.search(r"[\"']tabler:", path.read_text(encoding="utf-8"))
+            and not path.name.startswith("test")
+        ]
+        self.assertEqual(offenders, [])
+
+    def test_every_semantic_name_has_an_svg(self):
+        from config.icons import ACME_ICONS
+        from crud_views.lib.icons import resolve_icon
+
+        from django_tabler.icons import ICONS
+
+        self.assertTrue(ACME_ICONS)
+        for key in ACME_ICONS:
+            library, name = resolve_icon(key)
+            self.assertEqual(library, "tabler", key)
+            self.assertIn(name, ICONS, key)
+
+    @staticmethod
+    def _used_icons():
+        """Every icon value the example's code names, as (where, value): views, property groups, workflow, models,
+        courier events and the sidebar menu."""
+        from catalog.models import Product
+        from config.templatetags.acme_nav import DASHBOARD, MENU
+        from crud_views.lib.viewset import _REGISTRY
+        from shipping.courier import EVENT_PLAN
+
+        _ = get_resolver().url_patterns  # importing the URLconf registers every ViewSet
+        used = []
+
+        def walk_groups(where, groups):
+            for group in groups or []:
+                if isinstance(group, dict) and group.get("icon"):
+                    used.append((f"{where} group {group.get('title')}", group["icon"]))
+
+        for name, viewset in _REGISTRY.items():
+            used.append((f"ViewSet {name}.icon_header", viewset.icon_header))
+            for key, view in viewset.get_all_views().items():
+                for attr in ("cv_icon_action", "cv_icon_header"):
+                    used.append((f"{name}.{key}.{attr}", getattr(view, attr, None)))
+                display = getattr(view, "cv_property_display", None)
+                if isinstance(display, dict):
+                    for model, groups in display.items():
+                        walk_groups(f"{name}.{key}[{model.__name__}]", groups)
+                else:
+                    walk_groups(f"{name}.{key}", display)
+
+        def subclasses(cls):
+            for sub in cls.__subclasses__():
+                yield sub
+                yield from subclasses(sub)
+
+        for cls in (Product, *subclasses(Product)):
+            if "card_icon" in vars(cls):
+                used.append((f"{cls.__name__}.card_icon", cls.card_icon))
+        for model in apps.get_models():
+            for field in model._meta.get_fields():
+                if isinstance(field, FSMFieldMixin):
+                    for transition in field.get_all_transitions(model):
+                        used.append(
+                            (f"{model.__name__} transition {transition.name}", (transition.custom or {}).get("icon"))
+                        )
+        for description, _location, _hours, icon in EVENT_PLAN:
+            used.append((f"courier event {description}", icon))
+        # the sidebar renders these through {% icon %}: a semantic name or a native Tabler name both work
+        from config.icons import ACME_ICONS
+
+        from django_tabler.icons import ICONS
+
+        for entry in (DASHBOARD, *(e for section in MENU for e in (section, *section.entries))):
+            icon = entry.icon
+            if icon not in ACME_ICONS:
+                used.append((f"menu {getattr(entry, 'title', '')}", f"tabler:{icon}" if icon in ICONS else icon))
+        return [(where, value) for where, value in used if value]
+
+    def test_every_icon_used_in_code_resolves(self):
+        from crud_views.lib.icons import resolve_icon
+
+        from django_tabler.icons import ICONS
+
+        used = self._used_icons()
+        self.assertGreater(len(used), 40)
+        self.assertTrue([w for w, _v in used if " transition " in w], "no workflow transition icon collected")
+        for where, value in used:
+            resolved = resolve_icon(value)
+            self.assertIsNotNone(resolved, f"{where}: {value!r}")
+            library, name = resolved
+            self.assertEqual(library, "tabler", f"{where}: {value!r} is not a table key (renders as a raw class)")
+            self.assertIn(name, ICONS, f"{where}: {value!r}")

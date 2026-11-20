@@ -13,6 +13,19 @@ Icons render inline, so no icon font or sprite is loaded.
 
 An unknown name renders nothing.
 
+### Icon aliases
+
+`TABLER_ICON_ALIASES` maps your own semantic names to Tabler icon names (without prefix). `{% icon %}` resolves the
+name through it first; names that are not aliased are used as given.
+
+```python
+TABLER_ICON_ALIASES = {"customer": "building-store"}
+```
+
+```django
+{% icon "customer" "icon-sm" %}  {# renders the building-store icon #}
+```
+
 ## In django-crud-views
 
 The theme registers an icon library `tabler` with django-crud-views and maps crud_views' semantic icon names (list,

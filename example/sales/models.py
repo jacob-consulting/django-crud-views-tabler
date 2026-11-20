@@ -219,7 +219,7 @@ class Order(WorkflowModelMixin, models.Model):
         source=OrderState.DRAFT,
         target=OrderState.CONFIRMED,
         permission=may_change_order,
-        custom={"label": "Confirm", "comment": WorkflowComment.NONE, "icon": "tabler:check", "variant": "success"},
+        custom={"label": "Confirm", "comment": WorkflowComment.NONE, "icon": "confirm", "variant": "success"},
     )
     def wf_confirm(self, request=None, by=None, comment=None):
         if problem := self.confirm_problem():  # workflow_check_transition refuses first; this guards direct calls
@@ -233,7 +233,7 @@ class Order(WorkflowModelMixin, models.Model):
         custom={
             "label": "Mark roasted",
             "comment": WorkflowComment.OPTIONAL,
-            "icon": "tabler:coffee",
+            "icon": "roasted",
             "variant": "warning",
         },
     )
@@ -245,7 +245,7 @@ class Order(WorkflowModelMixin, models.Model):
         source=OrderState.ROASTED,
         target=OrderState.SHIPPED,
         permission=may_change_order,
-        custom={"label": "Ship", "comment": WorkflowComment.OPTIONAL, "icon": "tabler:package", "variant": "primary"},
+        custom={"label": "Ship", "comment": WorkflowComment.OPTIONAL, "icon": "shipped", "variant": "primary"},
     )
     def wf_ship(self, request=None, by=None, comment=None):
         self.shipped_at = timezone.now()
@@ -258,7 +258,7 @@ class Order(WorkflowModelMixin, models.Model):
         custom={
             "label": "Mark delivered",
             "comment": WorkflowComment.NONE,
-            "icon": "tabler:circle-check",
+            "icon": "delivered",
             "variant": "success",
         },
     )
@@ -273,7 +273,7 @@ class Order(WorkflowModelMixin, models.Model):
         custom={
             "label": "Cancel order",
             "comment": WorkflowComment.REQUIRED,
-            "icon": "tabler:circle-x",
+            "icon": "cancelled",
             "variant": "danger",
         },
     )

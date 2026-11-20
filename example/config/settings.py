@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import os
 from pathlib import Path
 
+from config.icons import ACME_ICONS
 from config.login_required import MIDDLEWARE_PATH as LOGIN_REQUIRED_MIDDLEWARE
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -183,6 +184,9 @@ MAILERS = {
 CRISPY_ALLOWED_TEMPLATE_PACKS = ("crispy_tabler",)
 CRISPY_TEMPLATE_PACK = "crispy_tabler"
 CRUD_VIEWS_EXTENDS = "project/crud_views.html"
+# Semantic icon names (config/icons.py): crud_views maps them to the tabler library, templates alias them.
+CRUD_VIEWS_ICONS = {key: f"tabler:{name}" for key, name in ACME_ICONS.items()}
+TABLER_ICON_ALIASES = ACME_ICONS
 CRUD_VIEWS_BREADCRUMB_PREFIX = [{"title": "Home", "url_name": "dashboard:index"}]
 CRUD_VIEWS_DATETIMEPICKER = {"DEFAULTS": {"dayOfWeekStart": 1}}
 DJANGO_TABLES2_TEMPLATE = "crud_views/table/bootstrap5.html"

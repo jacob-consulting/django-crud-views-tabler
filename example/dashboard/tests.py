@@ -828,3 +828,31 @@ def _package_sources():
     """Every .py file of django_tabler and crud_views_tabler: the theme's own code, wherever it is installed."""
     for package in (django_tabler, crud_views_tabler):
         yield from Path(package.__file__).parent.rglob("*.py")
+
+
+class IconVocabularyTests(SimpleTestCase):
+    """The app names icons by domain meaning; only settings and config/icons.py know the library."""
+
+    def test_example_code_names_no_library(self):
+        root = Path(settings.BASE_DIR)
+        allowed = {root / "config" / "settings.py", root / "config" / "icons.py"}
+        offenders = [
+            str(path.relative_to(root))
+            for path in root.rglob("*.py")
+            if path not in allowed
+            and '"tabler:' in path.read_text(encoding="utf-8")
+            and not path.name.startswith("test")
+        ]
+        self.assertEqual(offenders, [])
+
+    def test_every_semantic_name_has_an_svg(self):
+        from config.icons import ACME_ICONS
+        from crud_views.lib.icons import resolve_icon
+
+        from django_tabler.icons import ICONS
+
+        self.assertTrue(ACME_ICONS)
+        for key in ACME_ICONS:
+            library, name = resolve_icon(key)
+            self.assertEqual(library, "tabler", key)
+            self.assertIn(name, ICONS, key)

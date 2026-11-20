@@ -30,7 +30,7 @@ from .customers import CustomerNavbarMixin
 cv_address = ViewSet(
     model=Address,
     name="address",
-    icon_header="tabler:map-pin",
+    icon_header="address",
     parent=ParentViewSet(name="customer"),
     ancestor_policy=AncestorPolicy(actions={"make_default": AncestorPermissions(nearest="change", higher="view")}),
 )
@@ -65,7 +65,7 @@ class AddressDetailView(CustomerNavbarMixin, BreadcrumbMixin, ObjectDetailViewPe
     cv_property_display = [
         {
             "title": _("Address"),
-            "icon": "tabler:map-pin",
+            "icon": "address",
             "properties": ["label", "street", "zip_code", "city", "country", "is_default", "customer"],
         }
     ]
@@ -107,7 +107,7 @@ class AddressMakeDefaultView(BreadcrumbMixin, MessageMixin, ActionViewPermission
     cv_path = "make_default"
     cv_permission = "change"
     cv_backend_only = True
-    cv_icon_action = "tabler:star"
+    cv_icon_action = "mark-default"
     cv_action_label_template_code = _("Make default")
     cv_action_short_label_template_code = _("Make default")
     cv_message_template_code = _("“{{ object.label }}” is now the default address")

@@ -45,7 +45,7 @@ cv_subscription = ViewSet(
     verbose_name=_("subscription"),
     verbose_name_plural=_("subscriptions"),
     parent=ParentViewSet(name="customer"),
-    icon_header="tabler:repeat",
+    icon_header="subscription",
 )
 
 cv_all_subscriptions = ViewSet(
@@ -53,7 +53,7 @@ cv_all_subscriptions = ViewSet(
     name="subscriptions",
     verbose_name=_("subscription"),
     verbose_name_plural=_("subscriptions"),
-    icon_header="tabler:repeat",
+    icon_header="subscription",
 )
 
 
@@ -174,7 +174,7 @@ class RunSubscriptionsView(BreadcrumbMixin, CrispyViewMixin, CustomFormNoObjectV
     cv_path = "run"
     cv_permission = "run"
     cv_inaccessible_actions = "disable"
-    cv_icon_action = "tabler:player-play"
+    cv_icon_action = "run-subscriptions"
     form_class = RunSubscriptionsForm
     cv_success_key = "list"
     cv_cancel_key = "list"

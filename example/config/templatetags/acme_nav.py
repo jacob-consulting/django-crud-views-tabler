@@ -37,20 +37,20 @@ DASHBOARD = Entry("Dashboard", "dashboard:index", "dashboard", ("index",))
 MENU = (
     Section(
         "Sales",
-        "building-store",
+        "sales",
         (
             Entry(
                 "Customers",
                 "customer-list",
-                "building-store",
+                "customer",
                 ("customer-", "address-"),
                 ("sales.view_customer", "sales.add_customer"),
             ),
-            Entry("Orders", "orders-list", "receipt", ("order-", "orders-"), ("sales.view_order",)),
+            Entry("Orders", "orders-list", "order", ("order-", "orders-"), ("sales.view_order",)),
             Entry(
                 "Subscriptions",
                 "subscriptions-list",
-                "repeat",
+                "subscription",
                 ("subscription-", "subscriptions-"),
                 ("sales.view_customersubscription",),
             ),
@@ -58,20 +58,20 @@ MENU = (
     ),
     Section(
         "Catalog",
-        "package",
+        "catalog",
         (
-            Entry("Products", "product-list", "package", ("product-",), ("catalog.view_product",)),
+            Entry("Products", "product-list", "product", ("product-",), ("catalog.view_product",)),
             Entry("Categories", "category-list", "category", ("category-",), ("catalog.view_category",)),
         ),
     ),
     Section(
         "Roastery",
-        "flame",
+        "roastery",
         (
-            Entry("Green lots", "lot-list", "package-import", ("lot-", "cupping-"), ("roastery.view_greenlot",)),
-            Entry("Roast batches", "batch-list", "flame", ("batch-",), ("roastery.view_roastbatch",)),
+            Entry("Green lots", "lot-list", "lot", ("lot-", "cupping-"), ("roastery.view_greenlot",)),
+            Entry("Roast batches", "batch-list", "batch", ("batch-",), ("roastery.view_roastbatch",)),
             # the shipment list checks `sales.view_order` and scopes the rows to the user's customers
-            Entry("Shipments", "shipment-list", "truck-delivery", ("shipment-",), ("sales.view_order",)),
+            Entry("Shipments", "shipment-list", "shipment", ("shipment-",), ("sales.view_order",)),
         ),
     ),
     Section(

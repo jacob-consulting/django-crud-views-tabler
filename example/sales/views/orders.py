@@ -40,7 +40,7 @@ cv_order = ViewSet(
     model=Order,
     name="order",
     parent=ParentViewSet(name="customer"),
-    icon_header="tabler:receipt",
+    icon_header="order",
     ancestor_policy=AncestorPolicy(
         actions={
             "duplicate": AncestorPermissions(nearest="change", higher="view"),
@@ -53,7 +53,7 @@ cv_order = ViewSet(
     ],
 )
 
-cv_all_orders = ViewSet(model=Order, name="orders", icon_header="tabler:receipt")
+cv_all_orders = ViewSet(model=Order, name="orders", icon_header="order")
 
 ORDER_CONTEXT_ACTIONS = ["home", "update", "workflow", "packing_slip", "duplicate", "delete"]
 

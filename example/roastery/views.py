@@ -37,16 +37,14 @@ from .models import CuppingSession, GreenLot, RoastBatch
 cv_lot = ViewSet(
     model=GreenLot,
     name="lot",
-    icon_header="tabler:package-import",
+    icon_header="lot",
     context_buttons=[
         *context_buttons_default(),
         ChildContextButton(key="sessions", child_name="cupping", label_template_code="Cupping sessions"),
     ],
 )
-cv_session = ViewSet(
-    model=CuppingSession, name="cupping", icon_header="tabler:coffee", parent=ParentViewSet(name="lot")
-)
-cv_batch = ViewSet(model=RoastBatch, name="batch", icon_header="tabler:flame")
+cv_session = ViewSet(model=CuppingSession, name="cupping", icon_header="cupping", parent=ParentViewSet(name="lot"))
+cv_batch = ViewSet(model=RoastBatch, name="batch", icon_header="batch")
 
 
 class BreadcrumbMixin(CrudViewBreadcrumbMixin):
@@ -127,12 +125,12 @@ class LotDetailView(BreadcrumbMixin, ObjectDetailViewPermissionRequired):
     cv_property_display = [
         {
             "title": _("Origin and producer"),
-            "icon": "tabler:map-pin",
+            "icon": "origin",
             "properties": ["origin", "producer", "variety", "process", "harvest_year"],
         },
         {
             "title": _("Stock and price"),
-            "icon": "tabler:scale",
+            "icon": "stock",
             "properties": [
                 x("kg_purchased", title=_("Purchased (kg)")),
                 x("kg_on_hand", title=_("On hand (kg)")),
@@ -142,7 +140,7 @@ class LotDetailView(BreadcrumbMixin, ObjectDetailViewPermissionRequired):
         },
         {
             "title": _("Cupping"),
-            "icon": "tabler:coffee",
+            "icon": "cupping",
             "properties": [
                 x("average_score", title=_("Average score")),
                 x("session_count", title=_("Sessions")),
@@ -321,7 +319,7 @@ class BatchDetailView(BreadcrumbMixin, ObjectDetailViewPermissionRequired):
     cv_property_display = [
         {
             "title": _("Roast"),
-            "icon": "tabler:flame",
+            "icon": "batch",
             "properties": [
                 "lot",
                 "roasted_on",
@@ -332,7 +330,7 @@ class BatchDetailView(BreadcrumbMixin, ObjectDetailViewPermissionRequired):
                 x("loss_label", title=_("Weight loss")),
             ],
         },
-        {"title": _("Orders"), "icon": "tabler:receipt", "properties": ["orders"]},
+        {"title": _("Orders"), "icon": "order", "properties": ["orders"]},
     ]
 
     def loss_label(self, instance):

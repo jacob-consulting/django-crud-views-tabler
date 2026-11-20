@@ -34,7 +34,7 @@ from ..permissions import customers_for, grant_customer, sync_owner_grants
 cv_customer = GuardianViewSet(
     model=Customer,
     name="customer",
-    icon_header="tabler:building-store",
+    icon_header="customer",
     ancestor_policy=AncestorPolicy(accept_global_perms=True),
     context_buttons=[
         *context_buttons_default(),
@@ -154,10 +154,8 @@ _WHOLESALE = [
 ]
 
 # One card, like the mockup; consumers have no wholesale terms to show
-WHOLESALE_DISPLAY = [
-    {"title": _("Details"), "icon": "tabler:building-store", "properties": [*_DETAILS, *_WHOLESALE, "notes"]}
-]
-CONSUMER_DISPLAY = [{"title": _("Details"), "icon": "tabler:building-store", "properties": [*_DETAILS, "notes"]}]
+WHOLESALE_DISPLAY = [{"title": _("Details"), "icon": "customer", "properties": [*_DETAILS, *_WHOLESALE, "notes"]}]
+CONSUMER_DISPLAY = [{"title": _("Details"), "icon": "customer", "properties": [*_DETAILS, "notes"]}]
 
 
 class CustomerDetailView(
@@ -167,7 +165,7 @@ class CustomerDetailView(
     cv_object_detail_layout = "split-card"
     # The customer's name is the page's h1 (ViewSet Navigation); this view titles its own section, like its tab
     cv_header_template_code = "{% load i18n %}{% translate 'Details' %}"
-    cv_icon_header = "tabler:eye"
+    cv_icon_header = "detail"
     cv_paragraph_template = "sales/snippets/customer_paragraph.html"
     cv_context_actions = ["home", "update", "delete"]
     cv_context_actions_inline = ["update"]

@@ -38,7 +38,7 @@ dependencies = [
 # The Acme Roasters example project (example/) and the public demo.
 examples = [
     "django-crud-views[workflow,polymorphic,guardian,ordered]",
-    "django-crud-views-extensions (>=0.3.3)",
+    "django-crud-views-extensions (>=0.4.0)",
     "pygments",
     # the public demo's settings (config.settings_demo) and their tests; gunicorn is in requirements/demo.txt
     "whitenoise (>=6.9)",

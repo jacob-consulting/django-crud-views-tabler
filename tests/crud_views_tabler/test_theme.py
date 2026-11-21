@@ -857,7 +857,6 @@ class BareTableTests(SimpleTestCase):
         css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
         self.assertNotIn(".page-body > .container-xl:has(> table.table)", css)
         self.assertIn(".cv-typeahead-select-popup", css)
-        self.assertIn("--bs-body-bg: var(--tblr-bg-surface)", css)
         self.assertNotRegex(css, r"table\.table \{\s*display: block")
 
     def test_manage_page_no_longer_scrolls_the_content_container(self):
@@ -866,14 +865,40 @@ class BareTableTests(SimpleTestCase):
         css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
         self.assertNotIn("#cv-ancestor-policy", css)
 
-    def test_manage_page_reads_tabler_secondary_colours(self):
-        # Finding 35: upstream's manage.css uses --bs-secondary-* with light fallbacks; Tabler names them --tblr-*
+    def test_tokens_map_tabler_properties_on_theme_roots(self):
+        # Upstream #394 (manage, formsets) and extensions 0.4.0 (typeahead) read --cv-* tokens; the theme maps them on
+        # every theme root (upstream's recipe); Tabler's light-dark() values resolve where a token is used
         css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
-        self.assertRegex(
-            css,
-            r"\[data-cv-manage\] \{\s*--bs-secondary-color: var\(--tblr-secondary-color\);\s*"
-            r"--bs-secondary-text-emphasis: var\(--tblr-secondary-text-emphasis\);",
-        )
+        match = re.search(r":root,\s*\[data-bs-theme\] \{([^}]*)\}", css)
+        self.assertIsNotNone(match)
+        for token, source in (
+            ("secondary-color", "secondary-color"),
+            ("secondary-text-emphasis", "secondary-text-emphasis"),
+            ("body-bg", "bg-surface"),
+            ("border-color", "border-color"),
+            ("border-radius", "border-radius"),
+            ("tertiary-bg", "tertiary-bg"),
+            ("border-color-translucent", "border-color-translucent"),
+            ("highlight-bg", "highlight-bg"),
+        ):
+            self.assertIn(f"--cv-{token}: var(--tblr-{source});", match.group(1))
+
+    def test_no_bootstrap_property_redefinitions_remain(self):
+        # Findings 31/35: the scoped --bs-* blocks and the compact-row gutter rule (upstream now adds gx-3) are gone
+        css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
+        self.assertNotRegex(css, r"--bs-[a-z-]+:")
+        self.assertNotIn("--tblr-gutter-x: 1rem", css)
+        self.assertIn(".cv-typeahead-select-popup", css)
+        # not .btn-outline-secondary, so upstream's Bootstrap-only help-button contrast rule does not apply
+        self.assertEqual(TABLER_BUTTON_CLASSES["manage:help"], "btn btn-sm")
+
+    def test_theme_guide_describes_the_token_mapping(self):
+        # The published guide must not describe the removed --bs-* blocks (review of the #394 adoption)
+        guide = (Path(__file__).resolve().parents[2] / "docs/theme_internals.md").read_text()
+        self.assertNotIn("--bs-* bridge", guide)
+        self.assertNotIn("reads `--bs-secondary-color` and `--bs-secondary-text-emphasis`", guide)
+        self.assertIn(":root, [data-bs-theme]", guide)
+        self.assertIn("--cv-body-bg", guide)
 
     def test_object_navbar_tabs_use_tabler_classes(self):
         # Finding 36, resolved by upstream #384: the tabs take Tabler's nav-bordered through the navbar:* keys; the

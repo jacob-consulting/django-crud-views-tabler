@@ -92,11 +92,11 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 | 28 | [Two ViewSets on one model share every default label](#28-two-viewsets-on-one-model-share-every-default-label) | cosmetic | **DONE** — [PR #342](https://github.com/jacob-consulting/django-crud-views/pull/342) (#338); adopted in both subscription ViewSets; list-header overrides removed |
 | 29 | [Snippet templates see the object, not the view](#29-snippet-templates-only-see-the-object-not-the-view) | cosmetic | **DONE** upstream #339 (closed 2026-11-10); adopted: duplicate message names the new draft; nested create heading names the customer |
 | 30 | ext: [Datetimepicker assets on every page, need jQuery](#30-ext-the-datetimepicker-assets-load-on-every-page-and-need-jquery) | annoyance | project head include loads jQuery 3.7.1 |
-| 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | theme CSS maps `--bs-*` to Tabler's `--tblr-*` |
+| 31 | ext: [Typeahead skins read Bootstrap's `--bs-*` properties](#31-ext-the-typeahead-skins-read-bootstraps---bs--custom-properties) | annoyance | **DONE** ext #6 / 0.4.0; theme maps the `--cv-*` tokens on `:root, [data-bs-theme]`; `--bs-*` block removed |
 | 32 | ext: [Datetimepicker keeps its own look](#32-ext-the-datetimepicker-keeps-its-own-look) | cosmetic | nothing |
 | 33 | [Workflow transition buttons ignore `variant` and `icon`](#33-workflow-transition-buttons-ignore-the-transitions-variant-and-icon) | cosmetic | **DONE** upstream #362 / PR #364; order transitions show their variant and icon; theme registers `workflow:transition-<variant>` |
 | 34 | [Compact formsets reject custom `Select` subclasses](#34-compact-formsets-reject-custom-select-subclasses) | cosmetic | **DONE** upstream #349 / PR #350; order lines use compact mode with the marked `ProductSelect` |
-| 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | **DONE** upstream #366 / PR #373 (+ #370, #372); theme registers Tabler classes for `manage:*` and maps the page's `--bs-secondary-*`; users and the Access check card shown; shipment Resource manage page |
+| 35 | [Manage page is one flat column of tables](#35-the-manage-page-is-one-flat-column-of-tables) | cosmetic | **DONE** upstream #366 / PR #373 (+ #370, #372); theme registers Tabler classes for `manage:*` and maps upstream's `--cv-*` tokens (#394) on the theme roots; users and the Access check card shown; shipment Resource manage page |
 | 36 | [Object navbar has no class keys](#36-the-object-navbar-has-no-class-keys) | cosmetic | **DONE** upstream #384: six `navbar:*` keys; theme registers `navbar:nav` = `nav nav-bordered flex-wrap column-gap-4 row-gap-1`, `navbar:item` with `ms-0` and `navbar:link` with `gap-2`; the pill-to-tab CSS is gone, only the active colour and the view title size remain |
 | 37 | [Object navbar checks each item with a fresh Guardian checker](#37-the-object-navbar-checks-each-item-with-a-fresh-guardian-checker) | cosmetic | **descoped**: tracked upstream as #385 (open); nothing here, eight extra queries per nested page for a grant-only user |
 | 38 | [ViewSet Navigation's contract forbids the identity as the page heading](#38-viewset-navigations-contract-forbids-the-identity-as-the-page-heading) | cosmetic | **DONE** upstream #384: contract reworded, owner-as-page-heading recipe published; the theme's owner header (avatar, name as h1, tabs, view title as h2) already matches it, no change |
@@ -607,7 +607,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   spans. The classic row helper and repeated-label setting are removed. Upstream renders one desktop heading strip
   plus associated row labels that show on mobile. The Tabler theme maps the compact fieldset's Bootstrap surface
   variables to Tabler tokens so its row cards follow dark mode, and gives heading/field grids the same 1rem Tabler
-  gutter that upstream requests via Bootstrap's variable. Create/update, invalid score and persistence tests
+  gutter that upstream requests via Bootstrap's variable. *Superseded 2026-11-21 by upstream #394: the `--cv-*` token
+  mapping and upstream's `gx-3` replace both; see finding 35.* Create/update, invalid score and persistence tests
   pass; source inspection confirms upstream's 768 px heading/label switch. A browser screenshot check was not run.
 - **Related follow-up:** order lines now use compact mode with the upstream custom-widget compatibility marker;
   see [finding 34](#34-compact-formsets-reject-custom-select-subclasses).
@@ -869,6 +870,11 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
 
 ### 31. ext: The typeahead skins read Bootstrap's `--bs-*` custom properties
 
+- **Status: DONE upstream** — django-crud-views-extensions
+  [issue #6](https://github.com/jacob-consulting/django-crud-views-extensions/issues/6), released in 0.4.0
+  (2026-11-21): the skins read `--cv-*` tokens with hard fallbacks. Adopted: the theme's root token mapping (finding
+  35) feeds them; the `--bs-*` block on `.cv-typeahead, .cv-typeahead-select` is gone. The dropdown shadow and
+  `display: block` on the items stay (theme look, not a token gap).
 - **What happened:** the select popup of `crud_views_widget_typeahead` uses `var(--bs-body-bg)`,
   `--bs-border-color-translucent`, `--bs-border-radius`, `--bs-secondary-color`, `--bs-highlight-bg`. Tabler names its
   properties `--tblr-*`, so the popup had no background or border and the form's buttons showed through the result
@@ -961,7 +967,16 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
     `--bs-secondary-color`, with light-mode fallbacks (`#495057`, `#6c757d`). Tabler defines only `--tblr-*`, so
     the fallbacks applied in dark mode too. `crud_views_tabler.css` maps both on `[data-cv-manage]` to Tabler's
     values (same approach as finding 31); in dark mode a default row is now Tabler's secondary text, not `#6c757d`.
-    Test: `BareTableTests::test_manage_page_reads_tabler_secondary_colours`.
+  - **Since #394 (PR #397, 2026-11-21):** `manage.css` and `formset.css` read six `--cv-*` tokens first
+    (`--cv-secondary-color`, `--cv-secondary-text-emphasis`, `--cv-body-bg`, `--cv-border-color`,
+    `--cv-border-radius`, `--cv-tertiary-bg`), and the compact rows carry `gx-3`. The theme maps the tokens once on
+    `:root, [data-bs-theme]` (with finding 31's typeahead tokens) and drops the `--bs-*` blocks on `[data-cv-manage]`
+    and `.cv-formset-compact`, and its `--tblr-gutter-x: 1rem` rule (Tabler's `gx-3` is the same 1rem). The mapping
+    is no longer scoped to compact formsets, so non-compact row cards (`formset.css`: border `--cv-secondary-color`,
+    background `--cv-body-bg`) and nested compact child formsets (`--cv-tertiary-bg`) now follow dark mode too; they
+    had kept light-mode literals. The example uses neither, so they were not checked in the browser. Tests:
+    `BareTableTests::test_tokens_map_tabler_properties_on_theme_roots`,
+    `test_no_bootstrap_property_redefinitions_remain`.
   - The finding-25 overflow rule is gone (finding 25, "Tables").
   - `example/config/settings.py` sets `CRUD_VIEWS_MANAGE_SHOW_USERS = True`: the matrix lists users, so sam's own
     Guardian grants on his customers (the gap reported below) are visible to alex.

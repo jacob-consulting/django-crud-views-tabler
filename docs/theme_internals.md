@@ -165,8 +165,8 @@ Magenta: required group · Green: Guardian policy"): `bg-blue-lt` for permission
 upstream's fixed-colour `cv-manage-badge-group`), `bg-green-lt` for Guardian policies and allowed/passed trace
 steps, `bg-red-lt` for denied, `bg-yellow-lt` for the other trace outcomes, `bg-secondary-lt` for the rest, and
 `badge badge-outline text-secondary` for object grants; the help buttons are `btn btn-sm`. Upstream's `manage.css`
-reads `--bs-secondary-color` and `--bs-secondary-text-emphasis`; `crud_views_tabler.css` sets both on
-`[data-cv-manage]` from Tabler's `--tblr-*` values so the headers and dimmed default rows follow dark mode. The page
+colours headers and dimmed default rows through the `--cv-*` CSS tokens (see "CSS tokens" below), so they follow
+dark mode. The page
 wraps its tables in `.table-responsive`, so the theme needs no overflow rule for it.
 
 ## Card views
@@ -347,16 +347,37 @@ crud_views/
                                   guarded by test_card_bulk_markup_is_upstreams)
 static/crud_views_tabler/
   crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons,
-                                  toggle-group and formset legends, the typeahead --bs-* bridge
+                                  toggle-group and formset legends, the --cv-* token mapping
   tabler-adapters.js              cv.adapters -> window.tabler, toolbar tooltips below
 ```
 
 The CSS rules added for the roastery demo each have a finding in
 [crud_views_upstream_findings_roastery.md](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/dev/crud_views_upstream_findings_roastery.md): section labels for toggle
 groups and formsets (#21: `conditional:legend` and `formset:legend` register `cv-tabler-section-legend`),
-the typeahead skins reading Bootstrap's `--bs-*` properties (#31, plain CSS, the theme
-does not import the extensions package). The workflow history's sideways-scroll rule (#5) went with upstream's
-`.table-responsive` wrapper.
+the typeahead popup's shadow and unbroken match highlight (#31, plain CSS, the theme does not import the extensions
+package). The workflow history's sideways-scroll rule (#5) went with upstream's `.table-responsive` wrapper.
+
+### CSS tokens
+
+Upstream's `manage.css` and `formset.css` (#394) and the typeahead skins of django-crud-views-extensions 0.4.0 read
+`--cv-*` tokens, falling back to Bootstrap's `--bs-*` properties and then to light-mode literals. Tabler names its
+properties `--tblr-*`, so `crud_views_tabler.css` maps the tokens once, on `:root, [data-bs-theme]` (upstream's
+recipe: declare on every theme root):
+
+| Token | Tabler property |
+|---|---|
+| `--cv-secondary-color` | `--tblr-secondary-color` |
+| `--cv-secondary-text-emphasis` | `--tblr-secondary-text-emphasis` |
+| `--cv-body-bg` | `--tblr-bg-surface` (the card surface: formset rows and the typeahead popup sit on cards) |
+| `--cv-border-color` | `--tblr-border-color` |
+| `--cv-border-radius` | `--tblr-border-radius` |
+| `--cv-tertiary-bg` | `--tblr-tertiary-bg` |
+| `--cv-border-color-translucent` | `--tblr-border-color-translucent` (typeahead) |
+| `--cv-highlight-bg` | `--tblr-highlight-bg` (typeahead) |
+
+Tabler 1.6.1 defines these colours with `light-dark()`, so a mapped token resolves against the colour scheme of the
+element that uses it, including a nested dark section. Upstream's compact formset rows carry `gx-3`, which Tabler
+defines as the same 1rem gutter, so the theme sets no gutter.
 
 The theme used to override the context, list and card action templates, both containers, the `⋯` toggle, the filter
 toggle and the card-order bar (nine templates). crud_views' class table, leaves and tooltip markers made all of them

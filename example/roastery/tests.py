@@ -1,4 +1,5 @@
 import random
+import re
 from datetime import date
 from decimal import Decimal
 
@@ -82,7 +83,7 @@ class CuppingTests(RoasteryTestCase):
         self.login()
         create_url = reverse("cupping-create", kwargs={"lot_pk": self.lot.pk})
         create_html = self.client.get(create_url).content.decode()
-        self.assertEqual(create_html.count('class="row cv-formset-compact-headings"'), 1)
+        self.assertEqual(len(re.findall(r'class="[^"]*\bcv-formset-compact-headings\b[^"]*"', create_html)), 1)
         self.assertEqual(create_html.count("cv-formset-row-compact"), 2)
         for label in ("Taster", *[name.title() for name in SCORE_FIELDS]):
             self.assertIn(label, create_html)
@@ -95,7 +96,7 @@ class CuppingTests(RoasteryTestCase):
         )
         update_url = reverse("cupping-update", kwargs={"lot_pk": self.lot.pk, "pk": session.pk})
         update_html = self.client.get(update_url).content.decode()
-        self.assertEqual(update_html.count('class="row cv-formset-compact-headings"'), 1)
+        self.assertEqual(len(re.findall(r'class="[^"]*\bcv-formset-compact-headings\b[^"]*"', update_html)), 1)
         self.assertIn("cv-formset-row-compact", update_html)
 
         invalid = {**self.score_row(self.users["kim"]), "aroma": "10.5"}

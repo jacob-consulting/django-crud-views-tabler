@@ -5,6 +5,23 @@ Status snapshot for the five points in
 paths and the options per point; this one says only where each point stands today and what is left to do. The
 questions document is not edited.
 
+## Update 2026-11-21: bulk actions, upstream 75a42851
+
+Bulk selection (#392) works under Tabler with upstream's seven `bulk:*` defaults and no CSS; the table view needs
+nothing (the theme's table override already wraps the table in `.table-responsive`, which is C9 of the AdminLTE
+tracker, `PythonProject/django-crud-views-adminlte/superpowers/notes/upstream-tracker.md`). Covered by
+`tests/crud_views_tabler/test_bulk.py`.
+
+- **Card grid has no bulk hooks.** Upstream's `view_card.content.html` renders the toolbar include and the card cell
+  (checkbox plus `{% cv_card object %}` in a `bulk:card-cell` wrapper) inline, with no block and no include for either.
+  A theme that restyles the grid, as this one does for `.row-deck`, has to copy that markup, and a copy drifts
+  silently. The theme's override now carries both fragments; `test_card_bulk_markup_is_upstreams` compares them with
+  the installed upstream template. Possible fix: a `card_cell` block, or an include for the checkbox, so the theme
+  overrides only the grid.
+- **C10** (the toolbar shows every action to every viewer) and **C11** (no danger variant for bulk buttons) are the
+  AdminLTE tracker's entries and apply here unchanged; not worked around.
+- No further Tabler finding: toolbar, select column, review page and messages render in Tabler as they are.
+
 ## Update 2026-11-04: Acme Roasters demo, upstream main cf2bfc0f
 
 The roastery demo (`example/`) put the theme in front of nearly every crud_views feature. The 32 candidates it

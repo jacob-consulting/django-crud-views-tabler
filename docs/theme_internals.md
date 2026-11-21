@@ -311,9 +311,27 @@ renders at that level and the card and filter titles one below, each keeping its
 class (`h2`, `h3`). `django_tabler/layouts/app.html` has a `page_heading` block around its `<h2>` for this, so
 `django_tabler` itself still knows nothing about crud_views.
 
+## Bulk actions
+
+Bulk selection (django-crud-views #392) needs one override and no `bulk:*` key or CSS:
+
+- The seven `bulk:*` button-class keys are not set: upstream's defaults (`form-check-input`, `d-flex` flex rows,
+  `position-relative` card cells) are Bootstrap classes that Tabler styles.
+- The table view is upstream's: the toolbar renders above the table card and carries the select-all checkbox; the
+  table's first column, "Select", holds one checkbox per row inside `.card.table-container > .table-responsive`, so a
+  wide list scrolls in the card (the theme's table override already solves C9 of the AdminLTE tracker).
+- The card view is the exception. The theme's `view_card.content.html` replaces upstream's grid and so would drop the
+  toolbar and the card checkbox; it copies both from upstream's template (the toolbar include and the
+  `bulk:card-cell` wrapper around `{% cv_card object %}`), inside its `.row-deck` grid. Upstream has no block for either.
+  `test_card_bulk_markup_is_upstreams` compares the copied fragments with the installed upstream template, so a change
+  upstream fails the suite.
+- Every checkbox posts through `form="<toolbar form id>"`. The review page renders in the theme's page like any custom
+  form view; result and warning messages go through the theme's alert template, once.
+
 ## Overridden templates
 
-Eight templates, all about page layout; none of them renders a button:
+Eight templates, all about page layout; none of them renders a button (the card grid copies upstream's bulk markup,
+see [Bulk actions](#bulk-actions)):
 
 ```
 crud_views/
@@ -323,7 +341,8 @@ crud_views/
   tags/card.html                  actions in a .card-footer; crud_views' blocks and card:* class keys
   tags/alert.html                 every alert (messages, delete page) in Tabler's layout: .alert-icon, .alert-heading
   tags/list_filter.html, list_filter.inner.html   filter as a Tabler card
-  view_card.content.html          card grid and empty state
+  view_card.content.html          card grid and empty state; bulk toolbar and card checkbox (upstream's,
+                                  guarded by test_card_bulk_markup_is_upstreams)
 static/crud_views_tabler/
   crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons,
                                   toggle-group and formset legends, the typeahead --bs-* bridge

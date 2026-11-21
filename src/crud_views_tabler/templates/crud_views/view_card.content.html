@@ -1,10 +1,16 @@
-{% load crud_views i18n %}
+{% load l10n crud_views i18n %}
 {# Tabler theme: cards in a .row-deck grid (equal heights), a Tabler empty state, Tabler pagination. #}
-{% include "crud_views/snippets/card_order.html" %}
+{# Bulk selection (upstream #392): the toolbar include and the card cell below are upstream's markup, copied because #}
+{# upstream's template has no block for either; test_card_bulk_markup_is_upstreams fails when upstream changes them. #}
+{# tracker: dev/crud_views_upstream_status.md, update 2026-11-21. #}
+{% include "crud_views/snippets/card_order.html" %}{% if view.cv_bulk_actions %}{% include "crud_views/snippets/bulk_toolbar.html" %}{% endif %}
 <div class="row row-deck row-cards">
   {% for object in object_list %}
   <div class="{{ view.cv_card_container_class }}">
-    {% cv_card object %}
+    {% if view.cv_bulk_actions %}<div class="{% cv_button_class 'bulk' 'card-cell' %}">
+                <input type="checkbox" name="cv_bulk_ids" value="{{ object.pk|unlocalize }}" form="{{ view.cv_bulk_form_id }}" data-cv-bulk-item class="{% cv_button_class 'bulk' 'card-select' %}" aria-label="{% blocktranslate with name=object %}Select {{ name }}{% endblocktranslate %}">
+                {% cv_card object %}
+            </div>{% else %}{% cv_card object %}{% endif %}
   </div>
   {% empty %}
   <div class="col-12">

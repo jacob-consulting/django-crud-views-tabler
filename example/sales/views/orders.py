@@ -9,11 +9,13 @@ show disabled and their URLs answer 403. The workflow, packing slip and duplicat
 import django_filters
 import django_tables2 as tables
 from crispy_forms.layout import Layout, Row
+from crud_views.lib.bulk import BulkSelectionMixin
 from crud_views.lib.crispy import Column3, CrispyDeleteForm, CrispyViewMixin
 from crud_views.lib.formsets import FormSetMixin
 from crud_views.lib.table import LinkDetailColumn, Table
 from crud_views.lib.view import ContextButton
 from crud_views.lib.views import (
+    CardListViewPermissionRequired,
     CreateViewParentMixin,
     CreateViewPermissionRequired,
     DeleteViewPermissionRequired,
@@ -217,7 +219,25 @@ class OrderDeleteView(
 # --------------------------------------------------------------------------- top level: all orders, new order
 
 
-class AllOrdersListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilterMixin, ListViewPermissionRequired):
+# Bulk selection (upstream #392) on the table and the cards; the actions are in order_bulk.py. BulkSelectionMixin goes
+# before ListViewTableMixin, whose get_table_kwargs does not call super().
+ALL_ORDERS_BULK_ACTIONS = ("bulk_roast", "bulk_cancel")
+
+
+class AllOrdersScopeMixin:
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(customer__in=customers_for(self.request.user))
+        return queryset.select_related("customer").prefetch_related("lines")
+
+
+class AllOrdersListView(
+    BreadcrumbMixin,
+    BulkSelectionMixin,
+    AllOrdersScopeMixin,
+    ListViewTableMixin,
+    ListViewTableFilterMixin,
+    ListViewPermissionRequired,
+):
     """Every order the user may see: Guardian grants on the customer decide (all of them with model-level rights)."""
 
     cv_viewset = cv_all_orders
@@ -225,12 +245,25 @@ class AllOrdersListView(BreadcrumbMixin, ListViewTableMixin, ListViewTableFilter
     filterset_class = OrderFilter
     formhelper_class = OrderFilterFormHelper
     cv_list_actions = []
-    cv_context_actions = ["filter", "create"]
+    cv_context_actions = ["list", "card", "filter", "create"]
+    cv_bulk_actions = ALL_ORDERS_BULK_ACTIONS
     paginate_by = 20
 
-    def get_queryset(self):
-        queryset = super().get_queryset().filter(customer__in=customers_for(self.request.user))
-        return queryset.select_related("customer").prefetch_related("lines")
+
+class AllOrdersCardView(
+    BreadcrumbMixin, BulkSelectionMixin, AllOrdersScopeMixin, ListViewTableFilterMixin, CardListViewPermissionRequired
+):
+    """The same orders as cards, with the same bulk actions."""
+
+    cv_viewset = cv_all_orders
+    filterset_class = OrderFilter
+    formhelper_class = OrderFilterFormHelper
+    cv_context_actions = ["list", "card", "filter", "create"]
+    cv_bulk_actions = ALL_ORDERS_BULK_ACTIONS
+    cv_card_template = "sales/order_card.html"
+    cv_card_container_class = "col-md-6 col-xl-4"
+    cv_card_actions = []
+    paginate_by = 12
 
 
 class AllOrdersCreateView(BreadcrumbMixin, CrispyViewMixin, MessageMixin, CreateViewPermissionRequired):

@@ -106,7 +106,7 @@ The sidebar (or, in the top-bar layout, one dropdown per section) shows what the
 |---|---|---|---|
 | | Dashboard | `/` | plain Django view: stat cards, revenue chart (ApexCharts), orders to roast, recent cuppings |
 | Sales | Customers | `/customer/` | Guardian per-object permissions, conditional group (wholesale terms), object detail `split-card`, action menus, nested addresses (Mark default: action view), delete protection |
-| | Orders | `/orders/`, `/customer/<id>/order/` | two ViewSets on one model, workflow (draft → confirmed → roasted → shipped → delivered, cancel), line formset, typeahead customer picker, datetimepicker, Duplicate (custom form), Packing slip (context button), disabled edit/delete once shipped |
+| | Orders | `/orders/`, `/customer/<id>/order/` | two ViewSets on one model, workflow (draft → confirmed → roasted → shipped → delivered, cancel), line formset, typeahead customer picker, datetimepicker, Duplicate (custom form), Packing slip (context button), disabled edit/delete once shipped, bulk actions (table and cards: "Mark roasted", "Cancel orders") |
 | | Subscriptions | `/subscriptions/` | nested and top-level lists, "Run subscriptions" (custom form without an object, own permission) |
 | Catalog | Products | `/product/` | polymorphic (beans / equipment / subscription), card view as the landing page plus a table, per-kind object detail |
 | | Categories | `/category/` | ordered (up/down) |

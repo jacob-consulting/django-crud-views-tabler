@@ -1,0 +1,19 @@
+{% extends "crud_views/tags/card.html" %}
+{% comment %}
+An order on the all-orders cards: the state badge and date on top, the number (linked into the customer's order
+pages) as the title, customer and items, the total in a footer above the actions. The bulk checkbox comes from
+crud_views' grid wrapper.
+{% endcomment %}
+{% block card_header %}
+    <div class="d-flex mb-2" data-order-card="{{ object.pk }}">
+      {{ object.state_badge }}
+      <span class="ms-auto text-secondary small">{{ object.created_at|date:"d M Y" }}</span>
+    </div>
+{% endblock card_header %}
+{% block card_title %}<a href="{% url 'order-detail' customer_pk=object.customer_id pk=object.pk %}" class="text-reset">{{ object }}</a>{% endblock card_title %}
+{% block card_content %}
+    <div class="text-secondary small">{{ object.customer }} · {{ object.line_count }} item{{ object.line_count|pluralize }}</div>
+{% endblock card_content %}
+{% block card_actions %}
+  <div class="card-footer fw-bold text-end">€ {{ object.total|floatformat:2 }}</div>
+{% endblock card_actions %}

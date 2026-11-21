@@ -20,7 +20,40 @@ tracker, `PythonProject/django-crud-views-adminlte/superpowers/notes/upstream-tr
   overrides only the grid.
 - **C10** (the toolbar shows every action to every viewer) and **C11** (no danger variant for bulk buttons) are the
   AdminLTE tracker's entries and apply here unchanged; not worked around.
-- No further Tabler finding: toolbar, select column, review page and messages render in Tabler as they are.
+- **Card cell shrinks in `.row-deck` (found in the demo's browser pass).** Upstream's `bulk:card-cell` default is
+  `position-relative`, a block wrapper; Tabler's `.row-deck > [class*=col-]` is a flex row, so the wrapper took its
+  card's content width (cards of unequal width, 198 px on a 375 px screen). The theme sets `bulk:card-cell` to
+  `position-relative d-flex flex-fill` (`buttons.py`, `test_bulk_card_cell_fills_its_grid_column`). Upstream could
+  make the cell `w-100`-safe by default or document the key for flex grids.
+- Otherwise toolbar, select column, review page and messages render in Tabler as they are; the demo needed no CSS
+  (select-all's indeterminate state already takes the brand colour, light and dark).
+
+### Browser pass, demo on :8012, 2026-11-21 (Chrome, `/orders/` table and `/orders/card/`)
+
+No sideways scroll is `documentElement.scrollWidth === clientWidth`. A window of 1280 px has a scrollbar, so
+clientWidth is 1265; 375 gives 360, except on pages that do not scroll (the review form: 375/375). The table scrolls
+inside its `.table-responsive` (556 px wide in a 343 px box).
+
+| Check | View | User | Width | Result |
+|---|---|---|---|---|
+| checkboxes + select-all visible; none / some (indeterminate, `rgb(160, 82, 45)`) / all (checked, brand) / cleared | table | alex | 1280 | pass |
+| same | cards (12 checkboxes, 12 cards) | alex | 1280 | pass |
+| same | table / cards | kim | 375 | pass |
+| no sideways scroll | table | alex / kim | 1280: 1265/1265; 375: 360/360 | pass |
+| no sideways scroll | cards | alex / kim | 1280: 1265/1265; 375: 360/360 | pass |
+| no sideways scroll | cancel review page | alex | 375: 375/375 | pass |
+| "Mark roasted" runs straight through, "2 orders marked roasted.", orders now Roasted | table | alex | 1280 | pass |
+| same, 1 order | table | alex / kim | 375 / 1280 / 375 | pass |
+| same, 2 orders | cards | alex | 375 | pass |
+| "Cancel orders" asks for a reason, then "1 order cancelled.", state Cancelled | table | alex | 1280 and 375 | pass |
+| same | cards | alex | 375 | pass |
+| "Cancel orders" answers 403 (C10) | table / cards | kim | 1280 / 375 | pass |
+| card widths equal (344 px at 375) | cards | alex | 375 | pass after fix (before: 198 px and unequal) |
+| dark mode (`?theme=dark`): checked and indeterminate in the brand colour, unchecked box dark, no scroll | table | alex | 375 | pass |
+
+Minor, not fixed: at 375 px the first column's card checkbox sits on the card's corner (upstream's `translate-middle`),
+so 2 px of it lie left of the viewport.
+
 
 ## Update 2026-11-04: Acme Roasters demo, upstream main cf2bfc0f
 

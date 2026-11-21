@@ -101,6 +101,14 @@ def test_bulk_card_view(admin_client, customers):
         assert cell.cssselect(".card")  # the card itself, next to its checkbox
 
 
+def test_bulk_card_cell_fills_its_grid_column(admin_client, customers):
+    # Tabler's .row-deck column is a flex row, so a plain block cell shrinks to its card's content
+    doc = page(admin_client.get(reverse("bulk_customer-card")))
+    for cell in doc.cssselect(f".row-deck {css('card-cell')}"):
+        classes = cell.get("class").split()
+        assert {"position-relative", "d-flex", "flex-fill"} <= set(classes)
+
+
 def test_bulk_checkboxes_point_at_the_toolbar_form(admin_client, customers):
     for name in ("bulk_customer-list", "bulk_customer-card"):
         doc = page(admin_client.get(reverse(name)))

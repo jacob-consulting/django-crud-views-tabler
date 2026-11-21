@@ -110,6 +110,7 @@ class ButtonClassTests(SimpleTestCase):
             "list:secondary": "btn btn-sm btn-ghost-secondary",
             "list:tertiary": "btn btn-sm btn-ghost-secondary",
             "list:danger": "btn btn-sm btn-ghost-danger",
+            "bulk:card-cell": "position-relative d-flex flex-fill",
             "card:primary": "btn btn-sm btn-primary",
             "card:secondary": "btn btn-sm",
             "card:tertiary": "btn btn-sm btn-ghost-secondary",

@@ -313,10 +313,12 @@ class (`h2`, `h3`). `django_tabler/layouts/app.html` has a `page_heading` block 
 
 ## Bulk actions
 
-Bulk selection (django-crud-views #392) needs one override and no `bulk:*` key or CSS:
+Bulk selection (django-crud-views #392) needs one override, one `bulk:*` key and no CSS:
 
-- The seven `bulk:*` button-class keys are not set: upstream's defaults (`form-check-input`, `d-flex` flex rows,
-  `position-relative` card cells) are Bootstrap classes that Tabler styles.
+- Six of the seven `bulk:*` button-class keys are not set: upstream's defaults (`form-check-input`, `d-flex` flex rows)
+  are Bootstrap classes that Tabler styles. `bulk:card-cell` is `position-relative d-flex flex-fill`: upstream's
+  `position-relative` block cell shrinks to its card's content inside Tabler's `.row-deck` column (a flex row), which
+  gave cards of unequal width in the demo; `test_bulk_card_cell_fills_its_grid_column` pins it.
 - The table view is upstream's: the toolbar renders above the table card and carries the select-all checkbox; the
   table's first column, "Select", holds one checkbox per row inside `.card.table-container > .table-responsive`, so a
   wide list scrolls in the card (the theme's table override already solves C9 of the AdminLTE tracker).

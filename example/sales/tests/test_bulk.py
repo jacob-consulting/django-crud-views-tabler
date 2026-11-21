@@ -64,6 +64,7 @@ class OrderBulkTests(OrderTestCase):
             self.assertEqual(order.state, OrderState.ROASTED)
             self.assertEqual(list(history(order).values_list("transition", flat=True)), ["wf_roast"])
         doc = self.doc(self.client.get(reverse("orders-list")))
+        # this shell has no host message wrapper; the AdminLTE test scopes to .adminlte-messages
         self.assertEqual([text(a) for a in doc.cssselect(".alert")], ["2 orders marked roasted."])
 
     def test_roast_shows_blocked_orders(self):

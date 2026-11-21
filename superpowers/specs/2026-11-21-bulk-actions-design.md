@@ -48,9 +48,10 @@ under one page shell. Bringing it to the other two shows which gaps are general 
 
 - Each repo's own conventions (its `CLAUDE.md`) bind: tracker rule, comment format at workarounds, ruff, test
   commands, Taskfile.
-- CoreUI logs in `superpowers/notes/upstream-tracker.md` with `U<n>` IDs (next free: U13). Tabler has no tracker file;
-  it logs in `dev/crud_views_upstream_status.md` as a dated `## Update 2026-11-21: bulk actions, upstream 75a42851`
-  section, in that file's prose style.
+- CoreUI logs in `superpowers/notes/upstream-tracker.md` with `U<n>` IDs (next free: U13). Tabler has no `U<n>` tracker;
+  its numbered findings go to `dev/crud_views_upstream_findings_roastery.md` (findings 40 and 41), and
+  `dev/crud_views_upstream_status.md` carries a dated `## Update 2026-11-21: bulk actions, upstream 75a42851` summary
+  with the browser log, in that file's prose style.
 - Both repos run crud_views `@main` in nox and the local editable `../django-crud-views` at `75a42851` in development.
 - Both repos override `crud_views/table/bootstrap5.html` already (CoreUI extends upstream's; Tabler's wraps it in
   `card table-container` + `table-responsive`). The bulk select column must render through those overrides; whether

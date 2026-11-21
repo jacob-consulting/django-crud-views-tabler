@@ -17,14 +17,18 @@ tracker, `PythonProject/django-crud-views-adminlte/superpowers/notes/upstream-tr
   A theme that restyles the grid, as this one does for `.row-deck`, has to copy that markup, and a copy drifts
   silently. The theme's override now carries both fragments; `test_card_bulk_markup_is_upstreams` compares them with
   the installed upstream template. Possible fix: a `card_cell` block, or an include for the checkbox, so the theme
-  overrides only the grid.
+  overrides only the grid. Logged as finding 40 in
+  [crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md).
 - **C10** (the toolbar shows every action to every viewer) and **C11** (no danger variant for bulk buttons) are the
   AdminLTE tracker's entries and apply here unchanged; not worked around.
 - **Card cell shrinks in `.row-deck` (found in the demo's browser pass).** Upstream's `bulk:card-cell` default is
   `position-relative`, a block wrapper; Tabler's `.row-deck > [class*=col-]` is a flex row, so the wrapper took its
   card's content width (cards of unequal width, 198 px on a 375 px screen). The theme sets `bulk:card-cell` to
   `position-relative d-flex flex-fill` (`buttons.py`, `test_bulk_card_cell_fills_its_grid_column`). Upstream could
-  make the cell `w-100`-safe by default or document the key for flex grids.
+  make the cell `w-100`-safe by default or document the key for flex grids. Logged as finding 41 in
+  [crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md).
+- **Demo test deviation.** `example/sales/tests/test_bulk.py` is AdminLTE's file with one change: the message selector
+  `.adminlte-messages .alert` is `.alert`, since this shell has no host message wrapper.
 - Otherwise toolbar, select column, review page and messages render in Tabler as they are; the demo needed no CSS
   (select-all's indeterminate state already takes the brand colour, light and dark).
 

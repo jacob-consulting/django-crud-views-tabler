@@ -332,8 +332,8 @@ Bulk selection (django-crud-views #392) needs one override, one `bulk:*` key and
 
 ## Overridden templates
 
-Eight templates, all about page layout; none of them renders a button (the card grid copies upstream's bulk markup,
-see [Bulk actions](#bulk-actions)):
+Eight templates, all about page layout; only the card grid renders buttons, the bulk toolbar and the card checkboxes it
+copies from upstream (see [Bulk actions](#bulk-actions)):
 
 ```
 crud_views/

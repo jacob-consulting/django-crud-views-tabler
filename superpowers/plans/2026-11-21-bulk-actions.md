@@ -20,7 +20,8 @@ chrome-devtools MCP for the browser pass.
 - CoreUI: `/home/alex/projects/alex/django-crud-views-core-ui` (theme package `src/crud_views_coreui`, tests
   `tests/crud_views_coreui`, log `superpowers/notes/upstream-tracker.md`, `U<n>` IDs, next free U13).
 - Tabler: `/home/alex/projects/alex/tabler-test` (theme package `src/crud_views_tabler`, tests
-  `tests/crud_views_tabler`, log `dev/crud_views_upstream_status.md`).
+  `tests/crud_views_tabler`, findings in `dev/crud_views_upstream_findings_roastery.md`, dated summary and browser log in
+  `dev/crud_views_upstream_status.md`).
 - Reference (read-only): AdminLTE `/home/alex/projects/alex/PythonProject/django-crud-views-adminlte`, commit
   `99d5f4e` (`git -C <adminlte> show 99d5f4e` shows the whole bulk change). Upstream (read-only):
   `/home/alex/projects/alex/django-crud-views` at `75a42851`.
@@ -179,8 +180,9 @@ chrome-devtools MCP for the browser pass.
   `uv run pytest -n auto tests/crud_views_tabler --ds tests.crud_views_tabler.settings`; expected all pass (97 + new).
 - [ ] **Step 6: Docs and log.** `docs/theme_internals.md`: overrides table line for `view_card.content.html` gains
   "bulk toolbar and card checkbox (upstream's, guarded by `test_card_bulk_markup_is_upstreams`)", plus a "Bulk
-  actions" section as in CoreUI. `dev/crud_views_upstream_status.md`: a new top section
-  `## Update 2026-11-21: bulk actions, upstream 75a42851` in the file's prose style: the card grid finding (upstream's
+  actions" section as in CoreUI. Findings 40 and 41 go to
+  `dev/crud_views_upstream_findings_roastery.md`; `dev/crud_views_upstream_status.md`: a new top section
+  `## Update 2026-11-21: bulk actions, upstream 75a42851` in the file's prose style, summarising them: the card grid finding (upstream's
   `view_card.content.html` has no block for the card cell, so a theme that restyles the grid must copy the bulk
   markup; possible fix: a `card_cell` block or an include for the checkbox), C9/C10/C11 cross-referenced to the
   AdminLTE tracker, and any further Tabler finding.
@@ -189,8 +191,8 @@ chrome-devtools MCP for the browser pass.
 
 ### Task 4: Tabler demo: bulk orders and browser pass
 
-**Files (Tabler repo):** as Task 2, in the Tabler repo; the log is `dev/crud_views_upstream_status.md`
-(the bulk section from Task 3).
+**Files (Tabler repo):** as Task 2, in the Tabler repo; the findings file is `dev/crud_views_upstream_findings_roastery.md`, the browser log goes in
+`dev/crud_views_upstream_status.md` (the bulk section from Task 3).
 
 **Interfaces:**
 - Consumes: CoreUI's Task 2 files as the template (they are AdminLTE's, already adapted to a sibling layout).

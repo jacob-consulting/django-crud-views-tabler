@@ -30,7 +30,8 @@ TABLER_BUTTON_CLASSES: dict[str, str] = {
     "list:tertiary": "btn btn-sm btn-ghost-secondary",
     "list:danger": "btn btn-sm btn-ghost-danger",
     # Bulk selection: upstream's card cell is a block wrapper, which shrinks to its card inside Tabler's .row-deck
-    # column (a flex row). Fill the column; the card (Tabler gives .row-deck .card flex: 1 1 auto) then fills the cell.
+    # column (a flex row; finding 41). Fill the column; the card (Tabler gives .row-deck .card flex: 1 1 auto) then
+    # fills the cell.
     "bulk:card-cell": "position-relative d-flex flex-fill",
     "card:primary": "btn btn-sm btn-primary",
     "card:secondary": "btn btn-sm",

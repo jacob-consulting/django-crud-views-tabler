@@ -2,7 +2,7 @@
 {# Tabler theme: cards in a .row-deck grid (equal heights), a Tabler empty state, Tabler pagination. #}
 {# Bulk selection (upstream #392): the toolbar include and the card cell below are upstream's markup, copied because #}
 {# upstream's template has no block for either; test_card_bulk_markup_is_upstreams fails when upstream changes them. #}
-{# tracker: dev/crud_views_upstream_status.md, update 2026-11-21. #}
+{# tracker: finding 40, dev/crud_views_upstream_findings_roastery.md (summary: dev/crud_views_upstream_status.md). #}
 {% include "crud_views/snippets/card_order.html" %}{% if view.cv_bulk_actions %}{% include "crud_views/snippets/bulk_toolbar.html" %}{% endif %}
 <div class="row row-deck row-cards">
   {% for object in object_list %}

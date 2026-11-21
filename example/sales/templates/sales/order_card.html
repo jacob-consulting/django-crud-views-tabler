@@ -1,7 +1,7 @@
 {% extends "crud_views/tags/card.html" %}
 {% comment %}
 An order on the all-orders cards: the state badge and date on top, the number (linked into the customer's order
-pages) as the title, customer and items, the total in a footer above the actions. The bulk checkbox comes from
+pages) as the title, customer and items, the total in a footer. The card's actions are not rendered (`block.super` is not called). The bulk checkbox comes from
 crud_views' grid wrapper.
 {% endcomment %}
 {% block card_header %}

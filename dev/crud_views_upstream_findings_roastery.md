@@ -1123,6 +1123,32 @@ key, so a project can use `"customer"` and map it to `tabler:building-store`. Th
 worth documenting upstream: a semantic name missing from the table renders as a raw CSS class, silently.
 Cross-reference: CoreUI tracker U7 (`jacob-consulting/django-crud-views-coreui`).
 
+---
+
+### 40. The card view has no hook for the bulk toolbar or the card cell
+
+- **What happened:** upstream's `view_card.content.html` (bulk selection, #392) renders the bulk toolbar include and
+  the card cell (checkbox plus `{% cv_card object %}` in a `bulk:card-cell` wrapper) inline, with no block and no
+  include for either. A theme that restyles the card grid, as this one does for `.row-deck`, has to copy both
+  fragments, and a copy drifts silently.
+- **Worked around here:** `view_card.content.html` carries both fragments (comment "finding 40");
+  `test_card_bulk_markup_is_upstreams` compares them with the installed upstream template.
+- **Suggested upstream change:** a `card_cell` block, or an include for the checkbox, so a theme overrides only the grid.
+- **Severity:** cosmetic (a copy to maintain).
+
+---
+
+### 41. The bulk card cell shrinks inside a flex `.row-deck` column
+
+- **What happened:** upstream's `bulk:card-cell` default is `position-relative`, a block wrapper. Tabler's
+  `.row-deck > [class*=col-]` is a flex row, so the wrapper took its card's content width: cards of unequal width
+  (198 px on a 375 px screen), found in the demo's browser pass.
+- **Worked around here:** `bulk:card-cell` is `position-relative d-flex flex-fill` in `buttons.py` (comment "finding
+  41"); `test_bulk_card_cell_fills_its_grid_column`.
+- **Suggested upstream change:** make the default cell safe in flex grids (`w-100`), or document the key for them.
+- **Severity:** cosmetic.
+
+
 ## Not shown in the demo
 
 Features from the spec's feature map that were dropped or reduced, with the reason.

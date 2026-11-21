@@ -104,9 +104,19 @@ def test_bulk_card_view(admin_client, customers):
 def test_bulk_card_cell_fills_its_grid_column(admin_client, customers):
     # Tabler's .row-deck column is a flex row, so a plain block cell shrinks to its card's content
     doc = page(admin_client.get(reverse("bulk_customer-card")))
-    for cell in doc.cssselect(f".row-deck {css('card-cell')}"):
+    cells = doc.cssselect(f".row-deck {css('card-cell')}")
+    assert len(cells) == 3  # so the loop cannot pass vacuously
+    for cell in cells:
         classes = cell.get("class").split()
         assert {"position-relative", "d-flex", "flex-fill"} <= set(classes)
+
+
+def test_bulk_prefixed_sort_marks_the_header(admin_client, customers):
+    # the bulk ViewSet's table has the prefix "c": ?c-sort=name marks the Name header (aria-sort, sort class)
+    doc = page(admin_client.get(reverse("bulk_customer-list") + "?c-sort=name"))
+    (th,) = [th for th in doc.cssselect("thead th") if "Name" in th.text_content()]
+    assert th.get("aria-sort") == "ascending"
+    assert "asc" in th.cssselect("a.table-sort")[0].get("class").split()
 
 
 def test_bulk_checkboxes_point_at_the_toolbar_form(admin_client, customers):

@@ -5,6 +5,75 @@ Status snapshot for the five points in
 paths and the options per point; this one says only where each point stands today and what is left to do. The
 questions document is not edited.
 
+## Update 2026-11-21: upstream #391, #393, #394 and extensions 0.4.0
+
+Upstream 95d40ddf, 4ec93cb9 and 49d5173a, plus django-crud-views-extensions 0.4.0.
+
+- **#391 (theme-registered data-attribute prefix):** Tabler keeps Bootstrap's `data-bs-*` API, which is the default
+  prefix. Nothing to register or change.
+- **#393 (breadcrumb class keys, `aria-sort` in the stock header):** the theme has no breadcrumb workaround and keeps
+  the defaults. Its `table/bootstrap5.html` override stays for the card table layout and already renders `aria-sort`
+  and the sort classes from the bound column (`column.is_ordered`), as upstream now does.
+- **#394 (`--cv-*` CSS tokens for manage and formsets) and extensions #6 (typeahead tokens):** one token mapping on
+  `:root, [data-bs-theme]` replaces the theme's three scoped `--bs-*` blocks and its compact-row gutter rule; see
+  findings 31 and 35 in [crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md).
+  Side effect: the compact headings and field rows now carry `gx-3`, which broke three example assertions that
+  matched the exact attribute `class="row cv-formset-compact-headings"`. They now match by class.
+
+## Update 2026-11-21: bulk actions, upstream 75a42851
+
+Bulk selection (#392) works under Tabler with upstream's seven `bulk:*` defaults and no CSS; the table view needs
+nothing (the theme's table override already wraps the table in `.table-responsive`, which is C9 of the AdminLTE
+tracker, `PythonProject/django-crud-views-adminlte/superpowers/notes/upstream-tracker.md`). Covered by
+`tests/crud_views_tabler/test_bulk.py`.
+
+- **Card grid has no bulk hooks.** Upstream's `view_card.content.html` renders the toolbar include and the card cell
+  (checkbox plus `{% cv_card object %}` in a `bulk:card-cell` wrapper) inline, with no block and no include for either.
+  A theme that restyles the grid, as this one does for `.row-deck`, has to copy that markup, and a copy drifts
+  silently. The theme's override now carries both fragments; `test_card_bulk_markup_is_upstreams` compares them with
+  the installed upstream template. Possible fix: a `card_cell` block, or an include for the checkbox, so the theme
+  overrides only the grid. Logged as finding 40 in
+  [crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md).
+- **C10** (the toolbar shows every action to every viewer) and **C11** (no danger variant for bulk buttons) are the
+  AdminLTE tracker's entries and apply here unchanged; not worked around.
+- **Card cell shrinks in `.row-deck` (found in the demo's browser pass).** Upstream's `bulk:card-cell` default is
+  `position-relative`, a block wrapper; Tabler's `.row-deck > [class*=col-]` is a flex row, so the wrapper took its
+  card's content width (cards of unequal width, 198 px on a 375 px screen). The theme sets `bulk:card-cell` to
+  `position-relative d-flex flex-fill` (`buttons.py`, `test_bulk_card_cell_fills_its_grid_column`). Upstream could
+  make the cell `w-100`-safe by default or document the key for flex grids. Logged as finding 41 in
+  [crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md).
+- **Demo test deviation.** `example/sales/tests/test_bulk.py` is AdminLTE's file with one change: the message selector
+  `.adminlte-messages .alert` is `.alert`, since this shell has no host message wrapper.
+- Otherwise toolbar, select column, review page and messages render in Tabler as they are; the demo needed no CSS
+  (select-all's indeterminate state already takes the brand colour, light and dark).
+
+### Browser pass, demo on :8012, 2026-11-21 (Chrome, `/orders/` table and `/orders/card/`)
+
+No sideways scroll is `documentElement.scrollWidth === clientWidth`. A window of 1280 px has a scrollbar, so
+clientWidth is 1265; 375 gives 360, except on pages that do not scroll (the review form: 375/375). The table scrolls
+inside its `.table-responsive` (556 px wide in a 343 px box).
+
+| Check | View | User | Width | Result |
+|---|---|---|---|---|
+| checkboxes + select-all visible; none / some (indeterminate, `rgb(160, 82, 45)`) / all (checked, brand) / cleared | table | alex | 1280 | pass |
+| same | cards (12 checkboxes, 12 cards) | alex | 1280 | pass |
+| same | table / cards | kim | 375 | pass |
+| no sideways scroll | table | alex / kim | 1280: 1265/1265; 375: 360/360 | pass |
+| no sideways scroll | cards | alex / kim | 1280: 1265/1265; 375: 360/360 | pass |
+| no sideways scroll | cancel review page | alex | 375: 375/375 | pass |
+| "Mark roasted" runs straight through, "2 orders marked roasted.", orders now Roasted | table | alex | 1280 | pass |
+| same, 1 order | table | alex / kim | 375 / 1280 / 375 | pass |
+| same, 2 orders | cards | alex | 375 | pass |
+| "Cancel orders" asks for a reason, then "1 order cancelled.", state Cancelled | table | alex | 1280 and 375 | pass |
+| same | cards | alex | 375 | pass |
+| "Cancel orders" answers 403 (C10) | table / cards | kim | 1280 / 375 | pass |
+| card widths equal (344 px at 375) | cards | alex | 375 | pass after fix (before: 198 px and unequal) |
+| dark mode (`?theme=dark`): checked and indeterminate in the brand colour, unchecked box dark, no scroll | table | alex | 375 | pass |
+
+Minor, not fixed: at 375 px the first column's card checkbox sits on the card's corner (upstream's `translate-middle`),
+so 2 px of it lie left of the viewport.
+
+
 ## Update 2026-11-04: Acme Roasters demo, upstream main cf2bfc0f
 
 The roastery demo (`example/`) put the theme in front of nearly every crud_views feature. The 32 candidates it

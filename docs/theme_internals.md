@@ -165,8 +165,8 @@ Magenta: required group · Green: Guardian policy"): `bg-blue-lt` for permission
 upstream's fixed-colour `cv-manage-badge-group`), `bg-green-lt` for Guardian policies and allowed/passed trace
 steps, `bg-red-lt` for denied, `bg-yellow-lt` for the other trace outcomes, `bg-secondary-lt` for the rest, and
 `badge badge-outline text-secondary` for object grants; the help buttons are `btn btn-sm`. Upstream's `manage.css`
-reads `--bs-secondary-color` and `--bs-secondary-text-emphasis`; `crud_views_tabler.css` sets both on
-`[data-cv-manage]` from Tabler's `--tblr-*` values so the headers and dimmed default rows follow dark mode. The page
+colours headers and dimmed default rows through the `--cv-*` CSS tokens (see "CSS tokens" below), so they follow
+dark mode. The page
 wraps its tables in `.table-responsive`, so the theme needs no overflow rule for it.
 
 ## Card views
@@ -311,9 +311,29 @@ renders at that level and the card and filter titles one below, each keeping its
 class (`h2`, `h3`). `django_tabler/layouts/app.html` has a `page_heading` block around its `<h2>` for this, so
 `django_tabler` itself still knows nothing about crud_views.
 
+## Bulk actions
+
+Bulk selection (django-crud-views #392) needs one override, one `bulk:*` key and no CSS:
+
+- Six of the seven `bulk:*` button-class keys are not set: upstream's defaults (`form-check-input`, `d-flex` flex rows)
+  are Bootstrap classes that Tabler styles. `bulk:card-cell` is `position-relative d-flex flex-fill`: upstream's
+  `position-relative` block cell shrinks to its card's content inside Tabler's `.row-deck` column (a flex row), which
+  gave cards of unequal width in the demo; `test_bulk_card_cell_fills_its_grid_column` pins it.
+- The table view is upstream's: the toolbar renders above the table card and carries the select-all checkbox; the
+  table's first column, "Select", holds one checkbox per row inside `.card.table-container > .table-responsive`, so a
+  wide list scrolls in the card (the theme's table override already solves C9 of the AdminLTE tracker).
+- The card view is the exception. The theme's `view_card.content.html` replaces upstream's grid and so would drop the
+  toolbar and the card checkbox; it copies both from upstream's template (the toolbar include and the
+  `bulk:card-cell` wrapper around `{% cv_card object %}`), inside its `.row-deck` grid. Upstream has no block for either.
+  `test_card_bulk_markup_is_upstreams` compares the copied fragments with the installed upstream template, so a change
+  upstream fails the suite.
+- Every checkbox posts through `form="<toolbar form id>"`. The review page renders in the theme's page like any custom
+  form view; result and warning messages go through the theme's alert template, once.
+
 ## Overridden templates
 
-Eight templates, all about page layout; none of them renders a button:
+Eight templates, all about page layout; only the card grid renders buttons, the bulk toolbar and the card checkboxes it
+copies from upstream (see [Bulk actions](#bulk-actions)):
 
 ```
 crud_views/
@@ -323,19 +343,41 @@ crud_views/
   tags/card.html                  actions in a .card-footer; crud_views' blocks and card:* class keys
   tags/alert.html                 every alert (messages, delete page) in Tabler's layout: .alert-icon, .alert-heading
   tags/list_filter.html, list_filter.inner.html   filter as a Tabler card
-  view_card.content.html          card grid and empty state
+  view_card.content.html          card grid and empty state; bulk toolbar and card checkbox (upstream's,
+                                  guarded by test_card_bulk_markup_is_upstreams)
 static/crud_views_tabler/
   crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons,
-                                  toggle-group and formset legends, the typeahead --bs-* bridge
+                                  toggle-group and formset legends, the --cv-* token mapping
   tabler-adapters.js              cv.adapters -> window.tabler, toolbar tooltips below
 ```
 
 The CSS rules added for the roastery demo each have a finding in
 [crud_views_upstream_findings_roastery.md](https://github.com/jacob-consulting/django-crud-views-tabler/blob/main/dev/crud_views_upstream_findings_roastery.md): section labels for toggle
 groups and formsets (#21: `conditional:legend` and `formset:legend` register `cv-tabler-section-legend`),
-the typeahead skins reading Bootstrap's `--bs-*` properties (#31, plain CSS, the theme
-does not import the extensions package). The workflow history's sideways-scroll rule (#5) went with upstream's
-`.table-responsive` wrapper.
+the typeahead popup's shadow and unbroken match highlight (#31, plain CSS, the theme does not import the extensions
+package). The workflow history's sideways-scroll rule (#5) went with upstream's `.table-responsive` wrapper.
+
+### CSS tokens
+
+Upstream's `manage.css` and `formset.css` (#394) and the typeahead skins of django-crud-views-extensions 0.4.0 read
+`--cv-*` tokens, falling back to Bootstrap's `--bs-*` properties and then to light-mode literals. Tabler names its
+properties `--tblr-*`, so `crud_views_tabler.css` maps the tokens once, on `:root, [data-bs-theme]` (upstream's
+recipe: declare on every theme root):
+
+| Token | Tabler property |
+|---|---|
+| `--cv-secondary-color` | `--tblr-secondary-color` |
+| `--cv-secondary-text-emphasis` | `--tblr-secondary-text-emphasis` |
+| `--cv-body-bg` | `--tblr-bg-surface` (the card surface: formset rows and the typeahead popup sit on cards) |
+| `--cv-border-color` | `--tblr-border-color` |
+| `--cv-border-radius` | `--tblr-border-radius` |
+| `--cv-tertiary-bg` | `--tblr-tertiary-bg` |
+| `--cv-border-color-translucent` | `--tblr-border-color-translucent` (typeahead) |
+| `--cv-highlight-bg` | `--tblr-highlight-bg` (typeahead) |
+
+Tabler 1.6.1 defines these colours with `light-dark()`, so a mapped token resolves against the colour scheme of the
+element that uses it, including a nested dark section. Upstream's compact formset rows carry `gx-3`, which Tabler
+defines as the same 1rem gutter, so the theme sets no gutter.
 
 The theme used to override the context, list and card action templates, both containers, the `⋯` toggle, the filter
 toggle and the card-order bar (nine templates). crud_views' class table, leaves and tooltip markers made all of them

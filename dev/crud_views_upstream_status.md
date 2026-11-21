@@ -5,6 +5,21 @@ Status snapshot for the five points in
 paths and the options per point; this one says only where each point stands today and what is left to do. The
 questions document is not edited.
 
+## Update 2026-11-21: upstream #391, #393, #394 and extensions 0.4.0
+
+Upstream 95d40ddf, 4ec93cb9 and 49d5173a, plus django-crud-views-extensions 0.4.0.
+
+- **#391 (theme-registered data-attribute prefix):** Tabler keeps Bootstrap's `data-bs-*` API, which is the default
+  prefix. Nothing to register or change.
+- **#393 (breadcrumb class keys, `aria-sort` in the stock header):** the theme has no breadcrumb workaround and keeps
+  the defaults. Its `table/bootstrap5.html` override stays for the card table layout and already renders `aria-sort`
+  and the sort classes from the bound column (`column.is_ordered`), as upstream now does.
+- **#394 (`--cv-*` CSS tokens for manage and formsets) and extensions #6 (typeahead tokens):** one token mapping on
+  `:root, [data-bs-theme]` replaces the theme's three scoped `--bs-*` blocks and its compact-row gutter rule; see
+  findings 31 and 35 in [crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md).
+  Side effect: the compact headings and field rows now carry `gx-3`, which broke three example assertions that
+  matched the exact attribute `class="row cv-formset-compact-headings"`. They now match by class.
+
 ## Update 2026-11-21: bulk actions, upstream 75a42851
 
 Bulk selection (#392) works under Tabler with upstream's seven `bulk:*` defaults and no CSS; the table view needs

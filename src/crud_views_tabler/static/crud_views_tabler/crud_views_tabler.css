@@ -48,37 +48,21 @@
   font-weight: var(--tblr-font-weight-bold, 600);
 }
 
-/* Upstream compact rows use Bootstrap surface variables. Supply Tabler's values so their cards follow dark mode. */
-.cv-formset-compact {
-  --bs-body-bg: var(--tblr-bg-surface);
-  --bs-border-color: var(--tblr-border-color);
-  --bs-border-radius: var(--tblr-border-radius);
-}
-
-/* Compact headings and fields share a 1rem gutter; Tabler's .row reads its own variable. */
-.cv-formset-compact-headings,
-.cv-formset-compact-fields {
-  --tblr-gutter-x: 1rem;
-}
-
-/* django-crud-views-extensions' typeahead skins read Bootstrap's custom properties (--bs-body-bg, ...). Tabler names
-   them --tblr-*, so the select popup had no background or border and the form buttons showed through it. Feed the
-   components Tabler's values; plain CSS, the theme does not depend on the extensions package. */
-.cv-typeahead,
-.cv-typeahead-select {
-  --bs-body-bg: var(--tblr-bg-surface);
-  --bs-border-color-translucent: var(--tblr-border-color-translucent);
-  --bs-border-radius: var(--tblr-border-radius);
-  --bs-secondary-color: var(--tblr-secondary-color);
-  --bs-highlight-bg: var(--tblr-highlight-bg);
-}
-
-/* Finding 35: upstream's manage.css (the structured manage page, #366) colours headers and dimmed default rows with
-   Bootstrap's --bs-secondary-* properties and light-mode fallbacks; Tabler names them --tblr-*, so in dark mode the
-   fallbacks applied. Feed it Tabler's values. */
-[data-cv-manage] {
-  --bs-secondary-color: var(--tblr-secondary-color);
-  --bs-secondary-text-emphasis: var(--tblr-secondary-text-emphasis);
+/* Upstream's manage page and formsets (#394) and the typeahead skins of django-crud-views-extensions 0.4.0 read
+   --cv-* tokens, falling back to Bootstrap's --bs-* properties and light-mode literals; Tabler names its properties
+   --tblr-*. Declared on every theme root, so a nested data-bs-theme="dark" section (the dark sidebar) resolves the
+   tokens against its own mode. --cv-body-bg is the card surface: formset rows sit inside cards. Upstream's compact
+   rows carry gx-3, which Tabler defines as the same 1rem gutter. Findings 31 and 35. */
+:root,
+[data-bs-theme] {
+  --cv-secondary-color: var(--tblr-secondary-color);
+  --cv-secondary-text-emphasis: var(--tblr-secondary-text-emphasis);
+  --cv-body-bg: var(--tblr-bg-surface);
+  --cv-border-color: var(--tblr-border-color);
+  --cv-border-radius: var(--tblr-border-radius);
+  --cv-tertiary-bg: var(--tblr-tertiary-bg);
+  --cv-border-color-translucent: var(--tblr-border-color-translucent);
+  --cv-highlight-bg: var(--tblr-highlight-bg);
 }
 
 .cv-typeahead-select-popup {

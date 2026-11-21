@@ -867,7 +867,7 @@ class BareTableTests(SimpleTestCase):
 
     def test_tokens_map_tabler_properties_on_theme_roots(self):
         # Upstream #394 (manage, formsets) and extensions 0.4.0 (typeahead) read --cv-* tokens; the theme maps them on
-        # every theme root, so a nested data-bs-theme="dark" section resolves against its own mode
+        # every theme root (upstream's recipe); Tabler's light-dark() values resolve where a token is used
         css = (Path(crud_views_tabler.__file__).parent / "static/crud_views_tabler/crud_views_tabler.css").read_text()
         match = re.search(r":root,\s*\[data-bs-theme\] \{([^}]*)\}", css)
         self.assertIsNotNone(match)
@@ -891,6 +891,14 @@ class BareTableTests(SimpleTestCase):
         self.assertIn(".cv-typeahead-select-popup", css)
         # not .btn-outline-secondary, so upstream's Bootstrap-only help-button contrast rule does not apply
         self.assertEqual(TABLER_BUTTON_CLASSES["manage:help"], "btn btn-sm")
+
+    def test_theme_guide_describes_the_token_mapping(self):
+        # The published guide must not describe the removed --bs-* blocks (review of the #394 adoption)
+        guide = (Path(__file__).resolve().parents[2] / "docs/theme_internals.md").read_text()
+        self.assertNotIn("--bs-* bridge", guide)
+        self.assertNotIn("reads `--bs-secondary-color` and `--bs-secondary-text-emphasis`", guide)
+        self.assertIn(":root, [data-bs-theme]", guide)
+        self.assertIn("--cv-body-bg", guide)
 
     def test_object_navbar_tabs_use_tabler_classes(self):
         # Finding 36, resolved by upstream #384: the tabs take Tabler's nav-bordered through the navbar:* keys; the

@@ -607,7 +607,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   spans. The classic row helper and repeated-label setting are removed. Upstream renders one desktop heading strip
   plus associated row labels that show on mobile. The Tabler theme maps the compact fieldset's Bootstrap surface
   variables to Tabler tokens so its row cards follow dark mode, and gives heading/field grids the same 1rem Tabler
-  gutter that upstream requests via Bootstrap's variable. Create/update, invalid score and persistence tests
+  gutter that upstream requests via Bootstrap's variable. *Superseded 2026-11-21 by upstream #394: the `--cv-*` token
+  mapping and upstream's `gx-3` replace both; see finding 35.* Create/update, invalid score and persistence tests
   pass; source inspection confirms upstream's 768 px heading/label switch. A browser screenshot check was not run.
 - **Related follow-up:** order lines now use compact mode with the upstream custom-widget compatibility marker;
   see [finding 34](#34-compact-formsets-reject-custom-select-subclasses).
@@ -970,7 +971,10 @@ The original report, against `cf2bfc0f` (line numbers below are from then):
     (`--cv-secondary-color`, `--cv-secondary-text-emphasis`, `--cv-body-bg`, `--cv-border-color`,
     `--cv-border-radius`, `--cv-tertiary-bg`), and the compact rows carry `gx-3`. The theme maps the tokens once on
     `:root, [data-bs-theme]` (with finding 31's typeahead tokens) and drops the `--bs-*` blocks on `[data-cv-manage]`
-    and `.cv-formset-compact`, and its `--tblr-gutter-x: 1rem` rule (Tabler's `gx-3` is the same 1rem). Tests:
+    and `.cv-formset-compact`, and its `--tblr-gutter-x: 1rem` rule (Tabler's `gx-3` is the same 1rem). The mapping
+    is no longer scoped to compact formsets, so non-compact row cards (`formset.css`: border `--cv-secondary-color`,
+    background `--cv-body-bg`) and nested compact child formsets (`--cv-tertiary-bg`) now follow dark mode too; they
+    had kept light-mode literals. The example uses neither, so they were not checked in the browser. Tests:
     `BareTableTests::test_tokens_map_tabler_properties_on_theme_roots`,
     `test_no_bootstrap_property_redefinitions_remain`.
   - The finding-25 overflow rule is gone (finding 25, "Tables").

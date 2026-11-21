@@ -50,8 +50,8 @@
 
 /* Upstream's manage page and formsets (#394) and the typeahead skins of django-crud-views-extensions 0.4.0 read
    --cv-* tokens, falling back to Bootstrap's --bs-* properties and light-mode literals; Tabler names its properties
-   --tblr-*. Declared on every theme root, so a nested data-bs-theme="dark" section (the dark sidebar) resolves the
-   tokens against its own mode. --cv-body-bg is the card surface: formset rows sit inside cards. Upstream's compact
+   --tblr-*. Declared on every theme root, as upstream's recipe asks; Tabler 1.6.1's light-dark() values resolve
+   against the colour scheme where a token is used. --cv-body-bg is the card surface: formset rows sit inside cards. Upstream's compact
    rows carry gx-3, which Tabler defines as the same 1rem gutter. Findings 31 and 35. */
 :root,
 [data-bs-theme] {

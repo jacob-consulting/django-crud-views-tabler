@@ -135,7 +135,8 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
   on 2026-11-12. The corrected recipe sets a context-toolbar placement default and delegates to the original
   initializer, preserving explicit placement and lifecycle safeguards. A regression test executes the documented
   snippet; production JavaScript is unchanged.
-- **Local status:** the theme already uses this wrapper in `tabler-adapters.js`; no local code change is needed.
+- **Local status:** the wrapper is gone. Since upstream #398 (2026-11-22) the theme registers the placement
+  (`register_tooltip_placements({"context": "bottom"})`) and `tabler-adapters.js` is deleted.
 
 - **What happened:** the documented way to add per-location tooltip configuration is to assign
   `cv.adapters.tooltip.init = ...`. That drops upstream's Bootstrap transition guard in the original `init`; the
@@ -460,9 +461,10 @@ in [crud_views_upstream_status.md](crud_views_upstream_status.md).
 - **Implemented upstream:** [issue #328](https://github.com/jacob-consulting/django-crud-views/issues/328)
   (closed 2026-11-07), [PR #335](https://github.com/jacob-consulting/django-crud-views/pull/335) (phase 06.17, merge
   `be449c57`); not a claim about a published release. Object-detail tabs initialise through the theme adapters (`cv.adapters`) instead of `globalThis.bootstrap`. Shared with finding 15.
-- **Adopted here:** no theme code needed: upstream's `cv.bootstrapAdapters` now includes `tab`, and
-  `tabler-adapters.js` assigns the whole set (`Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler))`).
-  `test_upstream_adapter_set_includes_tab_and_theme_takes_all_of_it` pins both halves. Not checked in a browser.
+- **Adopted here:** no theme code needed: upstream's `cv.bootstrapAdapters` now includes `tab`. Since upstream #398
+  (2026-11-22) the theme assigns no adapter at all and registers its namespace instead, so the stock set, `tab`
+  included, resolves `window.tabler`. `test_upstream_stock_adapters_cover_what_the_theme_script_did` pins the
+  upstream half. Not checked in a browser.
 
 - **What happened:** the object-detail tab initialiser calls `globalThis.bootstrap?.Tab`, bypassing `cv.adapters`.
   Tabler exposes Bootstrap only as `window.tabler`, so the init silently does nothing. The tabs still switch

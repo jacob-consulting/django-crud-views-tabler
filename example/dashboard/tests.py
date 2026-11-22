@@ -592,7 +592,7 @@ class ShowCodeTests(TestCase):
         for label in (
             "crud_views_tabler/apps.py",
             "crud_views_tabler/buttons.py",
-            "crud_views_tabler/static/crud_views_tabler/tabler-adapters.js",
+            "crud_views_tabler/static/crud_views_tabler/crud_views_tabler.css",
             "crud_views_tabler/templates/crud_views_tabler/page.html",
             "example/config/settings.py (excerpt)",
         ):

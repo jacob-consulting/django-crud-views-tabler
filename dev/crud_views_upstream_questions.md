@@ -204,9 +204,10 @@ the filter toggle's `aria-expanded`, `aria-controls="filter-collapse"` and `data
 "configured global" idea became an adapter object with a lazily resolved namespace, which also removes the load-order
 trap: Bootstrap may load anywhere, deferred included.
 
-**What the theme does now:** no jQuery, no shim. One registered asset, `tabler-adapters.js`, holds one statement:
-`Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler))`. `shared/js.html` is no longer
-overridden. Resolved for every page without formsets; a project with formsets loads jQuery itself.
+**What the theme does now:** no jQuery, no shim, no script. Since upstream #398 (2026-11-22) the theme calls
+`register_js_namespace("tabler")` in `ready()` and upstream's stock adapters resolve `window.tabler`; the
+`tabler-adapters.js` asset that held `Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler))`
+is deleted. `shared/js.html` is no longer overridden. Resolved for every page without formsets; a project with formsets loads jQuery itself.
 
 ### What the package does today
 

@@ -6,7 +6,7 @@ A [Tabler](https://tabler.io) 1.6.1 theme for [django-crud-views](https://django
 distribution, `django-crud-views-tabler`, ships two Django apps:
 
 - **`crud_views_tabler`**: the theme. Listed before `crud_views` in `INSTALLED_APPS`, it shadows the layout templates
-  of django-crud-views' stock Bootstrap 5 theme and registers Tabler button classes, icons and JavaScript adapters
+  of django-crud-views' stock Bootstrap 5 theme and registers Tabler button classes, icons and the JS namespace
   through upstream's hooks. Your ViewSets and views need no changes.
 - **`django_tabler`**: a Tabler page shell that does not depend on django-crud-views: base template and app layout
   (top bar or sidebar), sign-in page, `{% load tabler %}` icon tags, an end-user layout switch, and `crispy_tabler`,

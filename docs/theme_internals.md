@@ -99,7 +99,7 @@ Which classes a button gets depends on its **variant**, which comes from the vie
   stylesheet sizes and mutes their `.cv-icon-fw` icon slot like Tabler's `dropdown-item-icon`, so labels line up
   whether an action has an icon or not.
 - **Tooltips**: crud_views marks every icon-only button with `data-cv-tooltip="<location>"` and initialises it
-  through `cv.adapters.tooltip`, which the theme points at Tabler (see JavaScript). Toolbar tooltips open below the
+  through `cv.adapters.tooltip`, which finds Tabler's `Tooltip` through the registered namespace (see JavaScript). Toolbar tooltips open below the
   button. A click hides the clicked button's tooltip, and tooltips inside the modal are disposed before its content is
   replaced (#205).
 - All hooks the package's JavaScript relies on come from the stock templates unchanged: `cv-key`,
@@ -274,22 +274,23 @@ semantic name or a `tabler:` value instead.
 ## JavaScript
 
 Core scripts on django-crud-views main run without jQuery and call Bootstrap only through `cv.adapters` (`modal`,
-`tooltip`, `collapse`). Tabler's bundle exposes Bootstrap's components on `window.tabler`, so the theme registers one
-asset, `crud_views_tabler/tabler-adapters.js`:
+`tooltip`, `tab`, `collapse`, `alert`). Tabler's bundle exposes Bootstrap's components on `window.tabler`, so the
+theme registers that name in `ready()` and ships no script of its own (upstream #398):
 
-    Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler));
-    { const init = cv.adapters.tooltip.init;
-      cv.adapters.tooltip.init = (el, options = {}) => { /* data-bs-placement="bottom" for "context" */ init(el, options); }; }
+    register_js_namespace("tabler")
+    register_tooltip_placements({"context": "bottom"})
 
-The second statement places toolbar tooltips below the buttons, so they do not cover the page header. It **wraps**
-crud_views' `init` instead of replacing it: since 06.8 that `init` guards Bootstrap 5.3 tooltip transitions that
-outlive `dispose()`, and a theme calling `Tooltip.getOrCreateInstance` itself (crud_views' own recipe in
-`docs/reference/javascript.md#tooltips` still shows that) would silently drop the guard. The placement travels as the
-`data-bs-placement` attribute, which Bootstrap reads when it creates the tooltip; a button that already has one keeps
-it. Only `init` is touched, so the adapter keeps crud_views' optional `hide(el)` and `dispose(el)` (#205),
-which resolve `tabler.Tooltip` through the same namespace: `tooltip.js` hides a trigger's tooltip on click and disposes
-the tooltips under `#cv-modal` on `cv:modal:unload`, so Tabler's per-tooltip `hide.bs.modal` handlers do not pile up
-over repeated modal opens. Do not reassign `cv.adapters.tooltip` as a whole in the theme; that would drop both.
+Both values travel on `#cv-config` (`data-js-namespace`, `data-tooltip-placements`), and upstream's stock adapters
+read them on every call. The placement puts toolbar tooltips below the buttons, so they do not cover the page
+header; a button with its own `data-bs-placement` keeps it, and every other location keeps Tabler's default. The
+theme registers no data prefix: Tabler keeps Bootstrap's `data-bs-*` attributes and `*.bs.modal` events.
+
+Because the theme assigns no adapter, it keeps everything the stock ones carry: the guard for Bootstrap 5.3
+tooltip transitions that outlive `dispose()` (06.8), and the optional `hide(el)` and `dispose(el)` (#205).
+`tooltip.js` hides a trigger's tooltip on click and disposes the tooltips under `#cv-modal` on `cv:modal:unload`,
+so Tabler's per-tooltip `hide.bs.modal` handlers do not pile up over repeated modal opens. A project that copies
+`crud_views/tags/cv_config.html` must keep its `data-js-namespace` and `data-tooltip-placements` attributes, or the
+adapters fall back to `window.bootstrap`.
 
 The namespace is resolved on every call, so `tabler.min.js` stays `defer`red at the end of the body while the
 crud_views scripts load synchronously from `{% cv_js %}`. The theme loads no jQuery; a project with formsets loads it
@@ -348,7 +349,6 @@ crud_views/
 static/crud_views_tabler/
   crud_views_tabler.css           required marker, row actions, filter card spacing, modal title, menu icons,
                                   toggle-group and formset legends, the --cv-* token mapping
-  tabler-adapters.js              cv.adapters -> window.tabler, toolbar tooltips below
 ```
 
 The CSS rules added for the roastery demo each have a finding in

@@ -39,7 +39,6 @@ WHEEL_REQUIRED = [
     "django_tabler/static/django_tabler/layout-switch.js",
     "crud_views_tabler/templates/crud_views_tabler/page.html",
     "crud_views_tabler/static/crud_views_tabler/crud_views_tabler.css",
-    "crud_views_tabler/static/crud_views_tabler/tabler-adapters.js",
 ]
 
 

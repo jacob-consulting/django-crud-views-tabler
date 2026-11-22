@@ -13,6 +13,7 @@ class CrudViewsTablerConfig(AppConfig):
     verbose_name = "django-crud-views Tabler theme"
 
     def ready(self):
+        from crud_views.lib import register_js_namespace, register_tooltip_placements
         from crud_views.lib.assets import register_assets
         from crud_views.lib.button_classes import register_button_classes
         from crud_views.lib.icons import register_icon_library, register_icons
@@ -33,8 +34,10 @@ class CrudViewsTablerConfig(AppConfig):
                 if not key.startswith("workflow:") or self.apps.is_installed("crud_views_workflow")
             }
         )
-        register_assets(
-            "crud_views_tabler",
-            js=["crud_views_tabler/tabler-adapters.js"],
-            css=["crud_views_tabler/crud_views_tabler.css"],
-        )
+        # Tabler's bundle exposes Bootstrap's components on window.tabler, not window.bootstrap; upstream's stock
+        # adapters resolve the registered name on every call (upstream #398). The data prefix stays Bootstrap's bs.
+        register_js_namespace("tabler")
+        # Toolbar tooltips open below the buttons, so they do not cover the page header; the rest keep Tabler's
+        # default. A data-bs-placement on the button wins.
+        register_tooltip_placements({"context": "bottom"})
+        register_assets("crud_views_tabler", css=["crud_views_tabler/crud_views_tabler.css"])

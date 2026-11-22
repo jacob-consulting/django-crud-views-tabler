@@ -315,62 +315,59 @@ class ThemeRenderingTests(TestCase):
         self.assertIn('class="table-sort desc"', html)
         self.assertLess(html.index("Customer 14"), html.index("Customer 13"))
 
-    def test_scripts_use_the_tabler_adapter_without_jquery(self):
+    def test_scripts_use_upstream_adapters_without_jquery_or_a_theme_script(self):
         html = self.client.get(reverse("customer-list")).content.decode()
         self.assertNotIn("jquery", html.lower())
         self.assertNotIn("bootstrap-shim", html)
-        core = html.index("crud_views/js/adapters.js")
-        theme = html.index("crud_views_tabler/tabler-adapters.js")
-        self.assertLess(core, theme)
+        self.assertNotIn("tabler-adapters.js", html)  # the registrations below replaced it (upstream #398)
+        self.assertIn("crud_views/js/adapters.js", html)
         self.assertIn("crud_views/js/modal.js", html)
 
-    def test_tooltip_adapter_places_toolbar_tooltips_below(self):
-        from django.contrib.staticfiles import finders
+    def test_theme_registers_the_tabler_namespace_and_tooltip_placements(self):
+        from crud_views.lib.data_prefix import get_data_prefix
+        from crud_views.lib.js_config import get_js_namespace, get_tooltip_placements
 
-        with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
-            source = f.read()
-        self.assertIn("cv.bootstrapAdapters(() => globalThis.tabler)", source)
-        self.assertIn("cv.adapters.tooltip.init", source)
-        self.assertIn('location === "context"', source)
-        self.assertIn('setAttribute("data-bs-placement", "bottom")', source)
+        # upstream's stock adapters resolve window.tabler instead of window.bootstrap; toolbar tooltips open below
+        # the buttons, so they do not cover the page header (upstream #398)
+        self.assertEqual(get_js_namespace(), "tabler")
+        self.assertEqual(get_tooltip_placements(), {"context": "bottom"})
+        # Tabler's bundle keeps Bootstrap's data API and event names (data-bs-*, *.bs.modal): no prefix to register
+        self.assertEqual(get_data_prefix(), "bs")
 
-    def test_upstream_adapter_set_includes_tab_and_theme_takes_all_of_it(self):
-        # crud_views/js/adapters.js's bootstrapAdapters returns a `tab:` entry using component(ns, "Tab"), which
-        # the object-detail tabs.js initialises through (#328); the theme assigns the whole set, so no tab shim.
+    def test_cv_config_publishes_the_namespace_and_tooltip_placements(self):
+        # upstream's stock adapters read both from #cv-config on every call
+        html = self.client.get(reverse("customer-list")).content.decode()
+        self.assertIn('data-js-namespace="tabler"', html)
+        self.assertIn('data-tooltip-placements="{&quot;context&quot;: &quot;bottom&quot;}"', html)
+        self.assertIn('data-data-prefix="bs"', html)
+
+    def test_theme_ships_no_script(self):
+        from crud_views.lib.assets import get_registered
+
+        static = Path(crud_views_tabler.__file__).parent / "static" / "crud_views_tabler"
+        self.assertEqual(sorted(path.name for path in static.iterdir()), ["crud_views_tabler.css"])
+        bundle = {bundle.key: bundle for bundle in get_registered()}["crud_views_tabler"]
+        self.assertEqual([asset.path for asset in bundle.js], [])
+        self.assertEqual([asset.path for asset in bundle.css], ["crud_views_tabler/crud_views_tabler.css"])
+
+    def test_upstream_stock_adapters_cover_what_the_theme_script_did(self):
+        # The theme assigns no adapter, so each of these has to come from crud_views/js/adapters.js: the tab entry
+        # for object-detail tabs (#328), the namespace and placements from #cv-config with an explicit
+        # data-bs-placement winning (#398), the tooltip transition guard (06.8) and hide/dispose (#205).
         from django.contrib.staticfiles import finders
 
         with open(finders.find("crud_views/js/adapters.js"), encoding="utf-8") as f:
             core = f.read()
         self.assertRegex(core, r'tab: \{\s*init\(el\) \{ component\(ns, "Tab"\)')
-        with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
-            source = f.read()
-        self.assertIn("Object.assign(cv.adapters, cv.bootstrapAdapters(() => globalThis.tabler))", source)
-        self.assertNotRegex(source, r"cv\.adapters\.tab\b")
-
-    def test_tooltip_adapter_wraps_upstream_init(self):
-        # crud_views' init guards Bootstrap 5.3 tooltip transitions that outlive dispose() (06.8); the theme must
-        # delegate to it rather than call Tooltip.getOrCreateInstance itself, or it silently drops that guard.
-        from django.contrib.staticfiles import finders
-
-        with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
-            source = f.read()
-        self.assertIn("const init = cv.adapters.tooltip.init;", source)
-        self.assertIn("init(el, options);", source)
-        self.assertNotIn("getOrCreateInstance", source)
-
-    def test_tooltip_adapter_keeps_upstream_lifecycle(self):
-        # Only init is replaced, so crud_views' hide(el) / dispose(el) (#205) keep resolving tabler.Tooltip.
-        from django.contrib.staticfiles import finders
-
-        with open(finders.find("crud_views_tabler/tabler-adapters.js"), encoding="utf-8") as f:
-            source = f.read()
-        self.assertNotRegex(source, r"cv\.adapters\.tooltip\s*=")
-        self.assertNotIn("cv.adapters.tooltip.hide", source)
-        self.assertNotIn("cv.adapters.tooltip.dispose", source)
-        with open(finders.find("crud_views/js/adapters.js"), encoding="utf-8") as f:
-            core = f.read()
-        self.assertIn("hide(el)", core)
-        self.assertIn("dispose(el)", core)
+        for needle in (
+            '"data-js-namespace"',
+            '"data-tooltip-placements"',
+            "`data-${prefix}-placement`",
+            "guardTooltipTransitions(Tooltip, instance, el)",
+            "hide(el)",
+            "dispose(el)",
+        ):
+            self.assertIn(needle, core)
 
     def test_form_page_wraps_form_in_card(self):
         html = self.client.get(reverse("customer-create")).content.decode()

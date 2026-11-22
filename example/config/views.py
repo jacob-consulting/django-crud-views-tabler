@@ -27,7 +27,7 @@ GROUPS = (
     (
         "static",
         "CSS and JavaScript",
-        "A few CSS fixes and the adapter that hands crud_views Tabler's Bootstrap components.",
+        "A few CSS fixes. The theme ships no JavaScript: it registers Tabler's namespace in apps.py.",
     ),
     (
         "settings",

@@ -104,8 +104,9 @@ Option C landed in #204 (4b62ed6), with a bit more than the issue asked:
 - **Opt-out and recipes are documented.** Opt out with `cv.adapters.tooltip = {init() {}}`. `javascript.md` has a
   per-location recipe and a non-Bootstrap example; `inaccessible_actions.md` documents the disabled-button limitation.
 
-The theme now overrides no button template. `tabler-adapters.js` uses the per-location recipe, so toolbar tooltips
-open below the buttons as they did with the old overrides. Everything else is upstream's.
+The theme now overrides no button template. It registers the placement with
+`register_tooltip_placements({"context": "bottom"})` (upstream #398; before that, `tabler-adapters.js` used the
+per-location recipe), so toolbar tooltips open below the buttons as they did with the old overrides. Everything else is upstream's.
 
 #205 (5e36477, closing #203) adds the lifecycle: optional `cv.adapters.tooltip.hide(el)` and `dispose(el)`, a click
 on a trigger hides its tooltip, and the new `cv:modal:unload` event disposes the markers under `#cv-modal` before the

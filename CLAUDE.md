@@ -95,9 +95,10 @@ content) — none renders a button. Everything else is registered in `CrudViewsT
 - icons: `register_icon_library("tabler", ...)` + `register_icons(TABLER_ICONS)` mapping crud_views' semantic icon
   names to `tabler:<name>`; SVG paths live in `django_tabler.icons.ICONS`, and the system check
   `crud_views_tabler.W001` flags `tabler:` names with no path,
-- assets: `tabler-adapters.js` wires `cv.adapters` (modal/tooltip/collapse) to `window.tabler`'s Bootstrap
-  components. Wrap `cv.adapters.tooltip.init` (call the original), never replace it or the whole `tooltip` object:
-  upstream's `init` carries a Bootstrap transition guard, and the object carries `hide`/`dispose`.
+- JavaScript: `register_js_namespace("tabler")` and `register_tooltip_placements({"context": "bottom"})`
+  (upstream #398), so upstream's stock adapters use `window.tabler`'s Bootstrap components and toolbar tooltips
+  open below the buttons. The theme ships no script and registers no data prefix: Tabler keeps `data-bs-*`,
+- assets: `crud_views_tabler.css`.
 
 Prefer solving theme problems through upstream hooks (class keys, blocks, settings) rather than new template
 overrides; copied templates drift from upstream silently. Upstream asks and their status are tracked in

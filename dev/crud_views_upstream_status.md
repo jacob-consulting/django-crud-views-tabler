@@ -34,8 +34,11 @@ tracker, `PythonProject/django-crud-views-adminlte/superpowers/notes/upstream-tr
   the installed upstream template. Possible fix: a `card_cell` block, or an include for the checkbox, so the theme
   overrides only the grid. Logged as finding 40 in
   [crud_views_upstream_findings_roastery.md](crud_views_upstream_findings_roastery.md).
-- **C10** (the toolbar shows every action to every viewer) and **C11** (no danger variant for bulk buttons) are the
-  AdminLTE tracker's entries and apply here unchanged; not worked around.
+- **C10** (the toolbar shows every action to every viewer) is fixed upstream by #399: the toolbar offers only the
+  actions the viewer may enter, and the card cell follows `view.cv_bulk_buttons` as upstream's template does. The
+  theme's card template and `test_card_bulk_markup_is_upstreams` need an upstream checkout that contains #399.
+  **C11** (no danger variant for bulk buttons) is the AdminLTE tracker's entry and applies here unchanged; not
+  worked around.
 - **Card cell shrinks in `.row-deck` (found in the demo's browser pass).** Upstream's `bulk:card-cell` default is
   `position-relative`, a block wrapper; Tabler's `.row-deck > [class*=col-]` is a flex row, so the wrapper took its
   card's content width (cards of unequal width, 198 px on a 375 px screen). The theme sets `bulk:card-cell` to

@@ -108,6 +108,15 @@ class OrderBulkTests(OrderTestCase):
         shipped.refresh_from_db()
         self.assertEqual(shipped.state, OrderState.SHIPPED)
 
+    def test_roasters_are_not_offered_cancel(self):
+        """Upstream #399: the toolbar offers only the actions the viewer may enter."""
+        self.login("kim")
+        for name in ("orders-list", "orders-card"):
+            doc = self.doc(self.client.get(reverse(name)))
+            (toolbar,) = doc.cssselect("form[data-cv-bulk]")
+            actions = [b.get("data-cv-bulk-action") for b in toolbar.cssselect("button[data-cv-bulk-action]")]
+            self.assertEqual(actions, ["bulk_roast"], name)
+
     def test_roasters_may_not_cancel(self):
         self.login("kim")
         order = self.make_order(state=OrderState.DRAFT)

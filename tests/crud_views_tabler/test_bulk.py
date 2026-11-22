@@ -10,6 +10,8 @@ import lxml.html
 import pytest
 from crud_views.lib.button_classes import get_button_class
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 
 import crud_views_tabler
@@ -145,10 +147,10 @@ def test_bulk_table_inside_tabler_card(admin_client, customers):
 THEME_CARD = Path(crud_views_tabler.__file__).resolve().parent / "templates/crud_views/view_card.content.html"
 UPSTREAM_CARD = Path(crud_views.__file__).resolve().parent / "templates/crud_views/view_card.content.html"
 TOOLBAR = re.compile(
-    r"\{% if view\.cv_bulk_actions %\}\{% include \"crud_views/snippets/bulk_toolbar\.html\" %\}\{% endif %\}"
+    r"\{% if view\.cv_bulk_buttons %\}\{% include \"crud_views/snippets/bulk_toolbar\.html\" %\}\{% endif %\}"
 )
 CARD_CELL = re.compile(
-    r"\{% if view\.cv_bulk_actions %\}<div class=.*?\{% else %\}\{% cv_card object %\}\{% endif %\}", re.S
+    r"\{% if view\.cv_bulk_buttons %\}<div class=.*?\{% else %\}\{% cv_card object %\}\{% endif %\}", re.S
 )
 
 
@@ -164,6 +166,18 @@ def fragments(path):
 def test_card_bulk_markup_is_upstreams():
     """The theme's card grid copies upstream's bulk toolbar include and card cell (tracker note in the template)."""
     assert fragments(THEME_CARD) == fragments(UPSTREAM_CARD)
+
+
+def test_bulk_card_hides_selection_when_no_action_is_offered(client, customers):
+    """Upstream #399: a viewer who may enter no bulk action gets neither the toolbar nor the card checkboxes."""
+    viewer = get_user_model().objects.create_user("viewer", password="viewer")
+    content_type = ContentType.objects.get_for_model(Customer)
+    viewer.user_permissions.add(Permission.objects.get(codename="view_customer", content_type=content_type))
+    client.force_login(viewer)
+    doc = page(client.get(reverse("bulk_customer-card")))
+    assert "Ursula Le Guin" in text(doc.cssselect("main")[0])  # the cards themselves are there
+    assert not doc.cssselect("form[data-cv-bulk]")
+    assert not doc.cssselect("[data-cv-bulk-item]")
 
 
 def test_bulk_empty_list(admin_client):

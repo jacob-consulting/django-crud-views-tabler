@@ -21,6 +21,13 @@ Upstream 822f737c (#399, PR #404) and 71f59256 (#400, PR #402).
   `/orders/` and `/orders/card/`, alex and kim, light and dark, 1280 and 375px: red-outline "Cancel orders", plain
   "Mark roasted", Kim only "Mark roasted", no sideways scroll.
 
+- **Theme guide (django-crud-views PR #406):** "Authorized data in overridden templates" now says the toolbar is filtered
+  by destination access and that a copied card template guards its selection cell with `view.cv_bulk_buttons`, as the
+  theme's card template does since PR #7. Nothing to change here.
+- **Siblings:** the CoreUI and AdminLTE themes got the same GitHub workflows (Tests, Lint, Docs with Codecov) and Read
+  the Docs projects as this repo; AdminLTE dropped its crud-views pin, so all three themes test against `main` until
+  1.0.0rc1.
+
 ## Update 2026-11-21: upstream #391, #393, #394 and extensions 0.4.0
 
 Upstream 95d40ddf, 4ec93cb9 and 49d5173a, plus django-crud-views-extensions 0.4.0.

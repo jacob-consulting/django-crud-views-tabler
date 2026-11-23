@@ -17,7 +17,9 @@ Upstream 822f737c (#399, PR #404) and 71f59256 (#400, PR #402).
   `btn btn-primary`; an unset variant renders secondary). `TABLER_BUTTON_CLASSES` sets them and their `:icon` keys to
   the `context:*` values, since the bulk toolbar is a page-level button row like the context toolbar; the demo's
   "Cancel orders" sets `cv_action_variant = "danger"` (`btn btn-outline-danger`,
-  `test_toolbar_buttons_follow_the_destination_variant`).
+  `test_toolbar_buttons_follow_the_destination_variant`). Browser check 2026-11-23 (headless Chromium 159):
+  `/orders/` and `/orders/card/`, alex and kim, light and dark, 1280 and 375px: red-outline "Cancel orders", plain
+  "Mark roasted", Kim only "Mark roasted", no sideways scroll.
 
 ## Update 2026-11-21: upstream #391, #393, #394 and extensions 0.4.0
 

@@ -314,10 +314,15 @@ class (`h2`, `h3`). `django_tabler/layouts/app.html` has a `page_heading` block 
 
 ## Bulk actions
 
-Bulk selection (django-crud-views #392) needs one override, one `bulk:*` key and no CSS:
+Bulk selection (django-crud-views #392) needs one override, nine `bulk:*` keys and no CSS:
 
-- Six of the seven `bulk:*` button-class keys are not set: upstream's defaults (`form-check-input`, `d-flex` flex rows)
-  are Bootstrap classes that Tabler styles. `bulk:card-cell` is `position-relative d-flex flex-fill`: upstream's
+- The toolbar buttons take their class from the destination's `cv_action_variant` (django-crud-views #400):
+  `bulk:primary`, `bulk:secondary`, `bulk:tertiary` and `bulk:danger`, plus an `:icon` key each for the icon-only label
+  mode. The theme sets them to the `context:*` values, because the bulk toolbar is a page-level button row like the
+  context toolbar: secondary is Tabler's plain `btn`, danger `btn btn-outline-danger`. The demo marks "Cancel orders"
+  as danger. A destination without a variant renders secondary.
+- Six of the seven other `bulk:*` button-class keys are not set: upstream's defaults (`form-check-input`, `d-flex` flex
+  rows) are Bootstrap classes that Tabler styles. `bulk:card-cell` is `position-relative d-flex flex-fill`: upstream's
   `position-relative` block cell shrinks to its card's content inside Tabler's `.row-deck` column (a flex row), which
   gave cards of unequal width in the demo; `test_bulk_card_cell_fills_its_grid_column` pins it.
 - The table view is upstream's: the toolbar renders above the table card and carries the select-all checkbox; the

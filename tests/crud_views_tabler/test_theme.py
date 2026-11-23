@@ -97,8 +97,19 @@ class ButtonClassTests(SimpleTestCase):
     def test_btn_icon_only_on_icon_only_buttons(self):
         # btn-icon squares a button; a labelled button (label or both) must not get it.
         for key, classes in TABLER_BUTTON_CLASSES.items():
-            if key.split(":")[0] in ("context", "list", "card") and key.split(":")[1] in VARIANTS:
+            if key.split(":")[0] in ("context", "list", "card", "bulk") and key.split(":")[1] in VARIANTS:
                 self.assertEqual("btn-icon" in classes.split(), key.endswith(":icon"), key)
+
+    def test_bulk_variants_follow_the_context_toolbar(self):
+        # Upstream #400: the bulk toolbar is a page-level button row like the context toolbar, so each bulk variant
+        # (and its icon-only key) takes the context value.
+        for variant in VARIANTS:
+            for suffix in ("", ":icon"):
+                self.assertEqual(
+                    TABLER_BUTTON_CLASSES[f"bulk:{variant}{suffix}"],
+                    TABLER_BUTTON_CLASSES[f"context:{variant}{suffix}"],
+                    variant + suffix,
+                )
 
     def test_table_values(self):
         expected = {
@@ -127,6 +138,14 @@ class ButtonClassTests(SimpleTestCase):
             "card:secondary:icon": "btn btn-sm btn-icon",
             "card:tertiary:icon": "btn btn-sm btn-icon btn-ghost-secondary",
             "card:danger:icon": "btn btn-sm btn-icon btn-ghost-danger",
+            "bulk:primary": "btn btn-primary",
+            "bulk:secondary": "btn",
+            "bulk:tertiary": "btn",
+            "bulk:danger": "btn btn-outline-danger",
+            "bulk:primary:icon": "btn btn-primary btn-icon",
+            "bulk:secondary:icon": "btn btn-icon",
+            "bulk:tertiary:icon": "btn btn-icon",
+            "bulk:danger:icon": "btn btn-icon btn-outline-danger",
             "context:container": "btn-list",
             "list:container": "btn-list flex-nowrap justify-content-end gap-1",
             "card:container": "btn-list",

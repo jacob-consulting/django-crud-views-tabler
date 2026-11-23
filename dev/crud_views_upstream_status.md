@@ -5,6 +5,22 @@ Status snapshot for the five points in
 paths and the options per point; this one says only where each point stands today and what is left to do. The
 questions document is not edited.
 
+## Update 2026-11-23: upstream #399 and #400 (bulk toolbar)
+
+Upstream 822f737c (#399, PR #404) and 71f59256 (#400, PR #402).
+
+- **#399 (the toolbar offers only the actions the viewer may enter, C10):** adopted by PR #7, which makes the theme's
+  card template follow `view.cv_bulk_buttons`. `example/sales/tests/test_bulk.py::test_roasters_are_not_offered_cancel`
+  pins it in the demo.
+- **#400 (semantic variants for bulk toolbar buttons, C11):** the toolbar buttons take their class from the
+  destination's `cv_action_variant` through four keys, `bulk:primary` to `bulk:danger` (each stock value is
+  `btn btn-primary`; an unset variant renders secondary). `TABLER_BUTTON_CLASSES` sets them and their `:icon` keys to
+  the `context:*` values, since the bulk toolbar is a page-level button row like the context toolbar; the demo's
+  "Cancel orders" sets `cv_action_variant = "danger"` (`btn btn-outline-danger`,
+  `test_toolbar_buttons_follow_the_destination_variant`). Browser check 2026-11-23 (headless Chromium 159):
+  `/orders/` and `/orders/card/`, alex and kim, light and dark, 1280 and 375px: red-outline "Cancel orders", plain
+  "Mark roasted", Kim only "Mark roasted", no sideways scroll.
+
 ## Update 2026-11-21: upstream #391, #393, #394 and extensions 0.4.0
 
 Upstream 95d40ddf, 4ec93cb9 and 49d5173a, plus django-crud-views-extensions 0.4.0.
@@ -38,7 +54,7 @@ tracker, `PythonProject/django-crud-views-adminlte/superpowers/notes/upstream-tr
   actions the viewer may enter, and the card cell follows `view.cv_bulk_buttons` as upstream's template does. The
   theme's card template and `test_card_bulk_markup_is_upstreams` need an upstream checkout that contains #399.
   **C11** (no danger variant for bulk buttons) is the AdminLTE tracker's entry and applies here unchanged; not
-  worked around.
+  worked around. Both adopted since; see the update of 2026-11-23.
 - **Card cell shrinks in `.row-deck` (found in the demo's browser pass).** Upstream's `bulk:card-cell` default is
   `position-relative`, a block wrapper; Tabler's `.row-deck > [class*=col-]` is a flex row, so the wrapper took its
   card's content width (cards of unequal width, 198 px on a 375 px screen). The theme sets `bulk:card-cell` to

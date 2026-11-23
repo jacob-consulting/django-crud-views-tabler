@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from lxml import html as lxml_html
 
+from crud_views_tabler.buttons import TABLER_BUTTON_CLASSES
 from sales.models import Order, OrderState
 
 from .test_orders import OrderTestCase
@@ -53,6 +54,25 @@ class OrderBulkTests(OrderTestCase):
         for card in cards:
             (cell,) = card.xpath("ancestor::div[contains(@class, 'position-relative')][1]")
             self.assertEqual(len(cell.cssselect("input[data-cv-bulk-item]")), 1)
+
+    def test_toolbar_buttons_follow_the_destination_variant(self):
+        """Upstream #400: "Cancel orders" declares the danger variant, "Mark roasted" keeps the default secondary."""
+        self.login()
+        for name in ("orders-list", "orders-card"):
+            doc = self.doc(self.client.get(reverse(name)))
+            (toolbar,) = doc.cssselect("form[data-cv-bulk]")
+            classes = {
+                b.get("data-cv-bulk-action"): b.get("class") for b in toolbar.cssselect("button[data-cv-bulk-action]")
+            }
+            self.assertEqual(
+                classes,
+                {
+                    "bulk_roast": TABLER_BUTTON_CLASSES["bulk:secondary"],
+                    "bulk_cancel": TABLER_BUTTON_CLASSES["bulk:danger"],
+                },
+                name,
+            )
+            self.assertIn("btn-outline-danger", classes["bulk_cancel"].split(), name)
 
     def test_roast_runs_the_transition_when_all_are_confirmed(self):
         self.login("kim")  # a roaster: roast_order, no change_order

@@ -96,6 +96,7 @@ class OrderBulkCancelView(OrderTransitionBulkMixin, BreadcrumbMixin, BulkFormVie
     cv_path = "bulk-cancel"
     cv_permission = "change"
     cv_icon_action = "cancelled"
+    cv_action_variant = "danger"  # the destructive bulk action, styled by the theme's bulk:danger (upstream #400)
     cv_action_label_template_code = _("Cancel the selected orders")
     cv_action_short_label_template_code = _("Cancel orders")
     form_class = OrderBulkCancelForm

@@ -50,6 +50,16 @@ TABLER_BUTTON_CLASSES: dict[str, str] = {
     "card:secondary:icon": "btn btn-sm btn-icon",
     "card:tertiary:icon": "btn btn-sm btn-icon btn-ghost-secondary",
     "card:danger:icon": "btn btn-sm btn-icon btn-ghost-danger",
+    # Bulk toolbar buttons by the destination's cv_action_variant (upstream #400): a page-level button row like the
+    # context toolbar, so the same values. Labelled by default (bulk label mode "both"); :icon is the icon-only mode.
+    "bulk:primary": "btn btn-primary",
+    "bulk:secondary": "btn",
+    "bulk:tertiary": "btn",
+    "bulk:danger": "btn btn-outline-danger",
+    "bulk:primary:icon": "btn btn-primary btn-icon",
+    "bulk:secondary:icon": "btn btn-icon",
+    "bulk:tertiary:icon": "btn btn-icon",
+    "bulk:danger:icon": "btn btn-icon btn-outline-danger",
     "context:container": "btn-list",
     "list:container": "btn-list flex-nowrap justify-content-end gap-1",
     "card:container": "btn-list",
